@@ -3,19 +3,30 @@ import { Card } from '@/components/ui/card';
 
 interface EmojiPromptProps {
   emoji: string;
-  onTimerComplete: () => void;
+  onEmotionDetected?: () => void;
+  onTimeout?: () => void;
   duration?: number;
   className?: string;
+  isEmotionDetected?: boolean;
 }
 
 export const EmojiPrompt = ({ 
   emoji, 
-  onTimerComplete, 
-  duration = 5000,
-  className = "" 
+  onEmotionDetected,
+  onTimeout,
+  duration = 30000, // 30 seconds timeout for emotion detection
+  className = "",
+  isEmotionDetected = false
 }: EmojiPromptProps) => {
   const [timeLeft, setTimeLeft] = useState(duration / 1000);
   const [progress, setProgress] = useState(100);
+
+  // Handle emotion detection success
+  useEffect(() => {
+    if (isEmotionDetected && onEmotionDetected) {
+      onEmotionDetected();
+    }
+  }, [isEmotionDetected, onEmotionDetected]);
 
   useEffect(() => {
     setTimeLeft(duration / 1000);
@@ -28,7 +39,9 @@ export const EmojiPrompt = ({
         
         if (newTime <= 0) {
           clearInterval(interval);
-          onTimerComplete();
+          if (onTimeout) {
+            onTimeout();
+          }
         }
         
         return newTime;
@@ -36,24 +49,26 @@ export const EmojiPrompt = ({
     }, 100);
 
     return () => clearInterval(interval);
-  }, [duration, onTimerComplete]);
+  }, [duration, onTimeout]);
 
   return (
-    <Card className={`bg-gradient-primary shadow-hover border-0 animate-scale-in ${className}`}>
+    <Card className={`bg-gradient-primary shadow-hover border-0 ${className}`}>
       <div className="p-8 text-center">
         <div className="relative mb-6">
-          <div className="text-8xl sm:text-9xl animate-bounce-in">
+          <div className="text-8xl sm:text-9xl">
             {emoji}
           </div>
-          <div className="absolute inset-0 animate-pulse-glow rounded-full" />
         </div>
         
         <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">
-          Mimic this expression!
+          {isEmotionDetected ? 'Perfect! Well done!' : 'Mimic this expression'}
         </h2>
         
         <p className="text-lg text-white/80 mb-6">
-          Show me your best {emoji}
+          {isEmotionDetected 
+            ? 'You matched the emotion successfully!' 
+            : `Show me your best ${emoji}`
+          }
         </p>
         
         {/* Progress Ring */}
