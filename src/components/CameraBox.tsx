@@ -77,14 +77,6 @@ export const CameraBox = ({ isActive, className = "" }: CameraBoxProps) => {
         )}
       </div>
       
-      {hasPermission && (
-        <div className="absolute top-2 right-2">
-          <div className="flex items-center gap-1 bg-green-500/20 backdrop-blur-sm rounded-full px-2 py-1">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            <span className="text-xs font-medium text-green-700">Live</span>
-          </div>
-        </div>
-      )}
     </Card>
   );
 };

@@ -49,13 +49,13 @@ export const CameraEmoji = () => {
       </div>
 
       {/* Header */}
-      <header className="bg-gradient-to-r from-purple-600 via-pink-500 to-blue-500 text-white shadow-xl">
+      <header className="bg-gradient-to-r from-blue-400 via-green-400 to-yellow-400 text-white shadow-xl">
         <div className="container mx-auto px-4 py-4 md:py-6">
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-center">
-            🎭 Emoji Mimic Magic ✨
+            😊 Copy My Face! 😊
           </h1>
           <p className="text-center text-white/90 mt-1 text-sm sm:text-base">
-            Show your best expressions!
+            Make the same face as the emoji!
           </p>
         </div>
       </header>
@@ -69,18 +69,18 @@ export const CameraEmoji = () => {
             {/* Main Game Area - Takes full mobile width */}
             <div className="mb-6">
               {gameState === 'idle' && (
-                <div className="text-center bg-white/60 backdrop-blur-sm rounded-3xl p-6 shadow-xl border border-purple-200 mx-2">
-                  <div className="text-8xl mb-4 animate-bounce">🎭</div>
-                  <h3 className="text-2xl font-bold mb-3 text-purple-800">Ready to Play?</h3>
-                  <p className="text-purple-600 mb-6 text-lg leading-relaxed">
-                    We'll show you an emoji and you have 5 seconds to make that face! 
+                <div className="text-center bg-white/70 backdrop-blur-sm rounded-3xl p-6 shadow-xl border-2 border-blue-200 mx-2">
+                  <div className="text-8xl mb-4 animate-bounce">😊</div>
+                  <h3 className="text-2xl font-bold mb-3 text-blue-700">Let's Play!</h3>
+                  <p className="text-blue-600 mb-6 text-lg leading-relaxed">
+                    I'll show you a face. You make the same face! 
                   </p>
                   <Button 
                     onClick={startGame}
                     size="lg"
-                    className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 px-10 py-4 text-xl font-bold rounded-full transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
+                    className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white border-0 px-10 py-4 text-xl font-bold rounded-full transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
                   >
-                    🚀 Start the Magic!
+                    ▶️ Start Playing!
                   </Button>
                 </div>
               )}
@@ -104,10 +104,10 @@ export const CameraEmoji = () => {
 
             {/* Camera Section for idle state on mobile */}
             {gameState === 'idle' && (
-              <div className="text-center bg-white/50 backdrop-blur-sm rounded-2xl p-4 mx-2 border border-blue-200">
-                <h3 className="text-lg font-semibold text-blue-700 mb-3">📱 Get Ready!</h3>
-                <p className="text-blue-600 text-sm">
-                  Make sure your camera can see your face clearly
+              <div className="text-center bg-white/50 backdrop-blur-sm rounded-2xl p-4 mx-2 border border-green-200">
+                <h3 className="text-lg font-semibold text-green-600 mb-3">📱 Camera Ready!</h3>
+                <p className="text-green-600 text-sm">
+                  Make sure I can see your face!
                 </p>
               </div>
             )}
@@ -119,18 +119,18 @@ export const CameraEmoji = () => {
               
               {/* Camera Section - Desktop */}
               <div className="space-y-6 order-2 lg:order-1">
-                <h2 className="text-2xl font-bold text-center text-purple-800">
-                  📹 Your Camera
+                <h2 className="text-2xl font-bold text-center text-green-600">
+                  📹 Your Face
                 </h2>
-                <div className="bg-white/60 backdrop-blur-sm rounded-3xl p-6 shadow-xl border border-purple-200">
+                <div className="bg-white/60 backdrop-blur-sm rounded-3xl p-6 shadow-xl border border-green-200">
                   <CameraBox 
                     isActive={gameState !== 'idle'} 
                     className="w-full max-w-md mx-auto rounded-2xl overflow-hidden shadow-lg"
                   />
                   {gameState === 'idle' && (
                     <div className="text-center mt-4">
-                      <p className="text-purple-600 text-lg">
-                        Click "Start the Magic!" to begin! ✨
+                      <p className="text-green-600 text-lg">
+                        Click "Start Playing!" to begin! 😊
                       </p>
                     </div>
                   )}
@@ -139,24 +139,24 @@ export const CameraEmoji = () => {
 
               {/* Game Section - Desktop */}
               <div className="space-y-6 order-1 lg:order-2">
-                <h2 className="text-2xl font-bold text-center text-purple-800">
-                  🎯 Challenge Zone
+                <h2 className="text-2xl font-bold text-center text-blue-600">
+                  🎮 Let's Play!
                 </h2>
                 
-                <div className="bg-white/60 backdrop-blur-sm rounded-3xl p-8 shadow-xl border border-purple-200">
+                <div className="bg-white/60 backdrop-blur-sm rounded-3xl p-8 shadow-xl border border-blue-200">
                   {gameState === 'idle' && (
                     <div className="text-center">
-                      <div className="text-8xl mb-6 animate-bounce">🎭</div>
-                      <h3 className="text-3xl font-bold mb-4 text-purple-800">Ready to Play?</h3>
-                      <p className="text-purple-600 mb-8 text-lg leading-relaxed">
-                        We'll show you an emoji and you have 5 seconds to mimic the expression!
+                      <div className="text-8xl mb-6 animate-bounce">😊</div>
+                      <h3 className="text-3xl font-bold mb-4 text-blue-700">Ready to Play?</h3>
+                      <p className="text-blue-600 mb-8 text-lg leading-relaxed">
+                        I'll show you a face. You make the same face!
                       </p>
                       <Button 
                         onClick={startGame}
                         size="lg"
-                        className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0 px-10 py-4 text-xl font-bold rounded-full transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
+                        className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white border-0 px-10 py-4 text-xl font-bold rounded-full transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
                       >
-                        🚀 Start the Magic!
+                        ▶️ Start Playing!
                       </Button>
                     </div>
                   )}
@@ -177,26 +177,26 @@ export const CameraEmoji = () => {
             </div>
           </div>
 
-          {/* Instructions - Simplified for mobile */}
-          <div className="mt-8 lg:mt-12 bg-white/50 backdrop-blur-sm rounded-3xl p-4 lg:p-6 shadow-xl border border-purple-200 mx-2 lg:mx-0">
-            <h3 className="text-lg lg:text-xl font-bold mb-4 text-center text-purple-800">
-              🎮 How to Play
+          {/* Instructions - Simplified for young children */}
+          <div className="mt-8 lg:mt-12 bg-white/60 backdrop-blur-sm rounded-3xl p-4 lg:p-6 shadow-xl border-2 border-yellow-300 mx-2 lg:mx-0">
+            <h3 className="text-lg lg:text-xl font-bold mb-4 text-center text-yellow-600">
+              🌟 How to Play
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 lg:gap-6 text-center">
-              <div className="bg-white/60 rounded-2xl p-3 lg:p-4 border border-blue-200">
-                <div className="text-3xl lg:text-4xl mb-2">📱</div>
-                <p className="text-sm lg:text-base font-semibold text-blue-700">Camera Ready</p>
-                <p className="text-xs lg:text-sm text-blue-600 mt-1">Allow camera access</p>
+              <div className="bg-white/70 rounded-2xl p-3 lg:p-4 border-2 border-blue-300">
+                <div className="text-4xl lg:text-5xl mb-2">👀</div>
+                <p className="text-sm lg:text-base font-bold text-blue-600">Look!</p>
+                <p className="text-xs lg:text-sm text-blue-500 mt-1">See the face</p>
               </div>
-              <div className="bg-white/60 rounded-2xl p-3 lg:p-4 border border-green-200">
-                <div className="text-3xl lg:text-4xl mb-2">😊</div>
-                <p className="text-sm lg:text-base font-semibold text-green-700">Copy the Face</p>
-                <p className="text-xs lg:text-sm text-green-600 mt-1">Match the emoji expression</p>
+              <div className="bg-white/70 rounded-2xl p-3 lg:p-4 border-2 border-green-300">
+                <div className="text-4xl lg:text-5xl mb-2">😊</div>
+                <p className="text-sm lg:text-base font-bold text-green-600">Copy!</p>
+                <p className="text-xs lg:text-sm text-green-500 mt-1">Make the same face</p>
               </div>
-              <div className="bg-white/60 rounded-2xl p-3 lg:p-4 border border-orange-200">
-                <div className="text-3xl lg:text-4xl mb-2">⏱️</div>
-                <p className="text-sm lg:text-base font-semibold text-orange-700">Beat the Clock</p>
-                <p className="text-xs lg:text-sm text-orange-600 mt-1">5 seconds per emoji</p>
+              <div className="bg-white/70 rounded-2xl p-3 lg:p-4 border-2 border-orange-300">
+                <div className="text-4xl lg:text-5xl mb-2">🎉</div>
+                <p className="text-sm lg:text-base font-bold text-orange-600">Great Job!</p>
+                <p className="text-xs lg:text-sm text-orange-500 mt-1">You did it!</p>
               </div>
             </div>
           </div>
