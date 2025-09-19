@@ -44,6 +44,16 @@ const games: GameCard[] = [
     route: "/symbol-spotter",
   },
   {
+    id: "bubble-popping",
+    name: "Bubble Popping",
+    description: "Pop colorful bubbles for points!",
+    color: "text-cyan-700",
+    bgGradient: "from-cyan-200 to-blue-200",
+    icon: "🫧",
+    isImplemented: true,
+    route: "/bubble-popping",
+  },
+  {
     id: "emotion-adventure",
     name: "Emotion Adventure",
     description: "Go on an emotion journey!",
@@ -150,7 +160,6 @@ export const GameSelection = () => {
           <div className="mt-8">
             <FaceDetectionTest />
           </div>
-
         </div>
       </main>
     </div>
