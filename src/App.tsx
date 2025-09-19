@@ -6,7 +6,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { GameSelection } from "./pages/GameSelection";
 import { CameraEmoji } from "./pages/CameraEmoji";
 import { SymbolSpotter } from "./pages/SymbolSpotter";
+import { BubblePopping } from "./pages/BubblePopping";
 import { FreezeCat } from "./pages/FreezeCat";
+import { LetterSoundMatcher } from "./pages/LetterSoundMatcher";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,7 +23,9 @@ const App = () => (
           <Route path="/" element={<GameSelection />} />
           <Route path="/emotion-detector" element={<CameraEmoji />} />
           <Route path="/symbol-spotter" element={<SymbolSpotter />} />
+          <Route path="/bubble-popping" element={<BubblePopping />} />
           <Route path="/games/freeze-cat" element={<FreezeCat />} />
+          <Route path="/games/letter-sound-matcher" element={<LetterSoundMatcher />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

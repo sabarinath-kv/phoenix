@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 type GameState = "instructions" | "countdown" | "playing" | "completed";
@@ -42,6 +43,7 @@ const SPAWN_RATE_MIN = 300; // minimum ms between spawns
 const SPAWN_RATE_MAX = 800; // maximum ms between spawns
 
 export const SymbolSpotter = () => {
+  const navigate = useNavigate();
   const [gameState, setGameState] = useState<GameState>("instructions");
   const [targetEmoji, setTargetEmoji] = useState("");
   const [flyingEmojis, setFlyingEmojis] = useState<FlyingEmoji[]>([]);
@@ -181,7 +183,7 @@ export const SymbolSpotter = () => {
           if (emoji.clickAnimation) {
             return emoji;
           }
-          
+
           return {
             ...emoji,
             x: emoji.x + Math.cos(emoji.angle) * emoji.speed,
@@ -193,7 +195,7 @@ export const SymbolSpotter = () => {
           if (emoji.clickAnimation && emoji.animationStartTime) {
             return Date.now() - emoji.animationStartTime < 600;
           }
-          
+
           // Remove emojis that are too far from the screen
           return (
             emoji.x > -100 &&
@@ -230,13 +232,13 @@ export const SymbolSpotter = () => {
     );
   }, []);
 
-    const handleEmojiClick = useCallback(
+  const handleEmojiClick = useCallback(
     (clickedEmoji: FlyingEmoji) => {
       if (gameState !== "playing") return;
 
       if (isEmojiInCenterBox(clickedEmoji)) {
         const isCorrect = clickedEmoji.emoji === targetEmoji;
-        
+
         if (isCorrect) {
           setScore((prev) => prev + 1);
           playCorrectSound();
@@ -244,20 +246,20 @@ export const SymbolSpotter = () => {
           setScore((prev) => prev - 1);
           playWrongSound();
         }
-        
+
         // Add click animation
         setFlyingEmojis((prev) =>
           prev.map((emoji) =>
             emoji.id === clickedEmoji.id
               ? {
                   ...emoji,
-                  clickAnimation: isCorrect ? 'correct' : 'wrong',
+                  clickAnimation: isCorrect ? "correct" : "wrong",
                   animationStartTime: Date.now(),
                 }
               : emoji
           )
         );
-        
+
         // Remove emoji after animation
         setTimeout(() => {
           setFlyingEmojis((prev) =>
@@ -487,9 +489,32 @@ export const SymbolSpotter = () => {
         {/* Header */}
         <header className="bg-gradient-to-r from-orange-400 via-yellow-400 to-red-400 text-white shadow-xl relative z-30">
           <div className="container mx-auto px-4 py-4 md:py-6">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-center">
-              Symbol Spotter
-            </h1>
+            <div className="flex items-center justify-between">
+              <Button
+                onClick={() => navigate("/")}
+                variant="ghost"
+                className="group flex items-center gap-2 text-white/90 hover:text-white hover:bg-white/20 px-4 py-2 rounded-full transition-all duration-300 hover:scale-105 backdrop-blur-sm border border-white/20 hover:border-white/40"
+              >
+                <svg
+                  className="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+                <span className="font-medium text-sm">Back to Games</span>
+              </Button>
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-center flex-1">
+                Symbol Spotter
+              </h1>
+              <div className="w-32"></div> {/* Spacer for centering */}
+            </div>
 
             {/* Target Emoji Display */}
             {(gameState === "playing" || gameState === "completed") && (
@@ -532,50 +557,50 @@ export const SymbolSpotter = () => {
             </div>
           )}
 
-                      {/* Flying Emojis */}
-            {flyingEmojis.map((emoji) => {
-              const getAnimationClasses = () => {
-                if (!emoji.clickAnimation) {
-                  return "hover:scale-110 transition-transform";
-                }
-                
-                if (emoji.clickAnimation === 'correct') {
-                  return "correct-click text-green-400 drop-shadow-[0_0_15px_rgba(34,197,94,0.8)]";
-                }
-                
-                if (emoji.clickAnimation === 'wrong') {
-                  return "wrong-click text-red-400 drop-shadow-[0_0_15px_rgba(239,68,68,0.8)] opacity-75";
-                }
-                
-                return "";
-              };
+          {/* Flying Emojis */}
+          {flyingEmojis.map((emoji) => {
+            const getAnimationClasses = () => {
+              if (!emoji.clickAnimation) {
+                return "hover:scale-110 transition-transform";
+              }
 
-              return (
-                <div
-                  key={emoji.id}
-                  className={`absolute text-4xl cursor-pointer select-none ${getAnimationClasses()}`}
-                  style={{
-                    left: emoji.x - 20,
-                    top: emoji.y - 20,
-                    zIndex: emoji.clickAnimation ? 30 : 20,
-                  }}
-                  onClick={() => handleEmojiClick(emoji)}
-                >
-                  {emoji.emoji}
-                  {/* Add visual feedback elements */}
-                  {emoji.clickAnimation === 'correct' && (
-                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-green-500 font-bold text-lg animate-bounce">
-                      +1
-                    </div>
-                  )}
-                  {emoji.clickAnimation === 'wrong' && (
-                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-red-500 font-bold text-lg animate-pulse">
-                      -1
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+              if (emoji.clickAnimation === "correct") {
+                return "correct-click text-green-400 drop-shadow-[0_0_15px_rgba(34,197,94,0.8)]";
+              }
+
+              if (emoji.clickAnimation === "wrong") {
+                return "wrong-click text-red-400 drop-shadow-[0_0_15px_rgba(239,68,68,0.8)] opacity-75";
+              }
+
+              return "";
+            };
+
+            return (
+              <div
+                key={emoji.id}
+                className={`absolute text-4xl cursor-pointer select-none ${getAnimationClasses()}`}
+                style={{
+                  left: emoji.x - 20,
+                  top: emoji.y - 20,
+                  zIndex: emoji.clickAnimation ? 30 : 20,
+                }}
+                onClick={() => handleEmojiClick(emoji)}
+              >
+                {emoji.emoji}
+                {/* Add visual feedback elements */}
+                {emoji.clickAnimation === "correct" && (
+                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-green-500 font-bold text-lg animate-bounce">
+                    +1
+                  </div>
+                )}
+                {emoji.clickAnimation === "wrong" && (
+                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-red-500 font-bold text-lg animate-pulse">
+                    -1
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         {/* Results Screen */}

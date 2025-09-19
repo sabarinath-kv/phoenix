@@ -26,6 +26,26 @@ export const DIFFICULTY_LEVELS = {
   HARD: 3
 } as const;
 
+// Letter-Sound Matching Game Constants
+export const LETTER_SOUND = {
+  COUNTDOWN_DURATION: 3, // 3 second countdown
+  TOTAL_ROUNDS: 7, // A through G
+  SCORE_INCREMENT: 1, // Points per correct answer
+  ROUND_DELAY: 1000, // 1 second delay after correct answer
+  CARD_COUNT: 4, // Number of cards to show (1 correct + 3 distractors)
+} as const;
+
+// Letter-Sound Items (A through G)
+export const LETTER_SOUND_ITEMS = [
+  { letter: "A", word: "Apple", image: "/assets/letters/apple.png" },
+  { letter: "B", word: "Ball", image: "/assets/letters/ball.png" },
+  { letter: "C", word: "Cat", image: "/assets/letters/cat.png" },
+  { letter: "D", word: "Dog", image: "/assets/letters/dog.png" },
+  { letter: "E", word: "Egg", image: "/assets/letters/egg.png" },
+  { letter: "F", word: "Fish", image: "/assets/letters/fish.png" },
+  { letter: "G", word: "Grapes", image: "/assets/letters/grapes.png" },
+] as const;
+
 // Symbol Spotter Constants (existing)
 export const SYMBOL_SPOTTER = {
   GAME_DURATION: 100000, // 100 seconds

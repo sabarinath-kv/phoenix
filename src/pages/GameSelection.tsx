@@ -31,7 +31,8 @@ const games: GameCard[] = [
     color: "text-green-700",
     bgGradient: "from-green-200 to-emerald-200",
     icon: "🔤",
-    isImplemented: false,
+    isImplemented: true,
+    route: "/games/letter-sound-matcher",
   },
   {
     id: "symbol-spotter",
@@ -42,6 +43,17 @@ const games: GameCard[] = [
     icon: "🔍",
     isImplemented: true,
     route: "/symbol-spotter",
+  },
+  {
+    id: "bubble-popping",
+    name: "Bubble Popping",
+    description: "Pop colorful bubbles for points!",
+    color: "text-cyan-700",
+    bgGradient: "from-cyan-200 to-blue-200",
+    icon: "🫧",
+    isImplemented: true,
+    route: "/bubble-popping",
+
   },
   {
     id: "freeze-cat",
@@ -160,7 +172,6 @@ export const GameSelection = () => {
           <div className="mt-8">
             <FaceDetectionTest />
           </div>
-
         </div>
       </main>
     </div>
