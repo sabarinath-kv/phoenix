@@ -10,6 +10,7 @@ interface CameraBoxProps {
   onEmotionDetected?: (emotion: string) => void;
   onTargetEmotionDetected?: () => void;
   showDebugInfo?: boolean;
+  recognitionActive?: boolean;
 }
 
 export const CameraBox = ({ 
@@ -18,7 +19,8 @@ export const CameraBox = ({
   targetEmotion = "😊",
   onEmotionDetected,
   onTargetEmotionDetected,
-  showDebugInfo = false 
+  showDebugInfo = false,
+  recognitionActive = true 
 }: CameraBoxProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hasPermission, setHasPermission] = useState<boolean>(false);
@@ -35,7 +37,7 @@ export const CameraBox = ({
     modelLoadError,
     faceBox,
     detectionMethod
-  } = useFallbackEmotionDetection(videoRef, targetEmotion, isActive && hasPermission);
+  } = useFallbackEmotionDetection(videoRef, targetEmotion, isActive && hasPermission && recognitionActive);
 
   const startCamera = async () => {
     try {

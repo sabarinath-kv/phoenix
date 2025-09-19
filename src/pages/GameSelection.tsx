@@ -140,15 +140,6 @@ export const GameSelection = () => {
             <FaceDetectionTest />
           </div>
 
-          {/* Footer Message */}
-          <div className="text-center mt-12 bg-white/60 backdrop-blur-sm rounded-3xl p-6 shadow-lg border border-purple-200">
-            <h3 className="text-xl font-bold text-purple-700 mb-2">
-              Learning is Fun
-            </h3>
-            <p className="text-purple-600">
-              Each game helps you learn something new. Keep playing and keep growing!
-            </p>
-          </div>
         </div>
       </main>
     </div>
