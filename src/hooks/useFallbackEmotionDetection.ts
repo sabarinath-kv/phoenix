@@ -40,7 +40,7 @@ export const useFallbackEmotionDetection = (
       const mockInterval = setInterval(() => {
         setMockConfidence(prev => {
           const newConf = Math.min(prev + 0.2, 1.0);
-          if (newConf >= 0.8) {
+          if (newConf >= 0.8 && !mockTargetDetected) {
             setMockEmotion('happy');
             setMockTargetDetected(true);
             console.log('🎉 MOCK SUCCESS: Target emotion detected!');
@@ -55,7 +55,7 @@ export const useFallbackEmotionDetection = (
       setMockConfidence(0);
       setMockTargetDetected(false);
     }
-  }, [detectionMethod, isActive]);
+  }, [detectionMethod, isActive, mockTargetDetected]);
   
   // Fallback logic: switch to simpler method if face-api fails
   useEffect(() => {

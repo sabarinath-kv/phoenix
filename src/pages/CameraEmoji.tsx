@@ -61,13 +61,17 @@ export const CameraEmoji = () => {
     setIsRecognitionActive(false);
     setIsEmotionDetected(true);
 
-    // Add current emoji to completed list
-    const newCompletedEmojis = [...completedEmojis, currentEmojiIndex];
-    setCompletedEmojis(newCompletedEmojis);
+    // Add current emoji to completed list using functional update
+    setCompletedEmojis(prev => [...prev, currentEmojiIndex]);
 
-    // Clean up any existing success timeout
+    // Clean up any existing timeouts
     if (successTimeoutRef.current) {
       clearTimeout(successTimeoutRef.current);
+      successTimeoutRef.current = null;
+    }
+    if (recognitionTimeoutRef.current) {
+      clearTimeout(recognitionTimeoutRef.current);
+      recognitionTimeoutRef.current = null;
     }
 
     // Wait 1.5 seconds to show success message, then proceed
@@ -78,32 +82,28 @@ export const CameraEmoji = () => {
         setGameState("completed");
         setShowSuccessModal(true);
       } else {
-        // Move to next emoji after additional delay
+        // Move to next emoji
         const nextIndex = currentEmojiIndex + 1;
         console.log(`➡️ MOVING TO NEXT: ${EMOJIS[nextIndex]}`);
+        
+        // Reset states for next emoji
         setCurrentEmojiIndex(nextIndex);
         setIsEmotionDetected(false);
-
-        // Clean up any existing recognition timeout
-        if (recognitionTimeoutRef.current) {
-          clearTimeout(recognitionTimeoutRef.current);
-        }
+        setIsRecognitionActive(false); // Ensure recognition is off before starting again
 
         // Start recognition for next emoji after 2 seconds
         recognitionTimeoutRef.current = setTimeout(() => {
-          console.log(
-            "🔍 RECOGNITION STARTED: 2-second delay completed for next emoji"
-          );
+          console.log("🔍 RECOGNITION STARTED: 2-second delay completed for next emoji");
           setIsRecognitionActive(true);
         }, 2000);
       }
     }, 1500); // 1.5 second delay to show "Great!" message
-  }, [currentEmoji, currentEmojiIndex, completedEmojis]);
+  }, [currentEmoji, currentEmojiIndex]);
 
   const handleTimeout = useCallback(() => {
     console.log("⏰ EMOJI TIMEOUT: 30 seconds elapsed, moving to next");
-    handleEmotionDetected(); // Treat timeout as completion for now
-  }, [handleEmotionDetected]);
+    handleEmotionDetectedRef.current(); // Treat timeout as completion for now
+  }, []);
 
   const handlePlayAgain = () => {
     setShowSuccessModal(false);
@@ -111,10 +111,19 @@ export const CameraEmoji = () => {
   };
 
   const handleGoBack = () => {
+    // Clean up timeouts before navigating away
+    if (successTimeoutRef.current) {
+      clearTimeout(successTimeoutRef.current);
+      successTimeoutRef.current = null;
+    }
+    if (recognitionTimeoutRef.current) {
+      clearTimeout(recognitionTimeoutRef.current);
+      recognitionTimeoutRef.current = null;
+    }
     navigate("/");
   };
 
-  // Cleanup timeouts on component unmount
+  // Cleanup effect for component unmount
   useEffect(() => {
     return () => {
       if (successTimeoutRef.current) {
@@ -126,12 +135,16 @@ export const CameraEmoji = () => {
     };
   }, []);
 
+  // Use useRef to avoid infinite re-renders
+  const handleEmotionDetectedRef = useRef(handleEmotionDetected);
+  handleEmotionDetectedRef.current = handleEmotionDetected;
+
   const handleTargetEmotionDetected = useCallback(() => {
     console.log("🎯 TARGET EMOTION DETECTED: Ending game immediately");
     setIsEmotionDetected(true);
     // End game immediately when target emotion is detected
-    handleEmotionDetected();
-  }, [handleEmotionDetected]);
+    handleEmotionDetectedRef.current();
+  }, []);
 
   return (
     <>

@@ -180,7 +180,6 @@ export const useFaceEmotionDetection = (
           if ((maxEmotion === targetEmotionKey && maxConfidence >= TARGET_EMOTION_CONFIDENCE) ||
               (targetEmotionConfidence >= TARGET_EMOTION_CONFIDENCE)) {
             console.log(`🎉 SUCCESS: Target emotion "${targetEmotionKey}" detected with ${Math.round(targetEmotionConfidence * 100)}% confidence!`);
-            console.log(`📊 Current dominant emotion: ${maxEmotion} (${Math.round(maxConfidence * 100)}%)`);
             isTargetDetected = true;
           }
         }
