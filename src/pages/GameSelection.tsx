@@ -31,7 +31,8 @@ const games: GameCard[] = [
     color: "text-green-700",
     bgGradient: "from-green-200 to-emerald-200",
     icon: "🔤",
-    isImplemented: false,
+    isImplemented: true,
+    route: "/games/letter-sound-matcher",
   },
   {
     id: "symbol-spotter",
@@ -52,6 +53,17 @@ const games: GameCard[] = [
     icon: "🫧",
     isImplemented: true,
     route: "/bubble-popping",
+
+  },
+  {
+    id: "freeze-cat",
+    name: "Freeze Cat",
+    description: "Tap the animals! But do not tap the cat. Stay frozen when you see a cat.",
+    color: "text-purple-700",
+    bgGradient: "from-purple-200 to-pink-200",
+    icon: "🐱",
+    isImplemented: true,
+    route: "/games/freeze-cat",
   },
   {
     id: "emotion-adventure",
