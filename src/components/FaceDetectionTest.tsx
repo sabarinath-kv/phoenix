@@ -116,19 +116,15 @@ export const FaceDetectionTest: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="p-4 bg-blue-50 rounded-lg">
-        <h3 className="font-bold text-blue-800">Face Detection Test</h3>
-        <p className="text-blue-600">{modelStatus}</p>
-      </div>
+      <div >
+        </div>
     );
   }
 
   if (error) {
     return (
-      <div className="p-4 bg-red-50 rounded-lg">
-        <h3 className="font-bold text-red-800">Error</h3>
-        <p className="text-red-600">{error}</p>
-      </div>
+      <div >
+        </div>
     );
   }
 

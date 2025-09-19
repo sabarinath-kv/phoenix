@@ -29,7 +29,7 @@ const EMOTION_MAPPING: Record<string, string> = {
   'happy': '😊' // Both 😊 and 😁 will map to 'happy' emotion for detection
 };
 
-const DETECTION_INTERVAL = 150; // ms - More frequent detection
+const DETECTION_INTERVAL = 500; // ms - Reduced frequency to save resources
 const CONFIDENCE_THRESHOLD = 0.3; // Lowered from 0.5 to 0.3 for better detection
 const TARGET_EMOTION_CONFIDENCE = 0.4; // Lowered from 0.6 to 0.4 for easier success
 
@@ -48,6 +48,7 @@ export const useFaceEmotionDetection = (
   
   const detectionIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isDetectingRef = useRef<boolean>(false);
+  const lastDetectionTimeRef = useRef<number>(0);
 
   // Load face-api.js models
   const loadModels = useCallback(async () => {
@@ -104,6 +105,13 @@ export const useFaceEmotionDetection = (
   const detectFaceEmotion = useCallback(async () => {
     if (!videoRef.current || !isModelLoaded || isDetectingRef.current) return;
     
+    // Throttle detection to prevent excessive resource usage
+    const now = Date.now();
+    if (now - lastDetectionTimeRef.current < DETECTION_INTERVAL) {
+      return;
+    }
+    lastDetectionTimeRef.current = now;
+    
     try {
       isDetectingRef.current = true;
       
@@ -122,11 +130,13 @@ export const useFaceEmotionDetection = (
         let maxEmotion = 'neutral';
         let maxConfidence = 0;
         
-        // Log all detected emotions for debugging
-        const emotionScores = Object.entries(expressions).map(([emotion, conf]) => 
-          `${emotion}: ${Math.round(conf * 100)}%`
-        ).join(', ');
-        console.log(`🔍 DETECTED EMOTIONS: ${emotionScores}`);
+        // Log all detected emotions for debugging (less frequently)
+        if (Math.random() < 0.1) { // Only log 10% of detections to reduce spam
+          const emotionScores = Object.entries(expressions).map(([emotion, conf]) => 
+            `${emotion}: ${Math.round(conf * 100)}%`
+          ).join(', ');
+          console.log(`🔍 DETECTED EMOTIONS: ${emotionScores}`);
+        }
         
         Object.entries(expressions).forEach(([emotion, conf]) => {
           if (conf > maxConfidence && conf > CONFIDENCE_THRESHOLD) {
@@ -177,8 +187,10 @@ export const useFaceEmotionDetection = (
         
         setIsTargetEmotionDetected(isTargetDetected);
       } else {
-        // No face detected
-        console.log('👤 NO FACE DETECTED: Make sure your face is visible and well-lit');
+        // No face detected (log less frequently)
+        if (Math.random() < 0.05) { // Only log 5% of "no face" messages
+          console.log('👤 NO FACE DETECTED: Make sure your face is visible and well-lit');
+        }
         setCurrentEmotion(null);
         setConfidence(0);
         setFaceBox(null);

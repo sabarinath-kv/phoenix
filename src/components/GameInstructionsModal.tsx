@@ -44,13 +44,13 @@ export const GameInstructionsModal = ({ isOpen, onStartGame }: GameInstructionsM
             </div>
           </div>
           
-          <div className="flex items-center gap-4 bg-orange-50/60 rounded-2xl p-4 border border-orange-200">
+          {/* <div className="flex items-center gap-4 bg-orange-50/60 rounded-2xl p-4 border border-orange-200">
             <div className="text-3xl">⏱️</div>
             <div>
               <p className="font-bold text-orange-700">Quick!</p>
               <p className="text-sm text-orange-600">You have 5 seconds</p>
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Start Button */}
