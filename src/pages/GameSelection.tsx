@@ -44,6 +44,16 @@ const games: GameCard[] = [
     route: "/symbol-spotter",
   },
   {
+    id: "freeze-cat",
+    name: "Freeze Cat",
+    description: "Tap the animals! But do not tap the cat. Stay frozen when you see a cat.",
+    color: "text-purple-700",
+    bgGradient: "from-purple-200 to-pink-200",
+    icon: "🐱",
+    isImplemented: true,
+    route: "/games/freeze-cat",
+  },
+  {
     id: "emotion-adventure",
     name: "Emotion Adventure",
     description: "Go on an emotion journey!",
