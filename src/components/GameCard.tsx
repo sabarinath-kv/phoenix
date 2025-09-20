@@ -52,10 +52,6 @@ export const GameCard: React.FC<GameCardProps> = ({
       scale: [1, 1.2, 1],
       rotate: [0, 5, -5, 0],
       transition: { duration: 0.6 }
-    },
-    pop: {
-      scale: [1, 1.3, 1],
-      transition: { duration: 0.4, ease: "easeOut" }
     }
   };
 

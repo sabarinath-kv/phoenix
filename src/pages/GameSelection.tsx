@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { FaceDetectionTest } from "@/components/FaceDetectionTest";
+import ParentCompanionAI from './ParentCompanionAI';
+import { MessageCircleHeart } from 'lucide-react';
 
 interface GameCard {
   id: string;
@@ -110,9 +112,23 @@ export const GameSelection = () => {
       {/* Header */}
       <header className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 text-white shadow-xl">
         <div className="container mx-auto px-4 py-6">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center">
-            Fun Learning Games
-          </h1>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex-1" />
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center">
+              Fun Learning Games
+            </h1>
+            <div className="flex-1 flex justify-end">
+              <button
+                onClick={() => navigate('/parent-companion')}
+                className="group flex items-center gap-2 px-3 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-300"
+              >
+                <MessageCircleHeart className="w-5 h-5 text-pink-200 group-hover:scale-110 transition-transform" />
+                <span className="text-sm font-medium text-white/90 hidden sm:inline">
+                  Parent Helper
+                </span>
+              </button>
+            </div>
+          </div>
           <p className="text-center text-white/90 mt-2 text-sm sm:text-base">
             Choose a game to play and learn
           </p>
@@ -194,6 +210,9 @@ export const GameSelection = () => {
           </div>
         </div>
       </main>
+
+      {/* Parent Companion AI Floating Button */}
+      <ParentCompanionAI />
     </div>
   );
 };
