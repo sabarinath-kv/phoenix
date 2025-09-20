@@ -220,17 +220,25 @@ export const LetterReversalSpotter: React.FC = () => {
 
   // Start new challenge
   const startNewChallenge = useCallback(() => {
-    const challenge = generateChallenge();
-    setCurrentChallenge(challenge);
-    setUsedChallenges(prev => new Set(prev).add(`${challenge.prompt}-${challenge.correctAnswer}`));
+    // Reset all selection states first
     setSelectedAnswer(null);
     setIsCorrect(null);
-    setTotalChallenges(prev => prev + 1);
     
-    // Speak the challenge after a short delay
+    // Clear current challenge temporarily to prevent flickering
+    setCurrentChallenge(null);
+    
+    // Small delay to ensure clean state transition
     setTimeout(() => {
-      speakText(challenge.voicePrompt);
-    }, 500);
+      const challenge = generateChallenge();
+      setCurrentChallenge(challenge);
+      setUsedChallenges(prev => new Set(prev).add(`${challenge.prompt}-${challenge.correctAnswer}`));
+      setTotalChallenges(prev => prev + 1);
+      
+      // Speak the challenge after a short delay
+      setTimeout(() => {
+        speakText(challenge.voicePrompt);
+      }, 300);
+    }, 50);
   }, [generateChallenge, speakText]);
 
   // Handle answer selection
@@ -261,6 +269,9 @@ export const LetterReversalSpotter: React.FC = () => {
     // Auto-advance after feedback
     setTimeout(() => {
       if (timeLeft > 0) {
+        // Reset states before starting new challenge
+        setSelectedAnswer(null);
+        setIsCorrect(null);
         setGameState('playing');
         startNewChallenge();
       } else {
@@ -302,6 +313,9 @@ export const LetterReversalSpotter: React.FC = () => {
     setTotalChallenges(0);
     setUsedChallenges(new Set());
     setDifficultyLevel(1);
+    setSelectedAnswer(null);
+    setIsCorrect(null);
+    setCurrentChallenge(null);
     startNewChallenge();
   }, [startNewChallenge]);
 
@@ -453,11 +467,13 @@ export const LetterReversalSpotter: React.FC = () => {
       )}
 
       {/* Game Screen */}
-      {(gameState === 'playing' || gameState === 'feedback') && currentChallenge && (
+      {(gameState === 'playing' || gameState === 'feedback') && currentChallenge && currentChallenge.options && (
         <motion.div
+          key={`challenge-${currentChallenge.prompt}-${currentChallenge.correctAnswer}`}
           className="max-w-4xl mx-auto text-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
         >
           {/* Difficulty Indicator */}
           <motion.div
@@ -494,13 +510,18 @@ export const LetterReversalSpotter: React.FC = () => {
               ? 'grid-cols-2 md:grid-cols-4' 
               : 'grid-cols-1 md:grid-cols-2'
           }`}>
-            <AnimatePresence>
+            <AnimatePresence mode="wait" key={currentChallenge.prompt}>
               {currentChallenge.options.map((option, index) => (
                 <motion.div
-                  key={`${currentChallenge.prompt}-${option}`}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
+                  key={`${currentChallenge.prompt}-${currentChallenge.correctAnswer}-${option}-${index}`}
+                  initial={{ opacity: 0, y: 20, scale: 0.8 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -20, scale: 0.8 }}
+                  transition={{ 
+                    delay: index * 0.1,
+                    duration: 0.3,
+                    ease: "easeOut"
+                  }}
                 >
                   <GameCard
                     content={option}

@@ -36,18 +36,61 @@ export const LetterSoundMatcher = () => {
   const countdownTimerRef = useRef<NodeJS.Timeout>();
   const roundDelayRef = useRef<NodeJS.Timeout>();
 
-  // Speech synthesis function (using basic browser API)
+  // Speech synthesis function with consistent settings (same as LetterReversalSpotter)
   const speakLetter = useCallback((letter: string) => {
     if ('speechSynthesis' in window) {
       // Cancel any ongoing speech
       window.speechSynthesis.cancel();
       
-      const utterance = new SpeechSynthesisUtterance(`Capital ${letter}`);
-      utterance.rate = 0.7; // Slightly slower for children
-      utterance.pitch = 1.2; // Slightly higher pitch
-      utterance.volume = 0.8;
-      
-      window.speechSynthesis.speak(utterance);
+      // Wait a moment for cancellation to complete
+      setTimeout(() => {
+        const utterance = new SpeechSynthesisUtterance(`Capital ${letter}`);
+        
+        // Consistent voice settings for all questions
+        utterance.rate = 0.7;        // Slower, consistent rate
+        utterance.pitch = 1.1;       // Consistent pitch
+        utterance.volume = 0.9;      // Consistent volume
+        utterance.lang = 'en-US';    // Consistent language
+        
+        // Try to use the same voice consistently
+        const voices = window.speechSynthesis.getVoices();
+        let selectedVoice = null;
+        
+        // Priority order for consistent voice selection
+        const preferredVoices = [
+          'Microsoft Zira - English (United States)',
+          'Google US English',
+          'Alex',
+          'Samantha',
+          'Karen',
+          'Microsoft David - English (United States)'
+        ];
+        
+        // Find the first available preferred voice
+        for (const voiceName of preferredVoices) {
+          selectedVoice = voices.find(voice => voice.name === voiceName);
+          if (selectedVoice) break;
+        }
+        
+        // Fallback to first English voice if no preferred voice found
+        if (!selectedVoice) {
+          selectedVoice = voices.find(voice => 
+            voice.lang.startsWith('en') && 
+            (voice.name.includes('Female') || voice.name.includes('Woman'))
+          );
+        }
+        
+        // Final fallback to any English voice
+        if (!selectedVoice) {
+          selectedVoice = voices.find(voice => voice.lang.startsWith('en'));
+        }
+        
+        if (selectedVoice) {
+          utterance.voice = selectedVoice;
+        }
+        
+        window.speechSynthesis.speak(utterance);
+      }, 100);
     }
   }, []);
 
