@@ -76,6 +76,16 @@ const games: GameCard[] = [
     route: "/games/temple-run",
   },
   {
+    id: "letter-reversal-spotter",
+    name: "Letter Reversal Spotter",
+    description: "Help Panda find the right letters! Spot confusing letters and words.",
+    color: "text-indigo-700",
+    bgGradient: "from-indigo-200 to-purple-200",
+    icon: "🐼",
+    isImplemented: true,
+    route: "/games/letter-reversal-spotter",
+  },
+  {
     id: "emotion-adventure",
     name: "Emotion Adventure",
     description: "Go on an emotion journey!",
