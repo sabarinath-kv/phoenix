@@ -2,7 +2,6 @@ import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { FaceDetectionTest } from "@/components/FaceDetectionTest";
 import ParentCompanionAI from './ParentCompanionAI';
-import { MessageCircleHeart } from 'lucide-react';
 
 interface GameCard {
   id: string;
@@ -20,8 +19,8 @@ const games: GameCard[] = [
     id: "emotion-detector",
     name: "Emotion Detector",
     description: "Copy the emoji faces!",
-    color: "text-blue-700",
-    bgGradient: "from-blue-200 to-purple-200",
+    color: "text-game-info",
+    bgGradient: "bg-gradient-secondary",
     icon: "😊",
     isImplemented: true,
     route: "/emotion-detector",
@@ -30,8 +29,8 @@ const games: GameCard[] = [
     id: "letter-sound",
     name: "Letter-Sound Matching",
     description: "Match letters with sounds!",
-    color: "text-green-700",
-    bgGradient: "from-green-200 to-emerald-200",
+    color: "text-game-secondary",
+    bgGradient: "bg-gradient-secondary",
     icon: "🔤",
     isImplemented: true,
     route: "/games/letter-sound-matcher",
@@ -40,8 +39,8 @@ const games: GameCard[] = [
     id: "symbol-spotter",
     name: "Symbol Spotter",
     description: "Find the hidden symbols!",
-    color: "text-orange-700",
-    bgGradient: "from-orange-200 to-yellow-200",
+    color: "text-game-warning",
+    bgGradient: "bg-gradient-playful",
     icon: "🔍",
     isImplemented: true,
     route: "/symbol-spotter",
@@ -50,19 +49,18 @@ const games: GameCard[] = [
     id: "bubble-popping",
     name: "Bubble Popping",
     description: "Pop colorful bubbles for points!",
-    color: "text-cyan-700",
-    bgGradient: "from-cyan-200 to-blue-200",
+    color: "text-game-info",
+    bgGradient: "bg-gradient-primary",
     icon: "🫧",
     isImplemented: true,
     route: "/bubble-popping",
-
   },
   {
     id: "freeze-cat",
     name: "Freeze Cat",
     description: "Tap the animals! But do not tap the cat. Stay frozen when you see a cat.",
-    color: "text-purple-700",
-    bgGradient: "from-purple-200 to-pink-200",
+    color: "text-game-primary",
+    bgGradient: "bg-gradient-playful",
     icon: "🐱",
     isImplemented: true,
     route: "/games/freeze-cat",
@@ -71,8 +69,8 @@ const games: GameCard[] = [
     id: "temple-run",
     name: "Crossroad Racer",
     description: "Race through traffic! Avoid cars and navigate crossroads.",
-    color: "text-amber-700",
-    bgGradient: "from-amber-200 to-orange-200",
+    color: "text-game-warning",
+    bgGradient: "bg-gradient-secondary",
     icon: "🚗",
     isImplemented: true,
     route: "/games/temple-run",
@@ -81,8 +79,8 @@ const games: GameCard[] = [
     id: "letter-reversal-spotter",
     name: "Letter Reversal Spotter",
     description: "Help Panda find the right letters! Spot confusing letters and words.",
-    color: "text-indigo-700",
-    bgGradient: "from-indigo-200 to-purple-200",
+    color: "text-game-primary",
+    bgGradient: "bg-gradient-primary",
     icon: "🐼",
     isImplemented: true,
     route: "/games/letter-reversal-spotter",
@@ -91,8 +89,8 @@ const games: GameCard[] = [
     id: "emotion-adventure",
     name: "Emotion Adventure",
     description: "Go on an emotion journey!",
-    color: "text-pink-700",
-    bgGradient: "from-pink-200 to-rose-200",
+    color: "text-game-primary",
+    bgGradient: "bg-gradient-playful",
     icon: "🌈",
     isImplemented: false,
   },
@@ -108,92 +106,71 @@ export const GameSelection = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-100 via-pink-100 to-blue-100">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 text-white shadow-xl">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex-1" />
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-center">
+      <header className="bg-gradient-primary shadow-soft border-b border-border">
+        <div className="container mx-auto px-6 py-8">
+          <div className="text-center">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3">
               Fun Learning Games
             </h1>
-            <div className="flex-1 flex justify-end">
-              <button
-                onClick={() => navigate('/parent-companion')}
-                className="group flex items-center gap-2 px-3 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-300"
-              >
-                <MessageCircleHeart className="w-5 h-5 text-pink-200 group-hover:scale-110 transition-transform" />
-                <span className="text-sm font-medium text-white/90 hidden sm:inline">
-                  Parent Helper
-                </span>
-              </button>
-            </div>
+            <p className="text-white/90 text-lg max-w-2xl mx-auto">
+              Choose a game to play and learn together in a safe, engaging environment
+            </p>
           </div>
-          <p className="text-center text-white/90 mt-2 text-sm sm:text-base">
-            Choose a game to play and learn
-          </p>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        <div className="max-w-6xl mx-auto">
+      <main className="container mx-auto px-6 py-12">
+        <div className="max-w-7xl mx-auto">
           {/* Welcome Message */}
-          <div className="text-center mb-8">
-            <h2 className="text-2xl sm:text-3xl font-bold text-purple-700 mb-2">
+          <div className="text-center mb-12">
+            <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">
               Welcome to Learning Time
             </h2>
-            <p className="text-purple-600 text-lg">
-              Pick a game and let's have fun learning together
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Pick a game and let's have fun learning together. Each game is designed to help children develop important skills while having fun.
             </p>
           </div>
 
           {/* Game Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-6 lg:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {games.map((game) => (
               <Card
                 key={game.id}
-                className={`relative overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-xl cursor-pointer bg-gradient-to-br ${
-                  game.bgGradient
-                } border-2 border-white/50 shadow-lg ${
-                  game.isImplemented ? "hover:shadow-2xl" : "opacity-75"
+                className={`group relative overflow-hidden transition-all duration-300 hover:shadow-hover cursor-pointer bg-card border-border shadow-card hover:scale-[1.02] ${
+                  game.isImplemented ? "hover:shadow-hover" : "opacity-75"
                 }`}
                 onClick={() => handleGameClick(game)}
               >
-                <div className="p-6 text-center h-full flex flex-col justify-between min-h-[200px]">
+                <div className="p-8 text-center h-full flex flex-col justify-between min-h-[280px]">
                   {/* Game Icon */}
-                  <div className="text-6xl sm:text-7xl mb-4">{game.icon}</div>
+                  <div className="text-7xl sm:text-8xl mb-6 group-hover:scale-110 transition-transform duration-300">{game.icon}</div>
 
                   {/* Game Info */}
-                  <div className="space-y-3">
-                    <h3
-                      className={`text-lg sm:text-xl font-bold ${game.color}`}
-                    >
+                  <div className="space-y-4 flex-1 flex flex-col justify-center">
+                    <h3 className="text-xl sm:text-2xl font-bold text-foreground group-hover:text-primary transition-colors">
                       {game.name}
                     </h3>
-                    <p
-                      className={`text-sm ${game.color.replace(
-                        "700",
-                        "600"
-                      )} leading-relaxed`}
-                    >
+                    <p className="text-muted-foreground leading-relaxed text-base">
                       {game.description}
                     </p>
                   </div>
 
                   {/* Status Badge */}
-                  <div className="mt-4">
+                  <div className="mt-6">
                     {game.isImplemented ? (
-                      <div className="inline-flex items-center gap-1 bg-green-500/20 backdrop-blur-sm rounded-full px-3 py-1 border border-green-300">
-                        <div className="w-2 h-2 bg-green-500 rounded-full" />
-                        <span className="text-xs font-semibold text-green-700">
+                      <div className="inline-flex items-center gap-2 bg-game-success/10 backdrop-blur-sm rounded-full px-4 py-2 border border-game-success/20">
+                        <div className="w-2 h-2 bg-game-success rounded-full" />
+                        <span className="text-sm font-medium text-game-success">
                           Ready to Play
                         </span>
                       </div>
                     ) : (
-                      <div className="inline-flex items-center gap-1 bg-gray-400/20 backdrop-blur-sm rounded-full px-3 py-1 border border-gray-300">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full" />
-                        <span className="text-xs font-semibold text-gray-600">
+                      <div className="inline-flex items-center gap-2 bg-muted/50 backdrop-blur-sm rounded-full px-4 py-2 border border-muted">
+                        <div className="w-2 h-2 bg-muted-foreground rounded-full" />
+                        <span className="text-sm font-medium text-muted-foreground">
                           Coming Soon
                         </span>
                       </div>
@@ -205,7 +182,7 @@ export const GameSelection = () => {
           </div>
 
           {/* Face Detection Test */}
-          <div className="mt-8">
+          <div className="mt-16 bg-card rounded-lg shadow-card p-8 border border-border">
             <FaceDetectionTest />
           </div>
         </div>

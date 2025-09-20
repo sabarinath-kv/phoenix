@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Mic, MicOff, Send, Volume2, VolumeX, Heart, MessageCircle, Moon, Sun } from 'lucide-react';
+import { ArrowLeft, Mic, MicOff, Send, Volume2, VolumeX, Heart, Moon, Sun } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -34,15 +34,15 @@ const ParentCompanionAI = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, scrollToBottom]);
 
-  const sendMessage = (content: string, isVoice = false) => {
+  const sendMessage = useCallback((content: string, isVoice = false) => {
     if (!content.trim()) return;
 
     const userMessage: Message = {
@@ -85,9 +85,9 @@ const ParentCompanionAI = () => {
         speechSynthesis.speak(utterance);
       }
     }, 1500);
-  };
+  }, []);
 
-  const startListening = () => {
+  const startListening = useCallback(() => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
       setIsListening(true);
       
@@ -104,22 +104,18 @@ const ParentCompanionAI = () => {
         sendMessage(voiceInput, true);
       }, 2000);
     }
-  };
+  }, [sendMessage]);
 
-  const stopSpeaking = () => {
+  const stopSpeaking = useCallback(() => {
     if ('speechSynthesis' in window) {
       speechSynthesis.cancel();
       setIsSpeaking(false);
     }
-  };
+  }, []);
 
   const FloatingButton = () => (
     <motion.button
-      className={`fixed bottom-6 right-6 w-16 h-16 rounded-full shadow-lg backdrop-blur-sm border border-white/20 ${
-        isNightMode 
-          ? 'bg-gradient-to-br from-purple-400/80 to-pink-400/80' 
-          : 'bg-gradient-to-br from-blue-400/80 to-purple-400/80'
-      }`}
+      className={`fixed bottom-6 right-6 w-16 h-16 rounded-full shadow-hover backdrop-blur-sm border border-primary/20 bg-primary/90 hover:bg-primary`}
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.9 }}
       onClick={() => setShowDrawer(true)}
@@ -129,7 +125,7 @@ const ParentCompanionAI = () => {
     >
       <Heart className="w-8 h-8 text-white mx-auto" />
       <motion.div
-        className="absolute inset-0 rounded-full border-2 border-white/40"
+        className="absolute inset-0 rounded-full border-2 border-primary/40"
         animate={{
           scale: [1, 1.2, 1],
           opacity: [0.7, 0, 0.7]
@@ -156,31 +152,29 @@ const ParentCompanionAI = () => {
           />
           <motion.div
             className={`fixed inset-0 z-50 flex flex-col ${
-              isNightMode ? 'bg-slate-900/95' : 'bg-white/95'
-            } backdrop-blur-lg`}
+              isNightMode ? 'bg-card/95 dark' : 'bg-card/95'
+            } backdrop-blur-lg border-l border-border`}
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: "spring", damping: 20 }}
           >
             {/* Header */}
-            <div className={`flex items-center justify-between p-4 border-b ${
-              isNightMode ? 'border-white/10' : 'border-black/10'
-            }`}>
-              <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between p-6 border-b border-border bg-gradient-primary">
+              <div className="flex items-center gap-4">
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setShowDrawer(false)}
-                  className="rounded-full"
+                  className="rounded-full text-white hover:bg-white/20"
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </Button>
                 <div>
-                  <h2 className={`font-semibold ${isNightMode ? 'text-white' : 'text-gray-900'}`}>
+                  <h2 className="font-semibold text-white text-lg">
                     Parent Companion
                   </h2>
-                  <p className={`text-sm ${isNightMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                  <p className="text-white/80 text-sm">
                     Always here to help
                   </p>
                 </div>
@@ -190,7 +184,7 @@ const ParentCompanionAI = () => {
                   variant="ghost"
                   size="icon"
                   onClick={stopSpeaking}
-                  className="rounded-full"
+                  className="rounded-full text-white hover:bg-white/20"
                   disabled={!isSpeaking}
                 >
                   {isSpeaking ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
@@ -199,7 +193,7 @@ const ParentCompanionAI = () => {
                   variant="ghost"
                   size="icon"
                   onClick={() => setIsNightMode(!isNightMode)}
-                  className="rounded-full"
+                  className="rounded-full text-white hover:bg-white/20"
                 >
                   {isNightMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
                 </Button>
@@ -207,7 +201,7 @@ const ParentCompanionAI = () => {
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
               {messages.map((message) => (
                 <motion.div
                   key={message.id}
@@ -216,16 +210,10 @@ const ParentCompanionAI = () => {
                   className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[80%] p-4 rounded-2xl backdrop-blur-sm ${
+                    className={`max-w-[85%] p-4 rounded-2xl shadow-soft ${
                       message.type === 'user'
-                        ? `${isNightMode 
-                            ? 'bg-gradient-to-br from-purple-500/80 to-pink-500/80 text-white' 
-                            : 'bg-gradient-to-br from-blue-500/80 to-purple-500/80 text-white'
-                          }`
-                        : `${isNightMode
-                            ? 'bg-white/10 text-white border border-white/20'
-                            : 'bg-black/5 text-gray-900 border border-black/10'
-                          }`
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-secondary/50 text-foreground border border-border'
                     }`}
                   >
                     <div className="flex items-start gap-2">
@@ -234,7 +222,7 @@ const ParentCompanionAI = () => {
                       )}
                       <p className="text-sm leading-relaxed">{message.content}</p>
                     </div>
-                    <p className={`text-xs mt-2 opacity-60`}>
+                    <p className="text-xs mt-2 opacity-60">
                       {message.timestamp.toLocaleTimeString([], { 
                         hour: '2-digit', 
                         minute: '2-digit' 
@@ -247,9 +235,7 @@ const ParentCompanionAI = () => {
             </div>
 
             {/* Input Area */}
-            <div className={`p-4 border-t backdrop-blur-sm ${
-              isNightMode ? 'border-white/10 bg-slate-900/50' : 'border-black/10 bg-white/50'
-            }`}>
+            <div className="p-6 border-t border-border bg-card/50 backdrop-blur-sm">
               <div className="flex items-end gap-3">
                 <div className="flex-1">
                   <Textarea
@@ -257,11 +243,7 @@ const ParentCompanionAI = () => {
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     placeholder="Share what's on your mind..."
-                    className={`min-h-[50px] max-h-32 resize-none rounded-xl border-0 ${
-                      isNightMode 
-                        ? 'bg-white/10 text-white placeholder:text-gray-400' 
-                        : 'bg-black/5 text-gray-900 placeholder:text-gray-500'
-                    } backdrop-blur-sm`}
+                    className="min-h-[60px] max-h-32 resize-none rounded-xl border-border bg-background/50 backdrop-blur-sm focus:bg-background"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
@@ -272,12 +254,10 @@ const ParentCompanionAI = () => {
                 </div>
                 <div className="flex flex-col gap-2">
                   <motion.button
-                    className={`w-12 h-12 rounded-full backdrop-blur-sm border border-white/20 ${
+                    className={`w-12 h-12 rounded-full backdrop-blur-sm border border-border shadow-soft ${
                       isListening
-                        ? 'bg-gradient-to-br from-red-400/80 to-pink-400/80'
-                        : isNightMode
-                          ? 'bg-gradient-to-br from-purple-400/80 to-pink-400/80'
-                          : 'bg-gradient-to-br from-blue-400/80 to-purple-400/80'
+                        ? 'bg-destructive text-destructive-foreground'
+                        : 'bg-accent text-accent-foreground hover:bg-accent/80'
                     }`}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
@@ -285,13 +265,13 @@ const ParentCompanionAI = () => {
                     disabled={isListening}
                   >
                     {isListening ? (
-                      <MicOff className="w-5 h-5 text-white mx-auto" />
+                      <MicOff className="w-5 h-5 mx-auto" />
                     ) : (
-                      <Mic className="w-5 h-5 text-white mx-auto" />
+                      <Mic className="w-5 h-5 mx-auto" />
                     )}
                     {isListening && (
                       <motion.div
-                        className="absolute inset-0 rounded-full border-2 border-red-300"
+                        className="absolute inset-0 rounded-full border-2 border-destructive/40"
                         animate={{
                           scale: [1, 1.3, 1],
                           opacity: [0.7, 0, 0.7]
@@ -308,7 +288,7 @@ const ParentCompanionAI = () => {
                     onClick={() => sendMessage(inputText)}
                     disabled={!inputText.trim()}
                     size="icon"
-                    className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400/80 to-emerald-400/80 hover:from-green-500/80 hover:to-emerald-500/80 border-0"
+                    className="w-12 h-12 rounded-full bg-primary hover:bg-primary/90 shadow-soft"
                   >
                     <Send className="w-5 h-5" />
                   </Button>

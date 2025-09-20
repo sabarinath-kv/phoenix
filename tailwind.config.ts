@@ -57,6 +57,13 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        game: {
+          primary: 'hsl(var(--game-primary))',
+          secondary: 'hsl(var(--game-secondary))',
+          warning: 'hsl(var(--game-warning))',
+          success: 'hsl(var(--game-success))',
+          info: 'hsl(var(--game-info))'
+        }
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -86,8 +93,8 @@ export default {
           "100%": { opacity: "1", transform: "scale(1)" }
         },
         "pulse-glow": {
-          "0%, 100%": { boxShadow: "0 0 0 0 hsl(262 90% 65% / 0.4)" },
-          "50%": { boxShadow: "0 0 0 20px hsl(262 90% 65% / 0)" }
+          "0%, 100%": { boxShadow: "0 0 0 0 hsl(200 85% 60% / 0.4)" },
+          "50%": { boxShadow: "0 0 0 20px hsl(200 85% 60% / 0)" }
         }
       },
       animation: {
@@ -101,11 +108,16 @@ export default {
       backgroundImage: {
         'gradient-primary': 'var(--gradient-primary)',
         'gradient-secondary': 'var(--gradient-secondary)',
-        'gradient-card': 'var(--gradient-card)'
+        'gradient-card': 'var(--gradient-card)',
+        'gradient-playful': 'var(--gradient-playful)'
       },
       boxShadow: {
         'card': 'var(--shadow-card)',
-        'hover': 'var(--shadow-hover)'
+        'hover': 'var(--shadow-hover)',
+        'soft': 'var(--shadow-soft)'
+      },
+      fontFamily: {
+        'sans': ['Inter', 'system-ui', 'sans-serif'],
       },
     },
   },

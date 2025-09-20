@@ -2,96 +2,118 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+/* Practo-inspired design system: clean, minimal, professional yet playful for children.
 All colors MUST be HSL.
 */
 
 @layer base {
   :root {
-    --background: 240 10% 98%;
-    --foreground: 240 10% 10%;
+    /* Base colors - Soft, clean backgrounds */
+    --background: 210 20% 98%;
+    --foreground: 215 25% 27%;
 
+    /* Card system - Clean white with subtle shadows */
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 10%;
+    --card-foreground: 215 25% 27%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 10%;
+    --popover-foreground: 215 25% 27%;
 
-    --primary: 262 90% 65%;
+    /* Primary - Soft medical blue inspired by Practo */
+    --primary: 200 85% 60%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 10% 96%;
-    --secondary-foreground: 240 10% 20%;
+    /* Secondary - Gentle gray for backgrounds */
+    --secondary: 210 20% 95%;
+    --secondary-foreground: 215 25% 35%;
 
-    --muted: 240 10% 96%;
-    --muted-foreground: 240 10% 50%;
+    /* Muted colors for subtle UI elements */
+    --muted: 210 20% 95%;
+    --muted-foreground: 215 15% 55%;
 
-    --accent: 262 90% 95%;
-    --accent-foreground: 262 90% 15%;
+    /* Accent - Soft teal for highlights */
+    --accent: 180 60% 85%;
+    --accent-foreground: 180 60% 25%;
 
-    --destructive: 0 84% 60%;
+    /* Destructive - Gentle red for errors */
+    --destructive: 0 70% 65%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 240 10% 90%;
-    --input: 240 10% 90%;
-    --ring: 262 90% 65%;
+    /* Borders and inputs */
+    --border: 210 20% 88%;
+    --input: 210 20% 92%;
+    --ring: 200 85% 60%;
 
-    --radius: 1rem;
+    --radius: 1.25rem;
 
-    /* Custom design tokens */
-    --gradient-primary: linear-gradient(135deg, hsl(262 90% 65%) 0%, hsl(220 90% 70%) 100%);
-    --gradient-secondary: linear-gradient(135deg, hsl(300 80% 85%) 0%, hsl(262 90% 95%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(240 10% 98%) 100%);
-    --shadow-card: 0 10px 30px -5px hsl(262 90% 65% / 0.1);
-    --shadow-hover: 0 15px 40px -5px hsl(262 90% 65% / 0.15);
+    /* Practo-inspired design tokens */
+    --gradient-primary: linear-gradient(135deg, hsl(200 85% 60%) 0%, hsl(210 80% 70%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(180 60% 85%) 0%, hsl(200 50% 90%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(210 20% 98%) 100%);
+    --gradient-playful: linear-gradient(135deg, hsl(300 70% 85%) 0%, hsl(200 70% 85%) 100%);
+    
+    /* Gentle shadows for depth */
+    --shadow-card: 0 4px 16px -4px hsl(200 20% 20% / 0.08);
+    --shadow-hover: 0 8px 24px -6px hsl(200 30% 30% / 0.12);
+    --shadow-soft: 0 2px 8px -2px hsl(200 20% 20% / 0.06);
+    
+    /* Smooth animations */
     --animation-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
     --animation-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    --animation-gentle: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+    /* Game-specific colors */
+    --game-primary: 260 70% 70%;
+    --game-secondary: 140 60% 70%;
+    --game-warning: 35 80% 70%;
+    --game-success: 120 60% 65%;
+    --game-info: 200 70% 70%;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* Dark mode - Soft, easy on the eyes for night time */
+    --background: 215 30% 8%;
+    --foreground: 210 20% 92%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 215 25% 12%;
+    --card-foreground: 210 20% 92%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 215 25% 12%;
+    --popover-foreground: 210 20% 92%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 200 80% 65%;
+    --primary-foreground: 215 30% 8%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 215 25% 15%;
+    --secondary-foreground: 210 15% 85%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 215 25% 15%;
+    --muted-foreground: 210 15% 65%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 180 50% 25%;
+    --accent-foreground: 180 50% 85%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 65% 60%;
+    --destructive-foreground: 210 20% 92%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --border: 215 20% 20%;
+    --input: 215 20% 18%;
+    --ring: 200 80% 65%;
+
+    /* Dark mode gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(200 80% 65%) 0%, hsl(210 70% 60%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(180 50% 25%) 0%, hsl(200 40% 30%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(215 25% 12%) 0%, hsl(215 20% 15%) 100%);
+    
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -109,7 +131,20 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+  }
+
+  /* Improved typography for readability */
+  h1, h2, h3, h4, h5, h6 {
+    @apply text-foreground font-semibold leading-tight;
+  }
+
+  /* Smooth focus states */
+  button:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible {
+    @apply ring-2 ring-ring ring-offset-2 ring-offset-background outline-none;
   }
 }
 

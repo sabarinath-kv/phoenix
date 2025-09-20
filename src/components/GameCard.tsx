@@ -29,15 +29,15 @@ export const GameCard: React.FC<GameCardProps> = ({
 
   const getCardStyle = () => {
     if (isCorrect === true) {
-      return 'bg-gradient-to-br from-green-200 to-green-300 border-green-400 text-green-800';
+      return 'bg-game-success/20 border-game-success/40 text-game-success shadow-soft';
     }
     if (isCorrect === false) {
-      return 'bg-gradient-to-br from-red-200 to-red-300 border-red-400 text-red-800';
+      return 'bg-destructive/10 border-destructive/40 text-destructive shadow-soft';
     }
     if (isSelected) {
-      return 'bg-gradient-to-br from-blue-200 to-blue-300 border-blue-400 text-blue-800';
+      return 'bg-primary/10 border-primary/40 text-primary shadow-soft';
     }
-    return 'bg-gradient-to-br from-white to-gray-50 border-gray-200 text-gray-800 hover:from-purple-50 hover:to-purple-100 hover:border-purple-300';
+    return 'bg-card border-border text-foreground hover:bg-accent/5 hover:border-accent/40 shadow-card';
   };
 
   const cardVariants = {
