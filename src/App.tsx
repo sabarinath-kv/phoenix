@@ -9,6 +9,7 @@ import { SymbolSpotter } from "./pages/SymbolSpotter";
 import { BubblePopping } from "./pages/BubblePopping";
 import { FreezeCat } from "./pages/FreezeCat";
 import { LetterSoundMatcher } from "./pages/LetterSoundMatcher";
+import { TempleRun } from "./pages/games/TempleRun";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/bubble-popping" element={<BubblePopping />} />
           <Route path="/games/freeze-cat" element={<FreezeCat />} />
           <Route path="/games/letter-sound-matcher" element={<LetterSoundMatcher />} />
+          <Route path="/games/temple-run" element={<TempleRun />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

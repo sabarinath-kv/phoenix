@@ -28,7 +28,7 @@ export const LetterSoundMatcher = () => {
     totalRounds: LETTER_SOUND.TOTAL_ROUNDS
   });
   const [gameCards, setGameCards] = useState<GameCard[]>([]);
-  const [currentItem, setCurrentItem] = useState(LETTER_SOUND_ITEMS[0]);
+  const [currentItem, setCurrentItem] = useState<typeof LETTER_SOUND_ITEMS[0]>(LETTER_SOUND_ITEMS[0]);
   const [clickedCardIndex, setClickedCardIndex] = useState<number | null>(null);
   const [showScoreAnimation, setShowScoreAnimation] = useState(false);
 
@@ -103,9 +103,9 @@ export const LetterSoundMatcher = () => {
         } else {
           // Next round
           const nextItem = LETTER_SOUND_ITEMS[nextRound];
-          setCurrentItem(nextItem);
+          setCurrentItem(nextItem as typeof LETTER_SOUND_ITEMS[0]);
           setStats(prev => ({ ...prev, currentRound: nextRound }));
-          setGameCards(generateCards(nextItem));
+          setGameCards(generateCards(nextItem as typeof LETTER_SOUND_ITEMS[0]));
           setClickedCardIndex(null);
           
           // Speak the next letter after a short delay

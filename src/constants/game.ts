@@ -26,6 +26,23 @@ export const DIFFICULTY_LEVELS = {
   HARD: 3
 } as const;
 
+// Temple Run Game Constants
+export const TEMPLE_RUN = {
+  GAME_DURATION: 120000, // 2 minutes
+  COUNTDOWN_DURATION: 3, // 3 second countdown
+  LANES: 3, // Number of lanes
+  LANE_WIDTH: 4, // Lane width in 3D units
+  PLAYER_SPEED: 0.2, // Forward movement speed
+  JUMP_HEIGHT: 2, // Jump height
+  JUMP_DURATION: 600, // Jump duration in ms
+  SPAWN_INTERVAL_MIN: 1000, // Min obstacle spawn interval
+  SPAWN_INTERVAL_MAX: 3000, // Max obstacle spawn interval
+  OBSTACLE_SPEED: 0.15, // How fast obstacles move toward player
+  TERRAIN_SEGMENT_LENGTH: 10, // Length of each terrain segment
+  VISIBLE_SEGMENTS: 20, // Number of terrain segments to keep rendered
+  SCORE_MULTIPLIER: 10, // Points per distance unit
+} as const;
+
 // Letter-Sound Matching Game Constants
 export const LETTER_SOUND = {
   COUNTDOWN_DURATION: 3, // 3 second countdown

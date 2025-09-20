@@ -66,6 +66,16 @@ const games: GameCard[] = [
     route: "/games/freeze-cat",
   },
   {
+    id: "temple-run",
+    name: "Temple Run",
+    description: "Run through the temple! Avoid obstacles and collect points.",
+    color: "text-amber-700",
+    bgGradient: "from-amber-200 to-orange-200",
+    icon: "🏃‍♂️",
+    isImplemented: true,
+    route: "/games/temple-run",
+  },
+  {
     id: "emotion-adventure",
     name: "Emotion Adventure",
     description: "Go on an emotion journey!",
