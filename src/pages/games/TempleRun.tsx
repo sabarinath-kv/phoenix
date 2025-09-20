@@ -11,8 +11,8 @@ import { Sky } from '@/components/world/Sky';
 import { Obstacle } from '@/components/world/Obstacles';
 import { Lighting } from '@/components/world/Lighting';
 import { Player } from '@/components/world/Player';
-import { Temple, Vegetation, MysticalOrb, AncientRunes } from '@/components/world/Environment';
-import { DustParticles, MagicalSparkles, CollisionEffect } from '@/components/world/ParticleEffects';
+import { Building, TrafficLight, StreetLamp, BusStop, FireHydrant, ParkBench, TrashCan } from '@/components/world/Environment';
+import { RoadDust, CollisionEffect } from '@/components/world/ParticleEffects';
 import * as THREE from 'three';
 
 type GameState = 'countdown' | 'playing' | 'gameOver';
@@ -20,7 +20,7 @@ type GameState = 'countdown' | 'playing' | 'gameOver';
 interface ObstacleData {
   id: number;
   position: [number, number, number];
-  type: 'rock' | 'tree' | 'wall' | 'spike' | 'crystal';
+  type: 'car' | 'truck' | 'cone' | 'barrier' | 'bus';
 }
 
 export const TempleRun = () => {
@@ -95,16 +95,27 @@ export const TempleRun = () => {
     const touch = event.changedTouches[0];
     const deltaX = touch.clientX - touchStart.current.x;
     const deltaY = touch.clientY - touchStart.current.y;
-    const threshold = 50;
+    
+    // Adjust threshold based on orientation - more sensitive in portrait
+    const threshold = orientation === 'portrait' ? 40 : 50;
+    const minSwipeDistance = 30;
+
+    // Check if swipe is significant enough
+    const swipeDistance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    if (swipeDistance < minSwipeDistance) {
+      touchStart.current = null;
+      return;
+    }
 
     if (Math.abs(deltaX) > Math.abs(deltaY)) {
-      // Horizontal swipe
+      // Horizontal swipe - lane changing
       if (deltaX > threshold) {
         setPlayerLane(prev => Math.min(prev + 1, 1));
       } else if (deltaX < -threshold) {
         setPlayerLane(prev => Math.max(prev - 1, -1));
       }
     } else {
+      // Vertical swipe - jump/slide
       if (deltaY < -threshold && !isJumping && !isSliding) {
         // Swipe up - jump
         setIsJumping(true);
@@ -118,7 +129,7 @@ export const TempleRun = () => {
     }
 
     touchStart.current = null;
-  }, [gameState, isJumping, isSliding]);
+  }, [gameState, isJumping, isSliding, orientation]);
 
   // Game countdown
   const startCountdown = useCallback(() => {
@@ -156,10 +167,10 @@ export const TempleRun = () => {
       const randomLane = lanes[Math.floor(Math.random() * lanes.length)];
       
       // More obstacle variety with difficulty
-      const obstacleTypes: ('rock' | 'tree' | 'wall' | 'spike' | 'crystal')[] = 
+      const obstacleTypes: ('car' | 'truck' | 'cone' | 'barrier' | 'bus')[] = 
         difficultyMultiplier > 0.5 
-          ? ['rock', 'tree', 'wall', 'spike', 'crystal']
-          : ['rock', 'tree', 'wall'];
+          ? ['car', 'truck', 'cone', 'barrier', 'bus']
+          : ['car', 'truck', 'cone'];
       
       const randomType = obstacleTypes[Math.floor(Math.random() * obstacleTypes.length)];
       
@@ -247,45 +258,68 @@ export const TempleRun = () => {
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-gradient-to-b from-sky-300 to-orange-200">
-      {/* Orientation Warning */}
-      {orientation === 'portrait' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 text-white">
-          <div className="text-center p-8 bg-black/50 rounded-3xl backdrop-blur-sm">
-            <div className="text-8xl mb-6 animate-bounce">📱</div>
-            <h2 className="text-3xl font-bold mb-4 text-yellow-400">Rotate Your Device</h2>
-            <p className="text-xl text-gray-300">Please rotate to landscape mode</p>
-            <p className="text-lg text-gray-400 mt-2">for the ultimate Temple Run experience</p>
-          </div>
-        </div>
-      )}
+      {/* No orientation restriction - works in both portrait and landscape */}
 
-      {/* Enhanced Game HUD */}
-      <div className="absolute top-0 left-0 right-0 z-40 p-4">
-        <div className="flex justify-between items-start">
-          <Button
-            onClick={() => navigate('/')}
-            variant="ghost"
-            className="text-white bg-black/40 hover:bg-black/60 backdrop-blur-sm border border-white/20 rounded-xl"
-          >
-            ← Back to Games
-          </Button>
-          
-          <div className="text-center space-y-2">
-            <div className="text-4xl font-bold text-white bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent bg-black/40 rounded-xl px-6 py-3 backdrop-blur-sm border border-white/20">
-              {score.toLocaleString()}
+      {/* Enhanced Game HUD - Responsive for portrait/landscape */}
+      <div className="absolute top-0 left-0 right-0 z-40 p-3">
+        {orientation === 'portrait' ? (
+          // Portrait layout - more compact
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <Button
+                onClick={() => navigate('/')}
+                variant="ghost"
+                className="text-white bg-black/40 hover:bg-black/60 backdrop-blur-sm border border-white/20 rounded-lg text-sm px-3 py-2"
+              >
+                ← Back
+              </Button>
+              
+              <div className="flex items-center space-x-3">
+                <div className="text-2xl font-bold text-white bg-black/40 rounded-lg px-4 py-2 backdrop-blur-sm border border-white/20">
+                  {score.toLocaleString()}
+                </div>
+                <div className="text-sm text-white bg-black/30 rounded-lg px-3 py-1 backdrop-blur-sm">
+                  {distance}m
+                </div>
+              </div>
             </div>
-            <div className="text-lg text-white bg-black/30 rounded-lg px-4 py-1 backdrop-blur-sm">
-              {distance}m
-            </div>
+            
             {gameSpeed > 1 && (
-              <div className="text-sm text-yellow-300 bg-red-500/30 rounded-lg px-3 py-1 backdrop-blur-sm animate-pulse">
-                SPEED BOOST! {gameSpeed.toFixed(1)}x
+              <div className="text-center">
+                <div className="inline-block text-xs text-yellow-300 bg-red-500/30 rounded-lg px-3 py-1 backdrop-blur-sm animate-pulse">
+                  SPEED BOOST! {gameSpeed.toFixed(1)}x
+                </div>
               </div>
             )}
           </div>
-          
-          <div className="w-32"></div>
-        </div>
+        ) : (
+          // Landscape layout - original design
+          <div className="flex justify-between items-start">
+            <Button
+              onClick={() => navigate('/')}
+              variant="ghost"
+              className="text-white bg-black/40 hover:bg-black/60 backdrop-blur-sm border border-white/20 rounded-xl"
+            >
+              ← Back to Games
+            </Button>
+            
+            <div className="text-center space-y-2">
+              <div className="text-4xl font-bold text-white bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent bg-black/40 rounded-xl px-6 py-3 backdrop-blur-sm border border-white/20">
+                {score.toLocaleString()}
+              </div>
+              <div className="text-lg text-white bg-black/30 rounded-lg px-4 py-1 backdrop-blur-sm">
+                {distance}m
+              </div>
+              {gameSpeed > 1 && (
+                <div className="text-sm text-yellow-300 bg-red-500/30 rounded-lg px-3 py-1 backdrop-blur-sm animate-pulse">
+                  SPEED BOOST! {gameSpeed.toFixed(1)}x
+                </div>
+              )}
+            </div>
+            
+            <div className="w-32"></div>
+          </div>
+        )}
       </div>
 
       {/* Enhanced Countdown Overlay */}
@@ -295,8 +329,8 @@ export const TempleRun = () => {
             <div className="text-9xl font-bold text-transparent bg-gradient-to-r from-yellow-400 via-red-500 to-purple-600 bg-clip-text animate-pulse mb-6 drop-shadow-2xl">
               {countdown}
             </div>
-            <div className="text-3xl text-white mb-4 animate-bounce">⚡ GET READY! ⚡</div>
-            <div className="text-lg text-yellow-300">The ancient temple awaits...</div>
+            <div className="text-3xl text-white mb-4 animate-bounce">🚗 GET READY! 🚗</div>
+            <div className="text-lg text-yellow-300">Navigate the crossroad traffic...</div>
           </div>
         </div>
       )}
@@ -305,8 +339,8 @@ export const TempleRun = () => {
       {gameState === 'gameOver' && (
         <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/80 backdrop-blur-sm">
           <div className="bg-gradient-to-br from-purple-900/90 to-blue-900/90 rounded-3xl p-8 text-center max-w-md mx-4 border-2 border-yellow-400/50 shadow-2xl backdrop-blur-sm">
-            <div className="text-8xl mb-6 animate-bounce">🏺</div>
-            <h2 className="text-4xl font-bold text-yellow-400 mb-4">Temple Conquered!</h2>
+            <div className="text-8xl mb-6 animate-bounce">🚗</div>
+            <h2 className="text-4xl font-bold text-yellow-400 mb-4">Race Complete!</h2>
             <div className="space-y-3 mb-8">
               <div className="text-3xl font-bold text-white">
                 🏆 {score.toLocaleString()} Points
@@ -337,30 +371,40 @@ export const TempleRun = () => {
         </div>
       )}
 
-      {/* Enhanced Mobile Controls */}
+      {/* Mobile Controls - Works in both portrait and landscape */}
       <div className="absolute bottom-4 left-4 right-4 z-40 text-center">
-        <div className="bg-black/40 rounded-xl p-4 text-white backdrop-blur-sm border border-white/20">
-          {orientation === 'landscape' ? (
-            <div className="flex justify-center items-center space-x-6 text-sm">
-              <div className="hidden sm:flex items-center space-x-2">
-                <span>🏃‍♂️ WASD/Arrows</span>
-                <span>🦘 Space/W</span>
-                <span>🦆 S</span>
-              </div>
-              <div className="sm:hidden flex items-center space-x-4">
-                <span>👈👉 Swipe to move</span>
-                <span>☝️ Swipe up to jump</span>
-                <span>👇 Swipe down to slide</span>
-              </div>
+        <div className="bg-black/40 rounded-xl p-3 text-white backdrop-blur-sm border border-white/20">
+          <div className="flex justify-center items-center text-sm">
+            <div className="hidden sm:flex items-center space-x-4">
+              <span>🚗 WASD/Arrows to steer</span>
+              <span>⬆️ Space/W to jump ramps</span>
+              <span>⬇️ S to go under barriers</span>
             </div>
-          ) : null}
+            <div className="sm:hidden">
+              {orientation === 'portrait' ? (
+                <div className="space-y-1 text-center">
+                  <div>👈👉 Swipe left/right to change lanes</div>
+                  <div>☝️ Swipe up for ramps • 👇 Swipe down to duck</div>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-4">
+                  <span>👈👉 Swipe to change lanes</span>
+                  <span>☝️ Swipe up for ramps</span>
+                  <span>👇 Swipe down to duck under</span>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Enhanced 3D Scene */}
+      {/* Enhanced 3D Scene - Optimized for both portrait and landscape */}
       <Canvas
         shadows
-        camera={{ position: [0, 4, 10], fov: 75 }}
+        camera={{ 
+          position: [0, 4, 10], 
+          fov: orientation === 'portrait' ? 85 : 75 // Wider FOV for portrait mode
+        }}
         gl={{ 
           antialias: true, 
           powerPreference: "high-performance",
@@ -368,32 +412,12 @@ export const TempleRun = () => {
         }}
         dpr={[1, 2]} // Adaptive pixel ratio
       >
-        {/* Enhanced fog and environment */}
-        <fog attach="fog" args={['#FF7F50', 15, 80]} />
-        <Environment preset="sunset" background={false} />
-        
-        {/* Post-processing effects */}
-        <EffectComposer multisampling={4}>
-          <Bloom
-            intensity={0.5}
-            kernelSize={3}
-            luminanceThreshold={0.9}
-            luminanceSmoothing={0.4}
-          />
-          <DepthOfField
-            target={[0, 0, 2]}
-            focalLength={0.02}
-            bokehScale={2}
-            height={480}
-          />
-          <Noise opacity={0.025} />
-          <Vignette eskil={false} offset={0.1} darkness={0.5} />
-        </EffectComposer>
+        {/* Clean environment - no fog or post-processing */}
         
         <Lighting />
         <Sky />
         
-        {/* Enhanced Player */}
+        {/* Player Car */}
         <Player 
           lane={playerLane} 
           isJumping={isJumping} 
@@ -403,7 +427,7 @@ export const TempleRun = () => {
         
         {/* Collision Effect */}
         <CollisionEffect 
-          position={[playerLane * 4, 1, 2]} 
+          position={[playerLane * 4, 0.5, 2]} 
           trigger={collisionTriggered} 
         />
         
@@ -416,25 +440,26 @@ export const TempleRun = () => {
           />
         ))}
         
-        {/* Enhanced Environment */}
-        <Temple position={[-15, 0, -20]} />
-        <Temple position={[15, 0, -35]} />
-        <Temple position={[-20, 0, -60]} />
+        {/* Urban Environment */}
+        <Building position={[-12, 0, -20]} />
+        <Building position={[12, 0, -35]} />
+        <Building position={[-15, 0, -60]} />
+        <Building position={[18, 0, -80]} />
         
-        <Vegetation position={[-8, 0, -15]} />
-        <Vegetation position={[8, 0, -25]} />
-        <Vegetation position={[-12, 0, -40]} />
-        <Vegetation position={[10, 0, -55]} />
+        <TrafficLight position={[-6, 0, -15]} />
+        <TrafficLight position={[6, 0, -45]} />
         
-        <MysticalOrb position={[0, 5, -30]} />
-        <MysticalOrb position={[-10, 6, -50]} />
+        <StreetLamp position={[-8, 0, -25]} />
+        <StreetLamp position={[8, 0, -55]} />
+        <StreetLamp position={[-10, 0, -75]} />
         
-        <AncientRunes position={[6, 0, -18]} />
-        <AncientRunes position={[-7, 0, -45]} />
+        <BusStop position={[10, 0, -30]} />
+        <FireHydrant position={[-5, 0, -40]} />
+        <ParkBench position={[7, 0, -65]} />
+        <TrashCan position={[-3, 0, -50]} />
         
-        {/* Enhanced Particle Effects */}
-        <DustParticles count={150} speed={0.15 * gameSpeed} />
-        <MagicalSparkles count={80} position={[0, 3, -5]} />
+        {/* Minimal Road Effects */}
+        <RoadDust count={60} speed={0.08 * gameSpeed} />
         
         {/* Enhanced Obstacles */}
         {obstacles.map((obstacle) => (
@@ -443,14 +468,29 @@ export const TempleRun = () => {
             position={obstacle.position}
             type={obstacle.type}
             onCollision={handleCollision}
+            playerLane={playerLane}
+            isPlayerJumping={isJumping}
+            isPlayerSliding={isSliding}
           />
         ))}
       </Canvas>
 
-      {/* Performance indicator */}
+      {/* Debug indicators - Responsive */}
       {process.env.NODE_ENV === 'development' && (
-        <div className="absolute top-20 right-4 text-white bg-black/50 rounded p-2 text-xs">
-          FPS: 60 | Speed: {gameSpeed.toFixed(1)}x
+        <div className={`absolute text-white bg-black/50 rounded p-2 text-xs ${
+          orientation === 'portrait' 
+            ? 'top-20 left-2 right-2 text-center' 
+            : 'top-20 right-4 space-y-1'
+        }`}>
+          {orientation === 'portrait' ? (
+            <div>Lane: {playerLane} | J: {isJumping ? 'Y' : 'N'} | S: {isSliding ? 'Y' : 'N'} | Speed: {gameSpeed.toFixed(1)}x | Obs: {obstacles.length}</div>
+          ) : (
+            <>
+              <div>FPS: 60 | Speed: {gameSpeed.toFixed(1)}x</div>
+              <div>Lane: {playerLane} | Jumping: {isJumping ? 'Yes' : 'No'} | Sliding: {isSliding ? 'Yes' : 'No'}</div>
+              <div>Obstacles: {obstacles.length}</div>
+            </>
+          )}
         </div>
       )}
     </div>

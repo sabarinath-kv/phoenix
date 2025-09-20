@@ -11,11 +11,11 @@ interface ParticleSystemProps {
   speed?: number;
 }
 
-export const DustParticles = ({ 
-  count = 100, 
+export const RoadDust = ({ 
+  count = 80, 
   position = [0, 0, 0], 
-  color = "#D2B48C",
-  size = 0.05,
+  color = "#8D6E63",
+  size = 0.04,
   speed = 0.1 
 }: ParticleSystemProps) => {
   const pointsRef = useRef<THREE.Points>(null);
@@ -27,15 +27,15 @@ export const DustParticles = ({
     for (let i = 0; i < count; i++) {
       const i3 = i * 3;
       
-      // Random positions around the player
+      // Keep particles low to the ground
       positions[i3] = (Math.random() - 0.5) * 10;
-      positions[i3 + 1] = Math.random() * 2;
-      positions[i3 + 2] = (Math.random() - 0.5) * 5;
+      positions[i3 + 1] = Math.random() * 0.5; // Very low height
+      positions[i3 + 2] = (Math.random() - 0.5) * 4;
       
-      // Random velocities
-      velocities[i3] = (Math.random() - 0.5) * speed;
-      velocities[i3 + 1] = Math.random() * speed * 0.5;
-      velocities[i3 + 2] = speed + Math.random() * speed;
+      // Ground-level movement only
+      velocities[i3] = (Math.random() - 0.5) * speed * 0.2;
+      velocities[i3 + 1] = 0; // No upward movement
+      velocities[i3 + 2] = speed + Math.random() * speed * 0.4;
     }
     
     return [positions, velocities];
@@ -48,16 +48,15 @@ export const DustParticles = ({
       for (let i = 0; i < count; i++) {
         const i3 = i * 3;
         
-        // Update positions
+        // Simple ground-level movement
         positions[i3] += velocities[i3];
-        positions[i3 + 1] += velocities[i3 + 1];
         positions[i3 + 2] += velocities[i3 + 2];
         
-        // Reset particles when they go too far
-        if (positions[i3 + 2] > 5) {
+        // Reset when particles go too far
+        if (positions[i3 + 2] > 4) {
           positions[i3] = (Math.random() - 0.5) * 10;
-          positions[i3 + 1] = Math.random() * 2;
-          positions[i3 + 2] = -10;
+          positions[i3 + 1] = Math.random() * 0.5;
+          positions[i3 + 2] = -8;
         }
       }
       
@@ -72,67 +71,10 @@ export const DustParticles = ({
         size={size}
         sizeAttenuation
         transparent
-        opacity={0.6}
+        opacity={0.3}
         vertexColors={false}
       />
     </Points>
-  );
-};
-
-export const MagicalSparkles = ({ 
-  count = 50, 
-  position = [0, 0, 0], 
-  color = "#FFD700" 
-}: ParticleSystemProps) => {
-  const pointsRef = useRef<THREE.Points>(null);
-  
-  const positions = useMemo(() => {
-    const positions = new Float32Array(count * 3);
-    
-    for (let i = 0; i < count; i++) {
-      const i3 = i * 3;
-      
-      // Spiral pattern
-      const angle = (i / count) * Math.PI * 4;
-      const radius = 2 + Math.sin(angle) * 0.5;
-      
-      positions[i3] = Math.cos(angle) * radius;
-      positions[i3 + 1] = Math.sin(angle * 2) * 3 + 2;
-      positions[i3 + 2] = Math.sin(angle) * radius;
-    }
-    
-    return positions;
-  }, [count]);
-
-  useFrame((state) => {
-    if (pointsRef.current) {
-      pointsRef.current.rotation.y = state.clock.elapsedTime * 0.5;
-      
-      // Floating animation
-      const positions = pointsRef.current.geometry.attributes.position.array as Float32Array;
-      const time = state.clock.elapsedTime;
-      
-      for (let i = 0; i < count; i++) {
-        const i3 = i * 3;
-        positions[i3 + 1] += Math.sin(time * 2 + i * 0.1) * 0.01;
-      }
-      
-      pointsRef.current.geometry.attributes.position.needsUpdate = true;
-    }
-  });
-
-  return (
-    <group position={position}>
-      <Points ref={pointsRef} positions={positions}>
-        <PointMaterial
-          color={color}
-          size={0.1}
-          sizeAttenuation
-          transparent
-          opacity={0.8}
-        />
-      </Points>
-    </group>
   );
 };
 
@@ -146,17 +88,26 @@ export const CollisionEffect = ({
   const pointsRef = useRef<THREE.Points>(null);
   const startTime = useRef(0);
   
-  const positions = useMemo(() => {
-    const positions = new Float32Array(30 * 3);
+  const [positions, velocities] = useMemo(() => {
+    const positions = new Float32Array(20 * 3);
+    const velocities = new Float32Array(20 * 3);
     
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 20; i++) {
       const i3 = i * 3;
       positions[i3] = 0;
       positions[i3 + 1] = 0;
       positions[i3 + 2] = 0;
+      
+      // Simple horizontal spread
+      const angle = (i / 20) * Math.PI * 2;
+      const speed = 1 + Math.random() * 2;
+      
+      velocities[i3] = Math.cos(angle) * speed;
+      velocities[i3 + 1] = Math.random() * 0.5; // Minimal upward movement
+      velocities[i3 + 2] = Math.sin(angle) * speed;
     }
     
-    return positions;
+    return [positions, velocities];
   }, []);
 
   useFrame((state) => {
@@ -170,14 +121,16 @@ export const CollisionEffect = ({
       if (elapsed < 1) {
         const positions = pointsRef.current.geometry.attributes.position.array as Float32Array;
         
-        for (let i = 0; i < 30; i++) {
+        for (let i = 0; i < 20; i++) {
           const i3 = i * 3;
-          const angle = (i / 30) * Math.PI * 2;
-          const speed = elapsed * 5;
           
-          positions[i3] = Math.cos(angle) * speed;
-          positions[i3 + 1] = Math.sin(angle) * speed + Math.sin(elapsed * 10) * 0.5;
-          positions[i3 + 2] = Math.sin(angle * 2) * speed;
+          positions[i3] += velocities[i3] * 0.02;
+          positions[i3 + 1] += velocities[i3 + 1] * 0.02;
+          positions[i3 + 2] += velocities[i3 + 2] * 0.02;
+          
+          velocities[i3] *= 0.95;
+          velocities[i3 + 1] *= 0.95;
+          velocities[i3 + 2] *= 0.95;
         }
         
         pointsRef.current.geometry.attributes.position.needsUpdate = true;
@@ -186,6 +139,13 @@ export const CollisionEffect = ({
     
     if (!trigger) {
       startTime.current = 0;
+      if (pointsRef.current) {
+        const positions = pointsRef.current.geometry.attributes.position.array as Float32Array;
+        for (let i = 0; i < positions.length; i++) {
+          positions[i] = 0;
+        }
+        pointsRef.current.geometry.attributes.position.needsUpdate = true;
+      }
     }
   });
 
@@ -193,13 +153,24 @@ export const CollisionEffect = ({
     <group position={position}>
       <Points ref={pointsRef} positions={positions}>
         <PointMaterial
-          color="#FF4500"
-          size={0.15}
+          color="#FFD700"
+          size={0.1}
           sizeAttenuation
           transparent
-          opacity={trigger ? 0.8 : 0}
+          opacity={trigger ? 0.6 : 0}
         />
       </Points>
+      
+      {/* Simple flash effect */}
+      {trigger && (
+        <pointLight 
+          position={[0, 0, 0]} 
+          intensity={2} 
+          color="#FFD700" 
+          distance={5}
+          decay={2}
+        />
+      )}
     </group>
   );
 };
