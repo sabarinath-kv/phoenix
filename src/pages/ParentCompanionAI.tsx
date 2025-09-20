@@ -4,6 +4,8 @@ import { ArrowLeft, Mic, MicOff, Send, Volume2, VolumeX, Heart, Moon, Sun } from
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { VoiceIndicator } from '@/components/ui/voice-indicator';
+import { useVoiceState } from '@/hooks/useVoiceState';
 
 interface Message {
   id: string;
@@ -24,8 +26,6 @@ const ParentCompanionAI = () => {
     }
   ]);
   const [inputText, setInputText] = useState('');
-  const [isListening, setIsListening] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
   const [isNightMode, setIsNightMode] = useState(() => {
     const hour = new Date().getHours();
     return hour >= 20 || hour <= 6;
@@ -33,6 +33,14 @@ const ParentCompanionAI = () => {
   const [showDrawer, setShowDrawer] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  
+  // Use the new voice state hook
+  const voiceState = useVoiceState({
+    onStateChange: (state) => {
+      console.log('Voice state changed:', state);
+    },
+    autoTimeout: 3000,
+  });
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -77,11 +85,11 @@ const ParentCompanionAI = () => {
       
       // Simulate text-to-speech
       if ('speechSynthesis' in window) {
-        setIsSpeaking(true);
+        voiceState.startSpeaking();
         const utterance = new SpeechSynthesisUtterance(aiMessage.content);
         utterance.rate = 0.8;
         utterance.pitch = 1.1;
-        utterance.onend = () => setIsSpeaking(false);
+        utterance.onend = () => voiceState.stopVoice();
         speechSynthesis.speak(utterance);
       }
     }, 1500);
@@ -89,76 +97,83 @@ const ParentCompanionAI = () => {
 
   const startListening = useCallback(() => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      setIsListening(true);
+      voiceState.startListening();
       
       // Simulate voice recognition
       setTimeout(() => {
-        setIsListening(false);
-        const sampleVoiceInputs = [
-          "My toddler won't go to sleep",
-          "How do I handle tantrums in public",
-          "I'm feeling overwhelmed with bedtime routines",
-          "My child is being picky with food"
-        ];
-        const voiceInput = sampleVoiceInputs[Math.floor(Math.random() * sampleVoiceInputs.length)];
-        sendMessage(voiceInput, true);
+        voiceState.startProcessing();
+        setTimeout(() => {
+          const sampleVoiceInputs = [
+            "My toddler won't go to sleep",
+            "How do I handle tantrums in public",
+            "I'm feeling overwhelmed with bedtime routines",
+            "My child is being picky with food"
+          ];
+          const voiceInput = sampleVoiceInputs[Math.floor(Math.random() * sampleVoiceInputs.length)];
+          sendMessage(voiceInput, true);
+          voiceState.stopVoice();
+        }, 1000);
       }, 2000);
     }
-  }, [sendMessage]);
+  }, [sendMessage, voiceState]);
 
   const stopSpeaking = useCallback(() => {
     if ('speechSynthesis' in window) {
       speechSynthesis.cancel();
-      setIsSpeaking(false);
+      voiceState.stopVoice();
     }
-  }, []);
+  }, [voiceState]);
 
-  const FloatingButton = () => (
-    <motion.button
-      className={`fixed bottom-6 right-6 w-16 h-16 rounded-full shadow-hover backdrop-blur-sm border border-primary/20 bg-primary/90 hover:bg-primary`}
-      whileHover={{ scale: 1.1 }}
-      whileTap={{ scale: 0.9 }}
-      onClick={() => setShowDrawer(true)}
-      initial={{ scale: 0 }}
-      animate={{ scale: 1 }}
-      transition={{ delay: 0.5, type: "spring" }}
-    >
-      <Heart className="w-8 h-8 text-white mx-auto" />
-      <motion.div
-        className="absolute inset-0 rounded-full border-2 border-primary/40"
-        animate={{
-          scale: [1, 1.2, 1],
-          opacity: [0.7, 0, 0.7]
-        }}
-        transition={{
-          duration: 2,
-          repeat: Infinity,
-          ease: "easeInOut"
-        }}
-      />
-    </motion.button>
-  );
+  return (
+    <div className="relative">
+      {/* Floating Button */}
+      <motion.button
+        key="floating-button"
+        className={`fixed bottom-6 right-6 w-16 h-16 rounded-full shadow-hover backdrop-blur-sm border border-primary/20 bg-primary/90 hover:bg-primary`}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        onClick={() => setShowDrawer(true)}
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ delay: 0.5, type: "spring" }}
+      >
+        <Heart className="w-8 h-8 text-white mx-auto" />
+        <motion.div
+          className="absolute inset-0 rounded-full border-2 border-primary/40"
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.7, 0, 0.7]
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+      </motion.button>
 
-  const ChatDrawer = () => (
-    <AnimatePresence>
-      {showDrawer && (
-        <>
-          <motion.div
-            className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setShowDrawer(false)}
-          />
-          <motion.div
-            className={`fixed inset-0 z-50 flex flex-col ${
-              isNightMode ? 'bg-card/95 dark' : 'bg-card/95'
-            } backdrop-blur-lg border-l border-border`}
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: "spring", damping: 20 }}
-          >
+      {/* Chat Drawer */}
+      <AnimatePresence mode="wait">
+        {showDrawer && (
+          <>
+            <motion.div
+              key="backdrop"
+              className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowDrawer(false)}
+            />
+            <motion.div
+              key="drawer"
+              className={`fixed inset-0 z-50 flex flex-col ${
+                isNightMode ? 'bg-card/95 dark' : 'bg-card/95'
+              } backdrop-blur-lg border-l border-border`}
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: "spring", damping: 20 }}
+            >
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-border bg-gradient-primary">
               <div className="flex items-center gap-4">
@@ -185,9 +200,9 @@ const ParentCompanionAI = () => {
                   size="icon"
                   onClick={stopSpeaking}
                   className="rounded-full text-white hover:bg-white/20"
-                  disabled={!isSpeaking}
+                  disabled={!voiceState.isSpeaking}
                 >
-                  {isSpeaking ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                  {voiceState.isSpeaking ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
                 </Button>
                 <Button
                   variant="ghost"
@@ -253,62 +268,51 @@ const ParentCompanionAI = () => {
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <motion.button
-                    className={`w-12 h-12 rounded-full backdrop-blur-sm border border-border shadow-soft ${
-                      isListening
-                        ? 'bg-destructive text-destructive-foreground'
-                        : 'bg-accent text-accent-foreground hover:bg-accent/80'
-                    }`}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                  <Button
+                    size="icon"
+                    variant={voiceState.isActive ? "destructive" : "secondary"}
                     onClick={startListening}
-                    disabled={isListening}
+                    disabled={voiceState.isActive}
+                    className="relative overflow-hidden"
                   >
-                    {isListening ? (
-                      <MicOff className="w-5 h-5 mx-auto" />
-                    ) : (
-                      <Mic className="w-5 h-5 mx-auto" />
-                    )}
-                    {isListening && (
-                      <motion.div
-                        className="absolute inset-0 rounded-full border-2 border-destructive/40"
-                        animate={{
-                          scale: [1, 1.3, 1],
-                          opacity: [0.7, 0, 0.7]
-                        }}
-                        transition={{
-                          duration: 1,
-                          repeat: Infinity,
-                          ease: "easeInOut"
-                        }}
+                    {voiceState.isListening && (
+                      <VoiceIndicator 
+                        variant="pulse" 
+                        size="sm" 
+                        isActive={true}
+                        className="absolute inset-0"
                       />
                     )}
-                  </motion.button>
+                    {voiceState.isProcessing && (
+                      <VoiceIndicator 
+                        variant="waveform" 
+                        size="sm" 
+                        isActive={true}
+                        className="absolute inset-0"
+                      />
+                    )}
+                    {voiceState.isActive ? (
+                      <MicOff className="w-5 h-5 relative z-10" />
+                    ) : (
+                      <Mic className="w-5 h-5 relative z-10" />
+                    )}
+                  </Button>
                   <Button
                     onClick={() => sendMessage(inputText)}
                     disabled={!inputText.trim()}
                     size="icon"
-                    className="w-12 h-12 rounded-full bg-primary hover:bg-primary/90 shadow-soft"
+                    radius="pill"
+                    className="shadow-soft"
                   >
                     <Send className="w-5 h-5" />
                   </Button>
                 </div>
               </div>
             </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
-  );
-
-  if (!showDrawer) {
-    return <FloatingButton />;
-  }
-
-  return (
-    <div className="relative">
-      <FloatingButton />
-      <ChatDrawer />
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

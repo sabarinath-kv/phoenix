@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { FaceDetectionTest } from "@/components/FaceDetectionTest";
+import { Chip } from "@/components/ui/chip";
 import ParentCompanionAI from './ParentCompanionAI';
 
 interface GameCard {
@@ -139,8 +140,8 @@ export const GameSelection = () => {
             {games.map((game) => (
               <Card
                 key={game.id}
-                className={`group relative overflow-hidden transition-all duration-300 hover:shadow-hover cursor-pointer bg-card border-border shadow-card hover:scale-[1.02] ${
-                  game.isImplemented ? "hover:shadow-hover" : "opacity-75"
+                className={`group relative overflow-hidden card-hover cursor-pointer ${
+                  game.isImplemented ? "" : "opacity-75"
                 }`}
                 onClick={() => handleGameClick(game)}
               >
@@ -161,19 +162,15 @@ export const GameSelection = () => {
                   {/* Status Badge */}
                   <div className="mt-6">
                     {game.isImplemented ? (
-                      <div className="inline-flex items-center gap-2 bg-game-success/10 backdrop-blur-sm rounded-full px-4 py-2 border border-game-success/20">
+                      <Chip variant="success" className="gap-2">
                         <div className="w-2 h-2 bg-game-success rounded-full" />
-                        <span className="text-sm font-medium text-game-success">
-                          Ready to Play
-                        </span>
-                      </div>
+                        Ready to Play
+                      </Chip>
                     ) : (
-                      <div className="inline-flex items-center gap-2 bg-muted/50 backdrop-blur-sm rounded-full px-4 py-2 border border-muted">
+                      <Chip variant="default" className="gap-2">
                         <div className="w-2 h-2 bg-muted-foreground rounded-full" />
-                        <span className="text-sm font-medium text-muted-foreground">
-                          Coming Soon
-                        </span>
-                      </div>
+                        Coming Soon
+                      </Chip>
                     )}
                   </div>
                 </div>

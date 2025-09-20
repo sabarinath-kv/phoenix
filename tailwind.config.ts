@@ -69,6 +69,12 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        // Design system specific radii
+        'card': '16px',
+        'card-lg': '20px',
+        'drawer': '24px',
+        'pill': '999px',
+        'button': '12px',
       },
       keyframes: {
         "accordion-down": {
@@ -95,6 +101,38 @@ export default {
         "pulse-glow": {
           "0%, 100%": { boxShadow: "0 0 0 0 hsl(200 85% 60% / 0.4)" },
           "50%": { boxShadow: "0 0 0 20px hsl(200 85% 60% / 0)" }
+        },
+        // Voice state animations
+        "voice-pulse": {
+          "0%, 100%": { 
+            transform: "scale(1)",
+            boxShadow: "0 0 0 0 hsl(var(--primary) / 0.4)"
+          },
+          "50%": { 
+            transform: "scale(1.05)",
+            boxShadow: "0 0 0 8px hsl(var(--primary) / 0)"
+          }
+        },
+        "voice-waveform": {
+          "0%, 100%": { transform: "scaleY(0.3)" },
+          "25%": { transform: "scaleY(1)" },
+          "50%": { transform: "scaleY(0.6)" },
+          "75%": { transform: "scaleY(0.8)" }
+        },
+        // Micro-interactions
+        "micro-bounce": {
+          "0%": { transform: "scale(1)" },
+          "50%": { transform: "scale(1.02)" },
+          "100%": { transform: "scale(1)" }
+        },
+        "progress-fill": {
+          "0%": { width: "0%" },
+          "100%": { width: "var(--progress-value, 100%)" }
+        },
+        // Focus glow for dark mode
+        "focus-glow": {
+          "0%": { boxShadow: "0 0 0 0 hsl(var(--primary) / 0.3)" },
+          "100%": { boxShadow: "0 0 0 4px hsl(var(--primary) / 0.1)" }
         }
       },
       animation: {
@@ -103,7 +141,32 @@ export default {
         "fade-in": "fade-in 0.5s var(--animation-smooth)",
         "scale-in": "scale-in 0.3s var(--animation-bounce)",
         "bounce-in": "bounce-in 0.6s var(--animation-bounce)",
-        "pulse-glow": "pulse-glow 2s infinite"
+        "pulse-glow": "pulse-glow 2s infinite",
+        // Voice state animations
+        "voice-pulse": "voice-pulse 1.5s ease-in-out infinite",
+        "voice-waveform": "voice-waveform 0.8s ease-in-out infinite",
+        // Micro-interactions (150-250ms ease-out)
+        "micro-bounce": "micro-bounce 200ms ease-out",
+        "micro-scale": "micro-bounce 150ms ease-out",
+        // Progress animations (500-700ms)
+        "progress-fill": "progress-fill 600ms var(--animation-smooth)",
+        "progress-slow": "progress-fill 700ms var(--animation-smooth)",
+        // Focus states
+        "focus-glow": "focus-glow 200ms ease-out forwards",
+      },
+      // Motion timing functions
+      transitionTimingFunction: {
+        'micro': 'cubic-bezier(0.4, 0, 0.2, 1)', // 150-250ms interactions
+        'smooth': 'cubic-bezier(0.4, 0, 0.2, 1)', // General smooth
+        'gentle': 'cubic-bezier(0.25, 0.46, 0.45, 0.94)', // Calming effect
+        'bounce': 'cubic-bezier(0.68, -0.55, 0.265, 1.55)', // Playful bounce
+      },
+      transitionDuration: {
+        'micro': '150ms',
+        'micro-lg': '200ms',
+        'micro-xl': '250ms',
+        'progress': '600ms',
+        'progress-slow': '700ms',
       },
       backgroundImage: {
         'gradient-primary': 'var(--gradient-primary)',
@@ -118,6 +181,23 @@ export default {
       },
       fontFamily: {
         'sans': ['Inter', 'system-ui', 'sans-serif'],
+        'heading': ['Poppins', 'Inter', 'system-ui', 'sans-serif'],
+      },
+      fontSize: {
+        // Typography scale following the design system
+        'caption': ['13px', { lineHeight: '1.4', letterSpacing: '0.01em' }],
+        'caption-lg': ['14px', { lineHeight: '1.4', letterSpacing: '0.01em' }],
+        'caption-night': ['15px', { lineHeight: '1.4', letterSpacing: '0.01em' }], // Minimum 15px for night flows
+        'body': ['16px', { lineHeight: '1.5', letterSpacing: '0' }],
+        'h2': ['20px', { lineHeight: '1.3', letterSpacing: '-0.01em' }],
+        'h2-lg': ['22px', { lineHeight: '1.3', letterSpacing: '-0.01em' }],
+        'h1': ['24px', { lineHeight: '1.2', letterSpacing: '-0.02em' }],
+        'h1-lg': ['28px', { lineHeight: '1.2', letterSpacing: '-0.02em' }],
+      },
+      fontWeight: {
+        'regular': '400',
+        'medium': '500',
+        'semibold': '600',
       },
     },
   },
