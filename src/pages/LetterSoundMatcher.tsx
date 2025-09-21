@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useGameRedirect } from "@/hooks/useGameRedirect";
 import { LETTER_SOUND, LETTER_SOUND_ITEMS } from "@/constants/game";
 
 type GameState = "instructions" | "countdown" | "playing" | "completed";
@@ -20,15 +21,20 @@ interface GameStats {
 
 export const LetterSoundMatcher = () => {
   const navigate = useNavigate();
+  const gameRedirect = useGameRedirect("letter-sound");
   const [gameState, setGameState] = useState<GameState>("instructions");
-  const [countdown, setCountdown] = useState<number>(LETTER_SOUND.COUNTDOWN_DURATION);
+  const [countdown, setCountdown] = useState<number>(
+    LETTER_SOUND.COUNTDOWN_DURATION
+  );
   const [stats, setStats] = useState<GameStats>({
     score: 0,
     currentRound: 0,
-    totalRounds: LETTER_SOUND.TOTAL_ROUNDS
+    totalRounds: LETTER_SOUND.TOTAL_ROUNDS,
   });
   const [gameCards, setGameCards] = useState<GameCard[]>([]);
-  const [currentItem, setCurrentItem] = useState<typeof LETTER_SOUND_ITEMS[0]>(LETTER_SOUND_ITEMS[0]);
+  const [currentItem, setCurrentItem] = useState<
+    (typeof LETTER_SOUND_ITEMS)[0]
+  >(LETTER_SOUND_ITEMS[0]);
   const [clickedCardIndex, setClickedCardIndex] = useState<number | null>(null);
   const [showScoreAnimation, setShowScoreAnimation] = useState(false);
 
@@ -38,136 +44,153 @@ export const LetterSoundMatcher = () => {
 
   // Speech synthesis function with consistent settings (same as LetterReversalSpotter)
   const speakLetter = useCallback((letter: string) => {
-    if ('speechSynthesis' in window) {
+    if ("speechSynthesis" in window) {
       // Cancel any ongoing speech
       window.speechSynthesis.cancel();
-      
+
       // Wait a moment for cancellation to complete
       setTimeout(() => {
         const utterance = new SpeechSynthesisUtterance(`Capital ${letter}`);
-        
+
         // Consistent voice settings for all questions
-        utterance.rate = 0.7;        // Slower, consistent rate
-        utterance.pitch = 1.1;       // Consistent pitch
-        utterance.volume = 0.9;      // Consistent volume
-        utterance.lang = 'en-US';    // Consistent language
-        
+        utterance.rate = 0.7; // Slower, consistent rate
+        utterance.pitch = 1.1; // Consistent pitch
+        utterance.volume = 0.9; // Consistent volume
+        utterance.lang = "en-US"; // Consistent language
+
         // Try to use the same voice consistently
         const voices = window.speechSynthesis.getVoices();
         let selectedVoice = null;
-        
+
         // Priority order for consistent voice selection
         const preferredVoices = [
-          'Microsoft Zira - English (United States)',
-          'Google US English',
-          'Alex',
-          'Samantha',
-          'Karen',
-          'Microsoft David - English (United States)'
+          "Microsoft Zira - English (United States)",
+          "Google US English",
+          "Alex",
+          "Samantha",
+          "Karen",
+          "Microsoft David - English (United States)",
         ];
-        
+
         // Find the first available preferred voice
         for (const voiceName of preferredVoices) {
-          selectedVoice = voices.find(voice => voice.name === voiceName);
+          selectedVoice = voices.find((voice) => voice.name === voiceName);
           if (selectedVoice) break;
         }
-        
+
         // Fallback to first English voice if no preferred voice found
         if (!selectedVoice) {
-          selectedVoice = voices.find(voice => 
-            voice.lang.startsWith('en') && 
-            (voice.name.includes('Female') || voice.name.includes('Woman'))
+          selectedVoice = voices.find(
+            (voice) =>
+              voice.lang.startsWith("en") &&
+              (voice.name.includes("Female") || voice.name.includes("Woman"))
           );
         }
-        
+
         // Final fallback to any English voice
         if (!selectedVoice) {
-          selectedVoice = voices.find(voice => voice.lang.startsWith('en'));
+          selectedVoice = voices.find((voice) => voice.lang.startsWith("en"));
         }
-        
+
         if (selectedVoice) {
           utterance.voice = selectedVoice;
         }
-        
+
         window.speechSynthesis.speak(utterance);
       }, 100);
     }
   }, []);
 
   // Generate cards for current round
-  const generateCards = useCallback((correctItem: typeof LETTER_SOUND_ITEMS[0]) => {
-    const cards: GameCard[] = [];
-    
-    // Add correct card
-    cards.push({
-      ...correctItem,
-      isCorrect: true
-    });
+  const generateCards = useCallback(
+    (correctItem: (typeof LETTER_SOUND_ITEMS)[0]) => {
+      const cards: GameCard[] = [];
 
-    // Add 3 random distractors
-    const otherItems = LETTER_SOUND_ITEMS.filter(item => item.letter !== correctItem.letter);
-    const shuffledOthers = otherItems.sort(() => Math.random() - 0.5);
-    
-    for (let i = 0; i < 3; i++) {
+      // Add correct card
       cards.push({
-        ...shuffledOthers[i],
-        isCorrect: false
+        ...correctItem,
+        isCorrect: true,
       });
-    }
 
-    // Shuffle all cards
-    return cards.sort(() => Math.random() - 0.5);
-  }, []);
+      // Add 3 random distractors
+      const otherItems = LETTER_SOUND_ITEMS.filter(
+        (item) => item.letter !== correctItem.letter
+      );
+      const shuffledOthers = otherItems.sort(() => Math.random() - 0.5);
+
+      for (let i = 0; i < 3; i++) {
+        cards.push({
+          ...shuffledOthers[i],
+          isCorrect: false,
+        });
+      }
+
+      // Shuffle all cards
+      return cards.sort(() => Math.random() - 0.5);
+    },
+    []
+  );
 
   // Handle card click
-  const handleCardClick = useCallback((cardIndex: number, isCorrect: boolean) => {
-    if (gameState !== "playing" || clickedCardIndex !== null) return;
+  const handleCardClick = useCallback(
+    (cardIndex: number, isCorrect: boolean) => {
+      if (gameState !== "playing" || clickedCardIndex !== null) return;
 
-    setClickedCardIndex(cardIndex);
+      setClickedCardIndex(cardIndex);
 
-    if (isCorrect) {
-      // Correct answer
-      setStats(prev => ({
-        ...prev,
-        score: prev.score + LETTER_SOUND.SCORE_INCREMENT
-      }));
-      
-      // Show score animation
-      setShowScoreAnimation(true);
-      setTimeout(() => setShowScoreAnimation(false), 1000);
+      if (isCorrect) {
+        // Correct answer
+        setStats((prev) => ({
+          ...prev,
+          score: prev.score + LETTER_SOUND.SCORE_INCREMENT,
+        }));
 
-      // Move to next round after delay
-      roundDelayRef.current = setTimeout(() => {
-        const nextRound = stats.currentRound + 1;
-        
-        if (nextRound >= LETTER_SOUND.TOTAL_ROUNDS) {
-          // Game completed
-          setGameState("completed");
-        } else {
-          // Next round
-          const nextItem = LETTER_SOUND_ITEMS[nextRound];
-          setCurrentItem(nextItem as typeof LETTER_SOUND_ITEMS[0]);
-          setStats(prev => ({ ...prev, currentRound: nextRound }));
-          setGameCards(generateCards(nextItem as typeof LETTER_SOUND_ITEMS[0]));
+        // Show score animation
+        setShowScoreAnimation(true);
+        setTimeout(() => setShowScoreAnimation(false), 1000);
+
+        // Move to next round after delay
+        roundDelayRef.current = setTimeout(() => {
+          const nextRound = stats.currentRound + 1;
+
+          if (nextRound >= LETTER_SOUND.TOTAL_ROUNDS) {
+            // Game completed
+            setGameState("completed");
+          } else {
+            // Next round
+            const nextItem = LETTER_SOUND_ITEMS[nextRound];
+            setCurrentItem(nextItem as (typeof LETTER_SOUND_ITEMS)[0]);
+            setStats((prev) => ({ ...prev, currentRound: nextRound }));
+            setGameCards(
+              generateCards(nextItem as (typeof LETTER_SOUND_ITEMS)[0])
+            );
+            setClickedCardIndex(null);
+
+            // Speak the next letter after a short delay
+            setTimeout(() => speakLetter(nextItem.letter), 500);
+          }
+        }, LETTER_SOUND.ROUND_DELAY);
+      } else {
+        // Wrong answer - just reset click state after animation
+        setTimeout(() => {
           setClickedCardIndex(null);
-          
-          // Speak the next letter after a short delay
-          setTimeout(() => speakLetter(nextItem.letter), 500);
-        }
-      }, LETTER_SOUND.ROUND_DELAY);
-    } else {
-      // Wrong answer - just reset click state after animation
-      setTimeout(() => {
-        setClickedCardIndex(null);
-      }, 600);
-    }
-  }, [gameState, clickedCardIndex, stats.currentRound, generateCards, speakLetter]);
+        }, 600);
+      }
+    },
+    [
+      gameState,
+      clickedCardIndex,
+      stats.currentRound,
+      generateCards,
+      speakLetter,
+    ]
+  );
 
   // Start countdown
   const startCountdown = useCallback(() => {
     console.log("Starting countdown..."); // Debug log
     setGameState("countdown");
-    
+
     // Simple countdown: 3, 2, 1, then start
     let currentCount = LETTER_SOUND.COUNTDOWN_DURATION;
     setCountdown(currentCount);
@@ -181,7 +204,7 @@ export const LetterSoundMatcher = () => {
     const countdownInterval = setInterval(() => {
       currentCount--;
       console.log("Countdown tick:", currentCount); // Debug log
-      
+
       if (currentCount <= 0) {
         console.log("Countdown finished, starting game"); // Debug log
         clearInterval(countdownInterval);
@@ -201,7 +224,7 @@ export const LetterSoundMatcher = () => {
     setStats({
       score: 0,
       currentRound: 0,
-      totalRounds: LETTER_SOUND.TOTAL_ROUNDS
+      totalRounds: LETTER_SOUND.TOTAL_ROUNDS,
     });
     setCurrentItem(LETTER_SOUND_ITEMS[0]);
     setGameCards([]);
@@ -217,9 +240,9 @@ export const LetterSoundMatcher = () => {
       clearTimeout(roundDelayRef.current);
       roundDelayRef.current = undefined;
     }
-    
+
     // Cancel speech
-    if ('speechSynthesis' in window) {
+    if ("speechSynthesis" in window) {
       window.speechSynthesis.cancel();
     }
   }, []);
@@ -232,10 +255,10 @@ export const LetterSoundMatcher = () => {
       // Reset to first round
       const firstItem = LETTER_SOUND_ITEMS[0];
       setCurrentItem(firstItem);
-      setStats(prev => ({ ...prev, currentRound: 0, score: 0 }));
+      setStats((prev) => ({ ...prev, currentRound: 0, score: 0 }));
       setGameCards(generateCards(firstItem));
       setClickedCardIndex(null);
-      
+
       // Speak the first letter after a short delay
       setTimeout(() => speakLetter(firstItem.letter), 1000);
     }
@@ -252,12 +275,11 @@ export const LetterSoundMatcher = () => {
         clearTimeout(roundDelayRef.current);
         roundDelayRef.current = undefined;
       }
-      if ('speechSynthesis' in window) {
+      if ("speechSynthesis" in window) {
         window.speechSynthesis.cancel();
       }
     };
   }, []);
-
 
   return (
     <>
@@ -394,8 +416,12 @@ export const LetterSoundMatcher = () => {
                     onClick={() => speakLetter(currentItem.letter)}
                     className="bg-green-500 hover:bg-green-600 text-white rounded-full p-3"
                     size="sm"
-                    disabled={!('speechSynthesis' in window)}
-                    title={'speechSynthesis' in window ? "Play sound" : "Speech not supported"}
+                    disabled={!("speechSynthesis" in window)}
+                    title={
+                      "speechSynthesis" in window
+                        ? "Play sound"
+                        : "Speech not supported"
+                    }
                   >
                     🔊
                   </Button>
@@ -416,21 +442,25 @@ export const LetterSoundMatcher = () => {
                     className={`
                       relative bg-white/80 backdrop-blur-sm rounded-3xl p-4 shadow-lg cursor-pointer
                       transition-all duration-300 hover:scale-105 hover:shadow-xl
-                      ${isCorrectClick ? 'scale-110 bg-green-100 shadow-2xl ring-4 ring-green-400' : ''}
-                      ${isWrongClick ? 'scale-95 bg-red-100 shadow-inner' : ''}
+                      ${
+                        isCorrectClick
+                          ? "scale-110 bg-green-100 shadow-2xl ring-4 ring-green-400"
+                          : ""
+                      }
+                      ${isWrongClick ? "scale-95 bg-red-100 shadow-inner" : ""}
                     `}
                     onClick={() => handleCardClick(index, card.isCorrect)}
                   >
                     <div className="aspect-square flex flex-col items-center justify-center text-center">
                       {/* Placeholder for image - using emoji for now */}
                       <div className="text-6xl md:text-8xl mb-2">
-                        {card.word === 'Apple' && '🍎'}
-                        {card.word === 'Ball' && '⚽'}
-                        {card.word === 'Cat' && '🐱'}
-                        {card.word === 'Dog' && '🐶'}
-                        {card.word === 'Egg' && '🥚'}
-                        {card.word === 'Fish' && '🐟'}
-                        {card.word === 'Grapes' && '🍇'}
+                        {card.word === "Apple" && "🍎"}
+                        {card.word === "Ball" && "⚽"}
+                        {card.word === "Cat" && "🐱"}
+                        {card.word === "Dog" && "🐶"}
+                        {card.word === "Egg" && "🥚"}
+                        {card.word === "Fish" && "🐟"}
+                        {card.word === "Grapes" && "🍇"}
                       </div>
                     </div>
 
@@ -464,7 +494,11 @@ export const LetterSoundMatcher = () => {
             <div className="relative bg-white/90 backdrop-blur-sm rounded-3xl p-6 sm:p-8 shadow-2xl border-2 border-white/50 mx-4 max-w-md w-full">
               <div className="text-center mb-6">
                 <div className="text-6xl mb-4">
-                  {stats.score === stats.totalRounds ? "🏆" : stats.score >= 5 ? "🎉" : "👍"}
+                  {stats.score === stats.totalRounds
+                    ? "🏆"
+                    : stats.score >= 5
+                    ? "🎉"
+                    : "👍"}
                 </div>
                 <h2 className="text-2xl font-bold text-green-700 mb-2">
                   Great Job!
@@ -488,21 +522,43 @@ export const LetterSoundMatcher = () => {
               </div>
 
               <div className="text-center space-y-3">
-                <Button
-                  onClick={resetGame}
-                  size="lg"
-                  className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl w-full"
-                >
-                  Play Again
-                </Button>
-                
-                <Button
-                  onClick={() => navigate("/")}
-                  variant="ghost"
-                  className="text-gray-600 hover:text-gray-800"
-                >
-                  Back to Games
-                </Button>
+                {gameRedirect.isInRedirectFlow ? (
+                  <>
+                    <Button
+                      onClick={gameRedirect.handleGoToNextGame}
+                      size="lg"
+                      className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl w-full"
+                    >
+                      {gameRedirect.isLastGame
+                        ? "Finish All Games"
+                        : "Go to Next Game"}
+                    </Button>
+                    <Button
+                      onClick={resetGame}
+                      variant="outline"
+                      className="text-gray-600 hover:text-gray-800 w-full"
+                    >
+                      Play Again
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      onClick={resetGame}
+                      size="lg"
+                      className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl w-full"
+                    >
+                      Play Again
+                    </Button>
+                    <Button
+                      onClick={() => navigate("/")}
+                      variant="ghost"
+                      className="text-gray-600 hover:text-gray-800"
+                    >
+                      Back to Games
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>
