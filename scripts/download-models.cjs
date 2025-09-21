@@ -1,2 +1,1 @@
-// Download models script - placeholder for face detection models
-console.log("Model download script executed - models available in public/models/");
+console.log("Models download script placeholder - no models needed for current setup");
