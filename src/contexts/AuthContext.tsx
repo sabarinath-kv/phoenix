@@ -10,6 +10,7 @@ import {
   type User as ApiUser,
   type SignupRequest,
 } from "@/api/auth";
+import { createRoomAndToken, LivekitTokenResponse } from "@/api/apis";
 
 type User = ApiUser;
 
@@ -17,6 +18,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  livekitTokenResponse: LivekitTokenResponse | null;
   login: (email: string, password: string) => Promise<void>;
   signup: (userData: SignupData) => Promise<void>;
   logout: () => void;
@@ -42,9 +44,10 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [livekitTokenResponse, setLivekitTokenResponse] = useState<LivekitTokenResponse | null>(null);
 
   const isAuthenticated = !!user;
-
+  console.log(livekitTokenResponse)
   // Check for existing auth token on app load
   useEffect(() => {
     const checkAuthStatus = () => {
@@ -53,6 +56,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // You might want to validate the token with the server here
         // For now, we'll just check if it exists
         const userData = localStorage.getItem("userData");
+        const livekitTokenResponse = localStorage.getItem("livekitTokenResponse");
         if (userData) {
           try {
             setUser(JSON.parse(userData));
@@ -60,8 +64,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             console.error("Error parsing user data:", error);
             localStorage.removeItem("authToken");
             localStorage.removeItem("userData");
+            localStorage.removeItem("livekitTokenResponse");
           }
         }
+        if (livekitTokenResponse) {
+          try {
+            setLivekitTokenResponse(JSON.parse(livekitTokenResponse));
+          } catch (error) {
+            localStorage.removeItem("livekitTokenResponse");
+          }
+        }
+        console.log("livekitTokenResponse", livekitTokenResponse);
       }
       setIsLoading(false);
     };
@@ -72,11 +85,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string): Promise<void> => {
     try {
       const response = await authService.login({ email, password });
+      const livekitTokenResponse = await createRoomAndToken(response.access_token);
 
       // Store auth token and user data
       localStorage.setItem("authToken", response.access_token);
       localStorage.setItem("userData", JSON.stringify(response.user));
-
+      localStorage.setItem("livekitTokenResponse", JSON.stringify(livekitTokenResponse));
+      setLivekitTokenResponse(livekitTokenResponse);
       setUser(response.user);
     } catch (error) {
       throw error;
@@ -95,12 +110,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = () => {
     localStorage.removeItem("authToken");
     localStorage.removeItem("userData");
+    localStorage.removeItem("livekitTokenResponse");
+    setLivekitTokenResponse(null);
     setUser(null);
   };
 
   const value: AuthContextType = {
     user,
     isAuthenticated,
+    livekitTokenResponse,
     isLoading,
     login,
     signup,

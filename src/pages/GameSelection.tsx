@@ -3,7 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FaceDetectionTest } from "@/components/FaceDetectionTest";
 import { Chip } from "@/components/ui/chip";
-import { Mic, MessageCircle } from "lucide-react";
+import { Mic, MessageCircle, LogOut } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import ParentCompanionAI from './ParentCompanionAI';
 
 interface GameCard {
@@ -101,6 +102,7 @@ const games: GameCard[] = [
 
 export const GameSelection = () => {
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const handleGameClick = (game: GameCard) => {
     if (game.isImplemented && game.route) {
@@ -108,18 +110,39 @@ export const GameSelection = () => {
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="bg-gradient-primary shadow-soft border-b border-border">
         <div className="container mx-auto px-6 py-8">
-          <div className="text-center">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3">
-              Fun Learning Games
-            </h1>
-            <p className="text-white/90 text-lg max-w-2xl mx-auto">
-              Choose a game to play and learn together in a safe, engaging environment
-            </p>
+          <div className="relative">
+            {/* Logout Button */}
+            <div className="absolute top-0 right-0">
+              <Button
+                onClick={handleLogout}
+                variant="ghost"
+                size="icon"
+                className="text-white hover:bg-white/20 hover:text-white transition-colors"
+                title="Logout"
+              >
+                <LogOut className="w-5 h-5" />
+              </Button>
+            </div>
+            
+            {/* Header Content */}
+            <div className="text-center">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3">
+                Fun Learning Games
+              </h1>
+              <p className="text-white/90 text-lg max-w-2xl mx-auto">
+                Choose a game to play and learn together in a safe, engaging environment
+              </p>
+            </div>
           </div>
         </div>
       </header>
