@@ -1,26 +1,37 @@
-import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Link, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { useAuth } from '@/contexts/AuthContext';
-import { Loader2, Eye, EyeOff } from 'lucide-react';
+import React, { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Link, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAuth } from "@/contexts/AuthContext";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 
-const signupSchema = z.object({
-  full_name: z.string().min(2, 'Full name must be at least 2 characters'),
-  email: z.string().email('Please enter a valid email address'),
-  phone: z.string().min(10, 'Phone number must be at least 10 digits').regex(/^\+?[\d\s-()]+$/, 'Please enter a valid phone number'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ["confirmPassword"],
-});
+const signupSchema = z
+  .object({
+    full_name: z.string().min(2, "Full name must be at least 2 characters"),
+    email: z.string().email("Please enter a valid email address"),
+    phone: z
+      .string()
+      .min(10, "Phone number must be at least 10 digits")
+      .regex(/^\+?[\d\s-()]+$/, "Please enter a valid phone number"),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
 
 type SignupFormData = z.infer<typeof signupSchema>;
 
@@ -30,7 +41,7 @@ export const Signup: React.FC = () => {
   const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
+
   const { signup } = useAuth();
   const navigate = useNavigate();
 
@@ -52,16 +63,21 @@ export const Signup: React.FC = () => {
         email: data.email,
         phone: data.phone,
         password: data.password,
+        metadata: {
+          isOnboarded: false,
+        },
       });
-      
+
       setSuccess(true);
-      
+
       // Redirect to login after 2 seconds
       setTimeout(() => {
-        navigate('/login');
+        navigate("/login");
       }, 2000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred during signup');
+      setError(
+        err instanceof Error ? err.message : "An error occurred during signup"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -74,13 +90,26 @@ export const Signup: React.FC = () => {
           <CardContent className="pt-6">
             <div className="text-center">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                <svg
+                  className="w-8 h-8 text-green-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
               </div>
-              <h2 className="text-2xl font-semibold text-gray-900 mb-2">Account Created!</h2>
+              <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+                Account Created!
+              </h2>
               <p className="text-gray-600 mb-4">
-                Your account has been successfully created. Redirecting to login...
+                Your account has been successfully created. Redirecting to
+                login...
               </p>
             </div>
           </CardContent>
@@ -93,7 +122,9 @@ export const Signup: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-semibold text-center">Create Account</CardTitle>
+          <CardTitle className="text-2xl font-semibold text-center">
+            Create Account
+          </CardTitle>
           <CardDescription className="text-center">
             Enter your details to create your account
           </CardDescription>
@@ -112,11 +143,13 @@ export const Signup: React.FC = () => {
                 id="full_name"
                 type="text"
                 placeholder="John Doe"
-                {...register('full_name')}
-                className={errors.full_name ? 'border-red-500' : ''}
+                {...register("full_name")}
+                className={errors.full_name ? "border-red-500" : ""}
               />
               {errors.full_name && (
-                <p className="text-sm text-red-500">{errors.full_name.message}</p>
+                <p className="text-sm text-red-500">
+                  {errors.full_name.message}
+                </p>
               )}
             </div>
 
@@ -126,8 +159,8 @@ export const Signup: React.FC = () => {
                 id="email"
                 type="email"
                 placeholder="john@example.com"
-                {...register('email')}
-                className={errors.email ? 'border-red-500' : ''}
+                {...register("email")}
+                className={errors.email ? "border-red-500" : ""}
               />
               {errors.email && (
                 <p className="text-sm text-red-500">{errors.email.message}</p>
@@ -140,8 +173,8 @@ export const Signup: React.FC = () => {
                 id="phone"
                 type="tel"
                 placeholder="+1 (555) 123-4567"
-                {...register('phone')}
-                className={errors.phone ? 'border-red-500' : ''}
+                {...register("phone")}
+                className={errors.phone ? "border-red-500" : ""}
               />
               {errors.phone && (
                 <p className="text-sm text-red-500">{errors.phone.message}</p>
@@ -153,10 +186,10 @@ export const Signup: React.FC = () => {
               <div className="relative">
                 <Input
                   id="password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  {...register('password')}
-                  className={errors.password ? 'border-red-500 pr-10' : 'pr-10'}
+                  {...register("password")}
+                  className={errors.password ? "border-red-500 pr-10" : "pr-10"}
                 />
                 <button
                   type="button"
@@ -171,7 +204,9 @@ export const Signup: React.FC = () => {
                 </button>
               </div>
               {errors.password && (
-                <p className="text-sm text-red-500">{errors.password.message}</p>
+                <p className="text-sm text-red-500">
+                  {errors.password.message}
+                </p>
               )}
             </div>
 
@@ -180,10 +215,12 @@ export const Signup: React.FC = () => {
               <div className="relative">
                 <Input
                   id="confirmPassword"
-                  type={showConfirmPassword ? 'text' : 'password'}
+                  type={showConfirmPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  {...register('confirmPassword')}
-                  className={errors.confirmPassword ? 'border-red-500 pr-10' : 'pr-10'}
+                  {...register("confirmPassword")}
+                  className={
+                    errors.confirmPassword ? "border-red-500 pr-10" : "pr-10"
+                  }
                 />
                 <button
                   type="button"
@@ -198,7 +235,9 @@ export const Signup: React.FC = () => {
                 </button>
               </div>
               {errors.confirmPassword && (
-                <p className="text-sm text-red-500">{errors.confirmPassword.message}</p>
+                <p className="text-sm text-red-500">
+                  {errors.confirmPassword.message}
+                </p>
               )}
             </div>
 
@@ -209,15 +248,18 @@ export const Signup: React.FC = () => {
                   Creating Account...
                 </>
               ) : (
-                'Create Account'
+                "Create Account"
               )}
             </Button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              Already have an account?{' '}
-              <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">
+              Already have an account?{" "}
+              <Link
+                to="/login"
+                className="font-medium text-blue-600 hover:text-blue-500"
+              >
                 Sign in
               </Link>
             </p>
@@ -226,4 +268,4 @@ export const Signup: React.FC = () => {
       </Card>
     </div>
   );
-}; 
+};

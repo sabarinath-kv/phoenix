@@ -17,6 +17,7 @@ import { TempleRun } from "./pages/games/TempleRun";
 import { LetterReversalSpotter } from "./pages/games/LetterReversalSpotter";
 import ParentCompanionAI from "./pages/ParentCompanionAI";
 import NotFound from "./pages/NotFound";
+import { Homepage } from "./pages/Homepage";
 
 const queryClient = new QueryClient();
 
@@ -31,18 +32,86 @@ const App = () => (
             {/* Public routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
-            
+
             {/* Protected routes */}
-            <Route path="/" element={<ProtectedRoute><GameSelection /></ProtectedRoute>} />
-            <Route path="/emotion-detector" element={<ProtectedRoute><CameraEmoji /></ProtectedRoute>} />
-            <Route path="/symbol-spotter" element={<ProtectedRoute><SymbolSpotter /></ProtectedRoute>} />
-            <Route path="/bubble-popping" element={<ProtectedRoute><BubblePopping /></ProtectedRoute>} />
-            <Route path="/games/freeze-cat" element={<ProtectedRoute><FreezeCat /></ProtectedRoute>} />
-            <Route path="/games/letter-sound-matcher" element={<ProtectedRoute><LetterSoundMatcher /></ProtectedRoute>} />
-            <Route path="/games/temple-run" element={<ProtectedRoute><TempleRun /></ProtectedRoute>} />
-            <Route path="/games/letter-reversal-spotter" element={<ProtectedRoute><LetterReversalSpotter /></ProtectedRoute>} />
-            <Route path="/parent-companion" element={<ProtectedRoute><ParentCompanionAI /></ProtectedRoute>} />
-            
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <GameSelection />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/emotion-detector"
+              element={
+                <ProtectedRoute>
+                  <CameraEmoji />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/symbol-spotter"
+              element={
+                <ProtectedRoute>
+                  <SymbolSpotter />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/bubble-popping"
+              element={
+                <ProtectedRoute>
+                  <BubblePopping />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/games/freeze-cat"
+              element={
+                <ProtectedRoute>
+                  <FreezeCat />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/games/letter-sound-matcher"
+              element={
+                <ProtectedRoute>
+                  <LetterSoundMatcher />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/games/temple-run"
+              element={
+                <ProtectedRoute>
+                  <TempleRun />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/games/letter-reversal-spotter"
+              element={
+                <ProtectedRoute>
+                  <LetterReversalSpotter />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/parent-companion"
+              element={
+                <ProtectedRoute>
+                  <ParentCompanionAI />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/homepage" element={
+              <ProtectedRoute>
+                <Homepage />
+              </ProtectedRoute>
+            } />
+
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

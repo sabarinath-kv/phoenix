@@ -1,4 +1,4 @@
-export const API_BASE_URL = "https://api.example.com/api/v1";
+export const API_BASE_URL = "https://phoenix-be-j9yt.onrender.com/api/v1";
 
 export const API_ENDPOINTS = {
   USERS: "/users",
