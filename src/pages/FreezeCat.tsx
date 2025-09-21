@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useGameRedirect } from "@/hooks/useGameRedirect";
 import { FREEZE_CAT, ANIMALS } from "@/constants/game";
 
 type GameState = "instructions" | "countdown" | "playing" | "completed";
@@ -23,16 +24,21 @@ interface GameStats {
 
 export const FreezeCat = () => {
   const navigate = useNavigate();
+  const gameRedirect = useGameRedirect("freeze-cat");
   const [gameState, setGameState] = useState<GameState>("instructions");
-  const [countdown, setCountdown] = useState<number>(FREEZE_CAT.COUNTDOWN_DURATION);
-  const [gameTimeLeft, setGameTimeLeft] = useState<number>(FREEZE_CAT.GAME_DURATION);
+  const [countdown, setCountdown] = useState<number>(
+    FREEZE_CAT.COUNTDOWN_DURATION
+  );
+  const [gameTimeLeft, setGameTimeLeft] = useState<number>(
+    FREEZE_CAT.GAME_DURATION
+  );
   // Removed difficulty level - keeping game simple
   const [currentAnimals, setCurrentAnimals] = useState<GridAnimal[]>([]);
   const [stats, setStats] = useState<GameStats>({
     score: 0,
     correctTaps: 0,
     incorrectTaps: 0,
-    totalTaps: 0
+    totalTaps: 0,
   });
 
   // Refs for cleanup
@@ -48,10 +54,11 @@ export const FreezeCat = () => {
 
   // TODO: Add confetti animation when winning
   // TODO: Add sound effects integration with better audio management
-  
+
   // Audio feedback functions
   const playCorrectSound = useCallback(() => {
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const audioContext = new (window.AudioContext ||
+      (window as any).webkitAudioContext)();
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
 
@@ -62,14 +69,18 @@ export const FreezeCat = () => {
     oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1); // E5
 
     gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+    gainNode.gain.exponentialRampToValueAtTime(
+      0.01,
+      audioContext.currentTime + 0.3
+    );
 
     oscillator.start(audioContext.currentTime);
     oscillator.stop(audioContext.currentTime + 0.3);
   }, []);
 
   const playWrongSound = useCallback(() => {
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const audioContext = new (window.AudioContext ||
+      (window as any).webkitAudioContext)();
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
 
@@ -80,7 +91,10 @@ export const FreezeCat = () => {
     oscillator.frequency.setValueAtTime(196, audioContext.currentTime + 0.1); // G3
 
     gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+    gainNode.gain.exponentialRampToValueAtTime(
+      0.01,
+      audioContext.currentTime + 0.4
+    );
 
     oscillator.start(audioContext.currentTime);
     oscillator.stop(audioContext.currentTime + 0.4);
@@ -97,36 +111,36 @@ export const FreezeCat = () => {
   const spawnAnimals = useCallback(() => {
     if (gameState !== "playing") return;
 
-    setCurrentAnimals(prev => {
+    setCurrentAnimals((prev) => {
       // Remove animals that have been visible for too long
       const now = Date.now();
-      const activeAnimals = prev.filter(animal => 
-        now - animal.showTime < FREEZE_CAT.ANIMAL_DISPLAY_TIME
+      const activeAnimals = prev.filter(
+        (animal) => now - animal.showTime < FREEZE_CAT.ANIMAL_DISPLAY_TIME
       );
 
       // Clear all animals and spawn new batch
       const newAnimals: GridAnimal[] = [];
-      
+
       // Randomly decide how many animals to spawn (1, 2, or 3)
       const numToSpawn = Math.floor(Math.random() * 3) + 1; // 1, 2, or 3
-      
+
       // Get available positions (all 9 positions)
       const allPositions = Array.from({ length: 9 }, (_, i) => i);
       const shuffledPositions = allPositions.sort(() => Math.random() - 0.5);
-      
+
       for (let i = 0; i < numToSpawn; i++) {
         // Cats are majority - 70% chance for cat, 30% for other animals
         const shouldSpawnCat = Math.random() < 0.7;
-        
+
         const newAnimal: GridAnimal = {
           id: animalIdCounter.current++,
           animal: shouldSpawnCat ? ANIMALS.CAT : getRandomAnimal(),
           position: shuffledPositions[i],
           isCat: shouldSpawnCat,
           isVisible: true,
-          showTime: now
+          showTime: now,
         };
-        
+
         newAnimals.push(newAnimal);
       }
 
@@ -141,32 +155,35 @@ export const FreezeCat = () => {
   }, [gameState, getCurrentAppearInterval, getRandomAnimal]);
 
   // Handle animal tap
-  const handleAnimalTap = useCallback((animal: GridAnimal) => {
-    if (gameState !== "playing") return;
+  const handleAnimalTap = useCallback(
+    (animal: GridAnimal) => {
+      if (gameState !== "playing") return;
 
-    // Simple score calculation - no complex difficulty logic
-    setStats(prev => {
-      const newStats = { ...prev };
-      newStats.totalTaps++;
+      // Simple score calculation - no complex difficulty logic
+      setStats((prev) => {
+        const newStats = { ...prev };
+        newStats.totalTaps++;
 
-      if (animal.isCat) {
-        // Tapped a cat - penalty!
-        newStats.score = Math.max(0, prev.score - FREEZE_CAT.SCORE_PENALTY);
-        newStats.incorrectTaps++;
-        playWrongSound();
-      } else {
-        // Tapped a good animal - reward!
-        newStats.score = prev.score + FREEZE_CAT.SCORE_INCREMENT;
-        newStats.correctTaps++;
-        playCorrectSound();
-      }
+        if (animal.isCat) {
+          // Tapped a cat - penalty!
+          newStats.score = Math.max(0, prev.score - FREEZE_CAT.SCORE_PENALTY);
+          newStats.incorrectTaps++;
+          playWrongSound();
+        } else {
+          // Tapped a good animal - reward!
+          newStats.score = prev.score + FREEZE_CAT.SCORE_INCREMENT;
+          newStats.correctTaps++;
+          playCorrectSound();
+        }
 
-      return newStats;
-    });
+        return newStats;
+      });
 
-    // Remove the tapped animal
-    setCurrentAnimals(prev => prev.filter(a => a.id !== animal.id));
-  }, [gameState, playCorrectSound, playWrongSound]);
+      // Remove the tapped animal
+      setCurrentAnimals((prev) => prev.filter((a) => a.id !== animal.id));
+    },
+    [gameState, playCorrectSound, playWrongSound]
+  );
 
   // Start countdown
   const startCountdown = useCallback(() => {
@@ -221,7 +238,7 @@ export const FreezeCat = () => {
       score: 0,
       correctTaps: 0,
       incorrectTaps: 0,
-      totalTaps: 0
+      totalTaps: 0,
     });
     setCurrentAnimals([]);
     setGameTimeLeft(FREEZE_CAT.GAME_DURATION);
@@ -249,7 +266,7 @@ export const FreezeCat = () => {
         score: 0,
         correctTaps: 0,
         incorrectTaps: 0,
-        totalTaps: 0
+        totalTaps: 0,
       });
       setCurrentAnimals([]);
       setGameTimeLeft(FREEZE_CAT.GAME_DURATION);
@@ -317,7 +334,8 @@ export const FreezeCat = () => {
                 Freeze Cat
               </h2>
               <p className="text-purple-600 text-lg">
-                Tap the animals, but don't tap the cats! Watch out - there are many cats!
+                Tap the animals, but don't tap the cats! Watch out - there are
+                many cats!
               </p>
             </div>
 
@@ -351,7 +369,6 @@ export const FreezeCat = () => {
                   </p>
                 </div>
               </div>
-
             </div>
 
             <div className="text-center">
@@ -415,8 +432,10 @@ export const FreezeCat = () => {
         <div className="flex items-center justify-center min-h-[calc(100vh-140px)] p-4">
           <div className="grid grid-cols-3 gap-4 sm:gap-6 md:gap-8 max-w-2xl w-full aspect-square">
             {Array.from({ length: 9 }, (_, index) => {
-              const animal = currentAnimals.find(a => a.position === index && a.isVisible);
-              
+              const animal = currentAnimals.find(
+                (a) => a.position === index && a.isVisible
+              );
+
               return (
                 <div
                   key={index}
@@ -424,8 +443,12 @@ export const FreezeCat = () => {
                     aspect-square rounded-2xl border-4 border-dashed border-purple-300 
                     bg-white/50 backdrop-blur-sm flex items-center justify-center text-4xl sm:text-5xl md:text-6xl
                     transition-all duration-200 cursor-pointer
-                    ${animal ? 'bg-white/80 border-solid scale-105 shadow-lg' : 'hover:bg-white/60'}
-                    ${animal ? 'border-green-400 bg-green-50/80' : ''}
+                    ${
+                      animal
+                        ? "bg-white/80 border-solid scale-105 shadow-lg"
+                        : "hover:bg-white/60"
+                    }
+                    ${animal ? "border-green-400 bg-green-50/80" : ""}
                   `}
                   onClick={() => animal && handleAnimalTap(animal)}
                 >
@@ -444,7 +467,13 @@ export const FreezeCat = () => {
             <div className="relative bg-white/90 backdrop-blur-sm rounded-3xl p-6 sm:p-8 shadow-2xl border-2 border-white/50 mx-4 max-w-md w-full">
               <div className="text-center mb-6">
                 <div className="text-6xl mb-4">
-                  {stats.score >= 100 ? "🏆" : stats.score >= 50 ? "🎉" : stats.score >= 20 ? "👍" : "😅"}
+                  {stats.score >= 100
+                    ? "🏆"
+                    : stats.score >= 50
+                    ? "🎉"
+                    : stats.score >= 20
+                    ? "👍"
+                    : "😅"}
                 </div>
                 <h2 className="text-2xl font-bold text-green-700 mb-2">
                   Game Complete!
@@ -472,36 +501,64 @@ export const FreezeCat = () => {
 
                 <div className="grid grid-cols-3 gap-2 text-center text-sm">
                   <div className="bg-blue-50 rounded-lg p-3">
-                    <div className="font-bold text-blue-700">{stats.correctTaps}</div>
+                    <div className="font-bold text-blue-700">
+                      {stats.correctTaps}
+                    </div>
                     <div className="text-blue-600">Correct</div>
                   </div>
                   <div className="bg-red-50 rounded-lg p-3">
-                    <div className="font-bold text-red-700">{stats.incorrectTaps}</div>
+                    <div className="font-bold text-red-700">
+                      {stats.incorrectTaps}
+                    </div>
                     <div className="text-red-600">Wrong</div>
                   </div>
                   <div className="bg-purple-50 rounded-lg p-3">
-                    <div className="font-bold text-purple-700">{stats.totalTaps}</div>
+                    <div className="font-bold text-purple-700">
+                      {stats.totalTaps}
+                    </div>
                     <div className="text-purple-600">Total</div>
                   </div>
                 </div>
               </div>
 
               <div className="text-center space-y-3">
-                <Button
-                  onClick={resetGame}
-                  size="lg"
-                  className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl w-full"
-                >
-                  Play Again
-                </Button>
-                
-                <Button
-                  onClick={() => navigate("/")}
-                  variant="ghost"
-                  className="text-gray-600 hover:text-gray-800"
-                >
-                  Back to Games
-                </Button>
+                {gameRedirect.isInRedirectFlow ? (
+                  <>
+                    <Button
+                      onClick={gameRedirect.handleGoToNextGame}
+                      size="lg"
+                      className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl w-full"
+                    >
+                      {gameRedirect.isLastGame
+                        ? "Finish All Games"
+                        : "Go to Next Game"}
+                    </Button>
+                    <Button
+                      onClick={resetGame}
+                      variant="outline"
+                      className="text-gray-600 hover:text-gray-800 w-full"
+                    >
+                      Play Again
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      onClick={resetGame}
+                      size="lg"
+                      className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl w-full"
+                    >
+                      Play Again
+                    </Button>
+                    <Button
+                      onClick={() => navigate("/")}
+                      variant="ghost"
+                      className="text-gray-600 hover:text-gray-800"
+                    >
+                      Back to Games
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>

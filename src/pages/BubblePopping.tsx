@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useGameRedirect } from "@/hooks/useGameRedirect";
 
 type GameState = "instructions" | "countdown" | "playing" | "completed";
 
@@ -56,6 +57,7 @@ const MAX_BUBBLE_SIZE = 80;
 
 export const BubblePopping = () => {
   const navigate = useNavigate();
+  const gameRedirect = useGameRedirect('bubble-popping');
   const [gameState, setGameState] = useState<GameState>("instructions");
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
   const [countdown, setCountdown] = useState(COUNTDOWN_DURATION);
@@ -587,22 +589,27 @@ export const BubblePopping = () => {
       )}
 
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-50 to-teal-50 relative overflow-hidden">
-                {/* Header */}
+        {/* Header */}
         <header className="bg-gradient-to-r from-blue-400 via-cyan-400 to-teal-400 text-white shadow-xl relative z-30">
           <div className="container mx-auto px-4 py-4 md:py-6">
             <div className="flex items-center justify-between">
               <Button
-                onClick={() => navigate('/')}
+                onClick={() => navigate("/")}
                 variant="ghost"
                 className="group flex items-center gap-2 text-white/90 hover:text-white hover:bg-white/20 px-4 py-2 rounded-full transition-all duration-300 hover:scale-105 backdrop-blur-sm border border-white/20 hover:border-white/40"
               >
-                <svg 
-                  className="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1" 
-                  fill="none" 
-                  stroke="currentColor" 
+                <svg
+                  className="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1"
+                  fill="none"
+                  stroke="currentColor"
                   viewBox="0 0 24 24"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
                 </svg>
                 <span className="font-medium text-sm">Back to Games</span>
               </Button>
@@ -611,7 +618,7 @@ export const BubblePopping = () => {
               </h1>
               <div className="w-32"></div> {/* Spacer for centering */}
             </div>
-            
+
             {(gameState === "playing" || gameState === "completed") && (
               <div className="flex items-center justify-center mt-4 gap-4">
                 <div className="text-lg font-bold">Score: {metrics.score}</div>
@@ -702,13 +709,41 @@ export const BubblePopping = () => {
                   >
                     View Detailed Metrics
                   </Button>
-                  <Button
-                    onClick={resetGame}
-                    size="lg"
-                    className="w-full bg-gradient-to-r from-blue-400 to-cyan-400 hover:from-blue-500 hover:to-cyan-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl"
-                  >
-                    Play Again
-                  </Button>
+                  {gameRedirect.isInRedirectFlow ? (
+                    <>
+                      <Button
+                        onClick={gameRedirect.handleGoToNextGame}
+                        size="lg"
+                        className="w-full bg-gradient-to-r from-blue-400 to-cyan-400 hover:from-blue-500 hover:to-cyan-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl"
+                      >
+                        {gameRedirect.isLastGame ? 'Finish All Games' : 'Go to Next Game'}
+                      </Button>
+                      <Button
+                        onClick={resetGame}
+                        variant="outline"
+                        className="w-full text-gray-600 hover:text-gray-800"
+                      >
+                        Play Again
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        onClick={resetGame}
+                        size="lg"
+                        className="w-full bg-gradient-to-r from-blue-400 to-cyan-400 hover:from-blue-500 hover:to-cyan-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl"
+                      >
+                        Play Again
+                      </Button>
+                      <Button
+                        onClick={() => navigate("/")}
+                        variant="ghost"
+                        className="w-full text-gray-600 hover:text-gray-800"
+                      >
+                        Back to Games
+                      </Button>
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -756,13 +791,41 @@ export const BubblePopping = () => {
                   >
                     Back to Score
                   </Button>
-                  <Button
-                    onClick={resetGame}
-                    size="lg"
-                    className="w-full bg-gradient-to-r from-blue-400 to-cyan-400 hover:from-blue-500 hover:to-cyan-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl"
-                  >
-                    Play Again
-                  </Button>
+                  {gameRedirect.isInRedirectFlow ? (
+                    <>
+                      <Button
+                        onClick={gameRedirect.handleGoToNextGame}
+                        size="lg"
+                        className="w-full bg-gradient-to-r from-blue-400 to-cyan-400 hover:from-blue-500 hover:to-cyan-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl"
+                      >
+                        {gameRedirect.isLastGame ? 'Finish All Games' : 'Go to Next Game'}
+                      </Button>
+                      <Button
+                        onClick={resetGame}
+                        variant="outline"
+                        className="w-full text-gray-600 hover:text-gray-800"
+                      >
+                        Play Again
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        onClick={resetGame}
+                        size="lg"
+                        className="w-full bg-gradient-to-r from-blue-400 to-cyan-400 hover:from-blue-500 hover:to-cyan-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl"
+                      >
+                        Play Again
+                      </Button>
+                      <Button
+                        onClick={() => navigate("/")}
+                        variant="ghost"
+                        className="w-full text-gray-600 hover:text-gray-800"
+                      >
+                        Back to Games
+                      </Button>
+                    </>
+                  )}
                 </div>
               )}
             </div>
