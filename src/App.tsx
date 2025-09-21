@@ -16,6 +16,7 @@ import { LetterSoundMatcher } from "./pages/LetterSoundMatcher";
 import { TempleRun } from "./pages/games/TempleRun";
 import { LetterReversalSpotter } from "./pages/games/LetterReversalSpotter";
 import ParentCompanionAI from "./pages/ParentCompanionAI";
+import VoiceChat from "./pages/VoiceChat";
 import NotFound from "./pages/NotFound";
 import { Homepage } from "./pages/Homepage";
 
@@ -55,6 +56,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <SymbolSpotter />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/voice-chat"
+              element={
+                <ProtectedRoute>
+                  <VoiceChat />
                 </ProtectedRoute>
               }
             />

@@ -1,7 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { FaceDetectionTest } from "@/components/FaceDetectionTest";
 import { Chip } from "@/components/ui/chip";
+import { Mic, MessageCircle, LogOut } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import ParentCompanionAI from './ParentCompanionAI';
 
 interface GameCard {
@@ -99,6 +102,7 @@ const games: GameCard[] = [
 
 export const GameSelection = () => {
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const handleGameClick = (game: GameCard) => {
     if (game.isImplemented && game.route) {
@@ -106,18 +110,39 @@ export const GameSelection = () => {
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="bg-gradient-primary shadow-soft border-b border-border">
         <div className="container mx-auto px-6 py-8">
-          <div className="text-center">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3">
-              Fun Learning Games
-            </h1>
-            <p className="text-white/90 text-lg max-w-2xl mx-auto">
-              Choose a game to play and learn together in a safe, engaging environment
-            </p>
+          <div className="relative">
+            {/* Logout Button */}
+            <div className="absolute top-0 right-0">
+              <Button
+                onClick={handleLogout}
+                variant="ghost"
+                size="icon"
+                className="text-white hover:bg-white/20 hover:text-white transition-colors"
+                title="Logout"
+              >
+                <LogOut className="w-5 h-5" />
+              </Button>
+            </div>
+            
+            {/* Header Content */}
+            <div className="text-center">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3">
+                Fun Learning Games
+              </h1>
+              <p className="text-white/90 text-lg max-w-2xl mx-auto">
+                Choose a game to play and learn together in a safe, engaging environment
+              </p>
+            </div>
           </div>
         </div>
       </header>
@@ -130,9 +155,26 @@ export const GameSelection = () => {
             <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">
               Welcome to Learning Time
             </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto mb-8">
               Pick a game and let's have fun learning together. Each game is designed to help children develop important skills while having fun.
             </p>
+            
+            {/* Voice Chat Feature Button */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+              <Button
+                onClick={() => navigate('/voice-chat')}
+                size="lg"
+                className="bg-gradient-primary hover:opacity-90 text-white px-8 py-4 text-lg font-semibold shadow-hover group"
+              >
+                <Mic className="w-6 h-6 mr-3 group-hover:animate-pulse" />
+                Start Voice Chat
+              </Button>
+              
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <MessageCircle className="w-4 h-4" />
+                <span>Talk with our AI companion!</span>
+              </div>
+            </div>
           </div>
 
           {/* Game Cards Grid */}
