@@ -1,16 +1,14 @@
 import {
-    ControlBar,
     RoomAudioRenderer,
     RoomContext,
     useParticipants,
     useTracks,
-    useConnectionState,
   } from '@livekit/components-react';
-  import { Room, Track, RoomEvent, ConnectionState, RemoteParticipant, LocalParticipant } from 'livekit-client';
+  import { Room, Track, RoomEvent, ConnectionState, RemoteParticipant } from 'livekit-client';
   import '@livekit/components-styles';
-  import { useEffect, useState, useRef } from 'react';
-import { Mic, MicOff, Volume2, VolumeX, MessageSquare, Bot, Users, Wifi, WifiOff, Speaker } from 'lucide-react';
+  import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { VoiceChatUI } from '@/components/VoiceChatUI';
   
 export default function VoiceChatPage() {
   const [room] = useState(
@@ -22,11 +20,19 @@ export default function VoiceChatPage() {
   );
   const [connected, setConnected] = useState(false);
   const [micEnabled, setMicEnabled] = useState(false);
-  const [agentSpeaking, setAgentSpeaking] = useState(false);
+  const [agentSpeaking, setAgentSpeaking] = useState(true);
+  const [agentConnected, setAgentConnected] = useState(false);
   const [connectionState, setConnectionState] = useState<ConnectionState>(ConnectionState.Disconnected);
-
-  const { user, getLivekitTokenResponse, livekitTokenResponse,refreshLivekitTokenResponse } = useAuth();
-
+  const [autoMicEnabled, setAutoMicEnabled] = useState(true); // Auto-enable mic in listening state
+  
+  // New state for UI management
+  const [aiTranscript, setAiTranscript] = useState('');
+  const [userTranscript, setUserTranscript] = useState('');
+  const [chatHistory, setChatHistory] = useState<Array<{ role: 'ai' | 'user'; message: string; timestamp: Date }>>([]);
+  const [isListening, setIsListening] = useState(false);
+  const lastCallTime = useRef(0);
+  const { user, getLivekitTokenResponse, livekitTokenResponse, refreshLivekitTokenResponse } = useAuth();
+  const agentId = useRef('');
 
   useEffect(() => {
     getLivekitTokenResponse();
@@ -105,6 +111,13 @@ export default function VoiceChatPage() {
         metadata: participant.metadata,
         sid: participant.sid
       });
+      
+      // Check if this is the agent
+      if (participant.identity === 'agent' || participant.name === 'agent' || !participant.isLocal) {
+        agentId.current = participant.identity;
+        setAgentConnected(true);
+        console.log('🤖 [Agent] Agent connected and ready');
+      }
     };
 
     const handleParticipantDisconnected = (participant: RemoteParticipant) => {
@@ -113,6 +126,14 @@ export default function VoiceChatPage() {
         name: participant.name,
         sid: participant.sid
       });
+      
+      // Check if this was the agent
+      if (participant.identity === 'agent' || participant.name === 'agent' || !participant.isLocal) {
+        setAgentConnected(false);
+        setAgentSpeaking(false);
+        setIsListening(false);
+        console.log('🤖 [Agent] Agent disconnected');
+      }
     };
 
     // Audio track events
@@ -122,29 +143,61 @@ export default function VoiceChatPage() {
         source: track.source,
         participant: participant.identity,
         enabled: track.enabled,
-        muted: track.muted
+        muted: track.muted,
+        isAgent: !participant.isLocal
       });
 
-      if (track.kind === Track.Kind.Audio) {
-        console.log('🔊 [LiveKit] Audio track from agent received');
+      if (track.kind === Track.Kind.Audio && !participant.isLocal) {
+        console.log('🔊 [LiveKit] Agent audio track received - Agent is starting to speak');
+        
+        // Save any pending user transcript before agent starts speaking
+        if (userTranscript.trim()) {
+          console.log('💬 [Transcript] Saving user transcript before agent speaks:', userTranscript);
+          setChatHistory(prev => [...prev, {
+            role: 'user',
+            message: userTranscript.trim(),
+            timestamp: new Date()
+          }]);
+          setUserTranscript('');
+        }
+        
+        // Disable microphone when agent starts speaking
+        if (micEnabled) {
+          console.log('🎤 [LiveKit] Disabling microphone - agent is speaking');
+          setMicEnabled(false);
+          room.localParticipant.setMicrophoneEnabled(false);
+        }
+        
+        // Set agent speaking state and switch UI
         setAgentSpeaking(true);
+        setIsListening(false);
+        console.log('🎯 [UI State] Agent started speaking - switching to AI speaking UI');
         
         // Ensure audio context is started and track is properly attached
         const ensureAudioPlayback = async () => {
           try {
-            // Start audio if not already started
-            if (!room.canPlaybackAudio) {
-              console.log('🔊 [LiveKit] Starting audio context...');
-              await room.startAudio();
-            }
+            // Force start audio context
+            console.log('🔊 [LiveKit] Starting audio context...');
+            await room.startAudio();
             
-            // Attach the audio track
+            // Attach the audio track to DOM
             console.log('🔊 [LiveKit] Attaching audio track...');
             const audioElement = track.attach();
             if (audioElement) {
               audioElement.autoplay = true;
               audioElement.playsInline = true;
-              console.log('🔊 [LiveKit] Audio element configured for playback');
+              audioElement.volume = 1.0;
+              
+              // Append to body to ensure it plays
+              document.body.appendChild(audioElement);
+              
+              // Force play
+              try {
+                await audioElement.play();
+                console.log('🔊 [LiveKit] Audio element playing successfully');
+              } catch (playError) {
+                console.error('🔊 [LiveKit] Audio play failed:', playError);
+              }
             }
           } catch (error) {
             console.error('🔊 [LiveKit] Error setting up audio playback:', error);
@@ -159,12 +212,43 @@ export default function VoiceChatPage() {
       console.log('🔇 [LiveKit] Track unsubscribed:', {
         kind: track.kind,
         source: track.source,
-        participant: participant.identity
+        participant: participant.identity,
+        isAgent: !participant.isLocal
       });
 
-      if (track.kind === Track.Kind.Audio) {
-        console.log('🔇 [LiveKit] Agent audio stopped');
+      if (track.kind === Track.Kind.Audio && !participant.isLocal) {
+        console.log('🔇 [LiveKit] Agent audio stopped - Agent finished speaking');
+        
+        // Save AI transcript to chat history if we have one
+        if (aiTranscript.trim()) {
+          console.log('💬 [Transcript] Saving AI transcript after agent stops speaking:', aiTranscript);
+          setChatHistory(prev => [...prev, {
+            role: 'ai',
+            message: aiTranscript.trim(),
+            timestamp: new Date()
+          }]);
+          setAiTranscript('');
+        }
+        
+        // Set agent speaking to false
         setAgentSpeaking(false);
+        
+        // Switch to listening mode if agent is still connected
+        if (agentConnected) {
+          console.log('🎯 [UI State] Agent stopped speaking - switching to listening UI');
+          setIsListening(true);
+          
+          // Auto-enable microphone if setting is enabled (with small delay for state update)
+          if (autoMicEnabled) {
+            setTimeout(() => {
+              console.log('🎤 [Auto-Mic] Auto-enabling microphone after agent stops speaking');
+              handleAutoMicEnable();
+            }, 200);
+          }
+        } else {
+          console.log('🎯 [UI State] Agent disconnected - not switching to listening mode');
+          setIsListening(false);
+        }
       }
     };
 
@@ -188,8 +272,42 @@ export default function VoiceChatPage() {
       const message = new TextDecoder().decode(payload);
       console.log('📨 [LiveKit] Data received:', {
         message,
-        from: participant?.identity || 'unknown'
+        from: participant?.identity || 'unknown',
+        isFromAgent: participant ? !participant.isLocal : false
       });
+      
+      try {
+        const data = JSON.parse(message);
+        if (data.type === 'transcript') {
+          if (participant && !participant.isLocal) {
+            // AI transcript from agent
+            console.log('💬 [Transcript] AI transcript received:', data.text);
+            setAiTranscript(data.text || '');
+          } else {
+            // User transcript (from local participant or system)
+            console.log('💬 [Transcript] User transcript received:', data.text);
+            // setUserTranscript(data.text || '');
+          }
+        } else if (data.type === 'agent_speaking_start') {
+          console.log('🎯 [Agent State] Agent speaking start signal received');
+          setAgentSpeaking(true);
+          setIsListening(false);
+        } else if (data.type === 'agent_speaking_end') {
+          console.log('🎯 [Agent State] Agent speaking end signal received');
+          setAgentSpeaking(false);
+          if (agentConnected) {
+            setIsListening(true);
+          }
+        }
+      } catch (error) {
+        console.log('📨 [LiveKit] Non-JSON data received:', message);
+        // Handle plain text messages
+        if (participant && !participant.isLocal) {
+          // Treat as AI transcript
+          console.log('💬 [Transcript] Plain text from agent:', message);
+          setAiTranscript(message);
+        }
+      }
     };
 
     const handleAudioPlaybackChanged = () => {
@@ -211,8 +329,48 @@ export default function VoiceChatPage() {
     room.on(RoomEvent.TrackUnsubscribed, handleTrackUnsubscribed);
     room.on(RoomEvent.TrackMuted, handleTrackMuted);
     room.on(RoomEvent.TrackUnmuted, handleTrackUnmuted);
-    room.on(RoomEvent.DataReceived, handleDataReceived);
+    // room.on(RoomEvent.DataReceived, handleDataReceived);
     room.on(RoomEvent.AudioPlaybackStatusChanged, handleAudioPlaybackChanged);
+
+    room.on(RoomEvent.ActiveSpeakersChanged, (data) => {
+        const now = Date.now();
+        if (now - lastCallTime.current < 2000) {
+            return; // Skip if less than 1 second since last execution
+        }
+        lastCallTime.current = now;
+
+        if(data.length > 0 && data[0].identity === agentId.current) {
+            setAgentSpeaking(true);
+            setIsListening(false);
+        } else {
+            setTimeout(() => {
+                setAgentSpeaking(false);
+                setIsListening(true);
+            }, 1000);
+        }
+        console.log('🎤 [LiveKit] Active speakers changed:', data);
+    });
+
+    room.on(RoomEvent.LocalAudioSilenceDetected, (data) => {
+        const now = Date.now();
+        if (now - lastCallTime.current < 5000) {
+            return; // Skip if less than 1 second since last execution
+        }
+        lastCallTime.current = now;
+
+        if(data.isLocal) {
+            setAgentSpeaking(true);
+            setIsListening(false);
+        }
+        console.log('🎤 [LiveKit] Active speakers changed:', data);
+    });
+
+    room.on(RoomEvent.TranscriptionReceived, (data) => {
+        if (data.length > 0) {  
+            setAiTranscript(data[0].text);
+    }
+        console.log('🎤 [LiveKit] Transcription received:', data);
+    });
 
     // Log initial room state
     console.log('📊 [LiveKit] Initial room state:', {
@@ -233,212 +391,194 @@ export default function VoiceChatPage() {
       room.off(RoomEvent.TrackUnsubscribed, handleTrackUnsubscribed);
       room.off(RoomEvent.TrackMuted, handleTrackMuted);
       room.off(RoomEvent.TrackUnmuted, handleTrackUnmuted);
-      room.off(RoomEvent.DataReceived, handleDataReceived);
+    //   room.off(RoomEvent.DataReceived, handleDataReceived);
       room.off(RoomEvent.AudioPlaybackStatusChanged, handleAudioPlaybackChanged);
     };
   }, [room]);
 
+  // State logging and management
+  useEffect(() => {
+    console.log('🎯 [UI State] Current state:', {
+      connected,
+      agentConnected,
+      agentSpeaking,
+      isListening,
+      micEnabled,
+      autoMicEnabled,
+      hasAiTranscript: !!aiTranscript,
+      hasUserTranscript: !!userTranscript,
+      aiTranscriptLength: aiTranscript.length,
+      userTranscriptLength: userTranscript.length,
+      chatHistoryLength: chatHistory.length,
+      connectionState: connectionState,
+      roomState: room.state,
+      canPlaybackAudio: room.canPlaybackAudio,
+      numParticipants: room.numParticipants
+    });
+    
+    // Log the expected UI state
+    if (agentSpeaking) {
+      console.log('🎯 [UI Expected] Should show: AI Speaking UI with transcript');
+    } else if (isListening) {
+      console.log('🎯 [UI Expected] Should show: Listening UI with Wigloo illustration');
+    } else {
+      console.log('🎯 [UI Expected] Should show: Default/waiting state');
+    }
+  }, [connected, agentConnected, agentSpeaking, isListening, micEnabled, autoMicEnabled, aiTranscript, userTranscript, chatHistory, connectionState, room]);
+
+  // Auto-switch to listening when agent connects and is not speaking
+  useEffect(() => {
+    if (agentConnected && !agentSpeaking && connected) {
+      setIsListening(true);
+      console.log('🎯 [UI State] Agent connected and not speaking - auto-switching to listening mode');
+      
+      // Auto-enable microphone if setting is enabled
+      if (autoMicEnabled && !micEnabled) {
+        handleAutoMicEnable();
+      }
+    }
+  }, [agentConnected, agentSpeaking, connected, autoMicEnabled]);
+
+  // Auto-enable microphone when entering listening state
+  const handleAutoMicEnable = async () => {
+    if (autoMicEnabled && !agentSpeaking && agentConnected) {
+      console.log('🎤 [Auto-Mic] Auto-enabling microphone for listening');
+      setMicEnabled(true);
+      await room.localParticipant.setMicrophoneEnabled(true);
+    }
+  };
+
+  // Auto-enable mic when agent stops speaking
+  useEffect(() => {
+    if (isListening && autoMicEnabled && !micEnabled && !agentSpeaking && agentConnected) {
+      handleAutoMicEnable();
+    }
+  }, [isListening, autoMicEnabled, micEnabled, agentSpeaking, agentConnected]);
+
+  // Handler functions for the new UI
+  const handleToggleMic = async () => {
+    // Don't allow mic toggle if agent is speaking
+    if (agentSpeaking) {
+      console.log('🎤 [LiveKit] Cannot toggle mic - agent is speaking');
+      return;
+    }
+    
+    const next = !micEnabled;
+    console.log(`🎤 [LiveKit] Toggling microphone: ${next ? 'ON' : 'OFF'}`);
+    
+    try {
+      setMicEnabled(next);
+      await room.localParticipant.setMicrophoneEnabled(next);
+      
+      if (next) {
+        // User started speaking/listening
+        setIsListening(true);
+        setUserTranscript(''); // Clear any previous transcript
+        console.log('🎯 [UI State] User enabled mic - ready to speak');
+      } else {
+        // User stopped speaking
+        console.log('🎯 [UI State] User disabled mic - stopped speaking');
+        
+        // Save user transcript to chat history if we have one
+        if (userTranscript.trim()) {
+          console.log('💬 [Transcript] Saving user transcript on mic disable:', userTranscript);
+          setChatHistory(prev => [...prev, {
+            role: 'user',
+            message: userTranscript.trim(),
+            timestamp: new Date()
+          }]);
+          setUserTranscript('');
+        }
+        
+        // Stay in listening mode if agent is connected and not speaking
+        if (agentConnected && !agentSpeaking) {
+          setIsListening(true);
+          console.log('🎯 [UI State] Staying in listening mode - agent available');
+        } else {
+          setIsListening(false);
+          console.log('🎯 [UI State] Exiting listening mode - agent not available');
+        }
+      }
+    } catch (error) {
+      console.error('🎤 [LiveKit] Error toggling microphone:', error);
+      // Revert state on error
+      setMicEnabled(!next);
+    }
+  };
+
+  const handleToggleChat = () => {
+    console.log('🗨️ [VoiceChat] Chat toggled');
+  };
+
+  const handleToggleAutoMic = () => {
+    const newAutoMicState = !autoMicEnabled;
+    setAutoMicEnabled(newAutoMicState);
+    console.log(`🎤 [Auto-Mic] Auto-mic ${newAutoMicState ? 'enabled' : 'disabled'}`);
+    
+    // If disabling auto-mic and currently listening, disable mic
+    if (!newAutoMicState && micEnabled && isListening) {
+      setMicEnabled(false);
+      room.localParticipant.setMicrophoneEnabled(false);
+    }
+  };
+
+  const handleEndChat = async () => {
+    console.log('🔌 [VoiceChat] Ending chat...');
+    room.disconnect();
+    setConnected(false);
+  };
+
+  // Enable audio on first interaction if needed
+  const enableAudioIfNeeded = async () => {
+    if (!room.canPlaybackAudio) {
+      try {
+        console.log('🔊 [LiveKit] User interaction - enabling audio');
+        await room.startAudio();
+        console.log('🔊 [LiveKit] Audio enabled by user interaction');
+      } catch (error) {
+        console.error('🔊 [LiveKit] Failed to enable audio:', error);
+      }
+    }
+  };
+
+  useEffect(() => {
+    // Enable audio on component mount if possible
+    enableAudioIfNeeded();
+  }, [room]);
+
+
   return (
     <RoomContext.Provider value={room}>
-      <div className="flex flex-col items-center justify-between h-screen p-6 bg-gradient-to-br from-indigo-100 to-purple-200">
-        {/* Status Panel at the top */}
-        <ConnectionStatusPanel 
-          connectionState={connectionState}
-          connected={connected}
+      <div className="mobile-full-screen bg-white">
+        <VoiceChatUI
+          isAISpeaking={agentSpeaking}
+          isConnected={connected}
+          isListening={isListening}
+          aiTranscript={aiTranscript}
+          userTranscript={userTranscript}
+          chatHistory={chatHistory}
+          onToggleMic={handleToggleMic}
+          onToggleChat={handleToggleChat}
+          onEndChat={handleEndChat}
+          onToggleAutoMic={handleToggleAutoMic}
+          micEnabled={micEnabled}
+          agentConnected={agentConnected}
+          autoMicEnabled={autoMicEnabled}
           room={room}
         />
-
-        <div className="flex-1 flex flex-col items-center justify-center w-full">
-          <h1 className="text-2xl font-bold mb-6 text-gray-800">
-            Voice Chat with Agent
-          </h1>
-
-          {connected ? (
-            <>
-              <AgentStatus agentSpeaking={agentSpeaking} />
-              
-              {/* Audio Enable Button - helps with browser audio context */}
-              {!room.canPlaybackAudio && (
-                <button
-                  onClick={async () => {
-                    try {
-                      console.log('🔊 [LiveKit] User clicked to enable audio');
-                      await room.startAudio();
-                      console.log('🔊 [LiveKit] Audio enabled by user interaction');
-                    } catch (error) {
-                      console.error('🔊 [LiveKit] Failed to enable audio:', error);
-                    }
-                  }}
-                  className="mb-4 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center space-x-2"
-                >
-                  <Volume2 className="w-4 h-4" />
-                  <span>Enable Audio</span>
-                </button>
-              )}
-              
-              <UserMic
-                micEnabled={micEnabled}
-                onToggle={async () => {
-                  const next = !micEnabled;
-                  console.log(`🎤 [LiveKit] Toggling microphone: ${next ? 'ON' : 'OFF'}`);
-                  setMicEnabled(next);
-                  await room.localParticipant.setMicrophoneEnabled(next);
-                }}
-              />
-            </>
-          ) : (
-            <div className="text-center">
-              <p className="text-gray-600 mb-2">Connecting to room...</p>
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-            </div>
-          )}
-        </div>
-
-        {/* Agent audio output - ensure audio is rendered properly */}
+        
+        {/* Audio output - hidden but necessary */}
         <RoomAudioRenderer />
-        <AudioDebugPanel room={room} />
-
-        {/* Default controls at bottom */}
-        <ControlBar
-          variation="minimal"
-          controls={{
-            microphone: true,
-            camera: false,
-            screenShare: false,
-          }}
-        />
+        
+        {/* Debug panel for development */}
+        {/* {process.env.NODE_ENV === 'development' && (
+          <AudioDebugPanel room={room} />
+        )} */}
       </div>
     </RoomContext.Provider>
   );
 }
 
-/**
- * Connection Status Panel - shows comprehensive connection information
- */
-function ConnectionStatusPanel({ connectionState, connected, room }: { 
-  connectionState: ConnectionState; 
-  connected: boolean; 
-  room: Room;
-}) {
-  const participants = useParticipants();
-  const tracks = useTracks();
-  
-  const getConnectionStateColor = (state: ConnectionState) => {
-    switch (state) {
-      case ConnectionState.Connected:
-        return 'bg-green-100 text-green-700 border-green-200';
-      case ConnectionState.Connecting:
-      case ConnectionState.Reconnecting:
-        return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-      case ConnectionState.Disconnected:
-        return 'bg-red-100 text-red-700 border-red-200';
-      default:
-        return 'bg-gray-100 text-gray-700 border-gray-200';
-    }
-  };
-
-  const getConnectionStateIcon = (state: ConnectionState) => {
-    switch (state) {
-      case ConnectionState.Connected:
-        return <Wifi className="w-4 h-4" />;
-      case ConnectionState.Connecting:
-      case ConnectionState.Reconnecting:
-        return <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>;
-      case ConnectionState.Disconnected:
-        return <WifiOff className="w-4 h-4" />;
-      default:
-        return <WifiOff className="w-4 h-4" />;
-    }
-  };
-
-  const audioTracks = tracks.filter(track => track.publication.kind === 'audio');
-  const remoteAudioTracks = audioTracks.filter(track => track.participant.isLocal === false);
-
-  return (
-    <div className="w-full max-w-4xl mb-4">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Connection Status */}
-        <div className={`p-4 rounded-lg border-2 ${getConnectionStateColor(connectionState)}`}>
-          <div className="flex items-center space-x-2 mb-2">
-            {getConnectionStateIcon(connectionState)}
-            <h3 className="font-semibold">Connection</h3>
-          </div>
-          <p className="text-sm capitalize">{connectionState.toLowerCase()}</p>
-          <p className="text-xs mt-1">
-            Audio Playback: {room.canPlaybackAudio ? '✅ Enabled' : '❌ Disabled'}
-          </p>
-        </div>
-
-        {/* Participants */}
-        <div className="p-4 rounded-lg border-2 bg-blue-100 text-blue-700 border-blue-200">
-          <div className="flex items-center space-x-2 mb-2">
-            <Users className="w-4 h-4" />
-            <h3 className="font-semibold">Participants</h3>
-          </div>
-          <p className="text-sm">Total: {participants.length}</p>
-          <div className="text-xs mt-1 space-y-1">
-            {participants.map((p, index) => (
-              <div key={p.sid} className="flex items-center space-x-1">
-                <span className={`w-2 h-2 rounded-full ${p.isLocal ? 'bg-blue-500' : 'bg-green-500'}`}></span>
-                <span>{p.identity || `Participant ${index + 1}`} {p.isLocal && '(You)'}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Audio Status */}
-        <div className="p-4 rounded-lg border-2 bg-purple-100 text-purple-700 border-purple-200">
-          <div className="flex items-center space-x-2 mb-2">
-            <Speaker className="w-4 h-4" />
-            <h3 className="font-semibold">Audio</h3>
-          </div>
-          <p className="text-sm">Remote Audio: {remoteAudioTracks.length} tracks</p>
-          <div className="text-xs mt-1">
-            {remoteAudioTracks.map((track, index) => (
-              <div key={index} className="flex items-center space-x-1">
-                <span className={`w-2 h-2 rounded-full ${track.publication.isMuted ? 'bg-red-500' : 'bg-green-500'}`}></span>
-                <span>{track.participant.identity || 'Unknown'}: {track.publication.isMuted ? 'Muted' : 'Playing'}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/**
- * Show whether agent is present in the room
- */
-function AgentStatus({ agentSpeaking }: { agentSpeaking: boolean }) {
-  const participants = useParticipants();
-  const agentIdentity = "agent"; // use the same identity your backend assigns to AI agent
-  const agent = participants.find((p) => !p.isLocal);
-    console.log(participants);
-  return (
-    <div className="mb-8">
-      {agent ? (
-        <div className="flex items-center space-x-4">
-          <span className="px-4 py-2 rounded-xl bg-green-100 text-green-700 font-medium flex items-center space-x-2">
-            <Bot className="w-4 h-4" />
-            <span>✅ Agent connected</span>
-          </span>
-          {agentSpeaking && (
-            <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm font-medium flex items-center space-x-1 animate-pulse">
-              <Volume2 className="w-3 h-3" />
-              <span>Speaking</span>
-            </span>
-          )}
-        </div>
-      ) : (
-        <span className="px-4 py-2 rounded-xl bg-red-100 text-red-700 font-medium flex items-center space-x-2">
-          <Bot className="w-4 h-4" />
-          <span>❌ Agent not connected</span>
-        </span>
-      )}
-    </div>
-  );
-}
 
 /**
  * Audio Debug Panel - helps debug audio issues
@@ -486,10 +626,6 @@ function AudioDebugPanel({ room }: { room: Room }) {
     });
   }, [audioTracks]);
 
-  if (process.env.NODE_ENV !== 'development') {
-    return null;
-  }
-
   return (
     <div className="fixed bottom-4 right-4 bg-black bg-opacity-75 text-white p-2 rounded text-xs max-w-xs">
       <div>Audio Playback: {room.canPlaybackAudio ? '✅' : '❌'}</div>
@@ -501,27 +637,6 @@ function AudioDebugPanel({ room }: { room: Room }) {
           {track.publication.isMuted ? '🔇' : '🔊'}
         </div>
       ))}
-    </div>
-  );
-}
-
-/**
- * Show mic status + button
- */
-function UserMic({ micEnabled, onToggle }: { micEnabled: boolean; onToggle: () => void }) {
-  return (
-    <div className="flex flex-col items-center">
-      <button
-        onClick={onToggle}
-        className={`flex items-center justify-center w-20 h-20 rounded-full shadow-lg ${
-          micEnabled ? "bg-red-500" : "bg-green-500"
-        } text-white`}
-      >
-        {micEnabled ? <MicOff size={32} /> : <Mic size={32} />}
-      </button>
-      <span className="mt-3 text-gray-700 font-medium">
-        {micEnabled ? "Mic On (speaking)" : "Mic Off (waiting)"}
-      </span>
     </div>
   );
 }

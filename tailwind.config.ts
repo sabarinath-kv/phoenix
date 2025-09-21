@@ -133,6 +133,71 @@ export default {
         "focus-glow": {
           "0%": { boxShadow: "0 0 0 0 hsl(var(--primary) / 0.3)" },
           "100%": { boxShadow: "0 0 0 4px hsl(var(--primary) / 0.1)" }
+        },
+        // Custom keyframes for voice chat animations
+        "cloud-float": {
+          "0%, 100%": {
+            transform: "translateY(0px) translateX(0px) rotate(0deg)"
+          },
+          "25%": {
+            transform: "translateY(-8px) translateX(4px) rotate(0.5deg)"
+          },
+          "50%": {
+            transform: "translateY(-4px) translateX(-2px) rotate(-0.3deg)"
+          },
+          "75%": {
+            transform: "translateY(-12px) translateX(6px) rotate(0.8deg)"
+          }
+        },
+        "dots-loading": {
+          "0%, 80%, 100%": {
+            opacity: "0.3",
+            transform: "scale(1)"
+          },
+          "40%": {
+            opacity: "1",
+            transform: "scale(1.1)"
+          }
+        },
+        "ui-transition-in": {
+          "0%": {
+            opacity: "0",
+            transform: "translateY(20px) scale(0.95)"
+          },
+          "100%": {
+            opacity: "1",
+            transform: "translateY(0px) scale(1)"
+          }
+        },
+        "ui-transition-out": {
+          "0%": {
+            opacity: "1",
+            transform: "translateY(0px) scale(1)"
+          },
+          "100%": {
+            opacity: "0",
+            transform: "translateY(-10px) scale(0.98)"
+          }
+        },
+        "disconnect-fade-in": {
+          "0%": {
+            opacity: "0",
+            transform: "translateY(15px) scale(0.96)"
+          },
+          "100%": {
+            opacity: "1",
+            transform: "translateY(0px) scale(1)"
+          }
+        },
+        "disconnect-fade-out": {
+          "0%": {
+            opacity: "1",
+            transform: "translateY(0px) scale(1)"
+          },
+          "100%": {
+            opacity: "0",
+            transform: "translateY(-8px) scale(0.97)"
+          }
         }
       },
       animation: {
@@ -153,6 +218,13 @@ export default {
         "progress-slow": "progress-fill 700ms var(--animation-smooth)",
         // Focus states
         "focus-glow": "focus-glow 200ms ease-out forwards",
+        // Custom animations for voice chat
+        "cloud-float": "cloud-float 6s ease-in-out infinite",
+        "dots-loading": "dots-loading 1.4s ease-in-out infinite",
+        "ui-transition-in": "ui-transition-in 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
+        "ui-transition-out": "ui-transition-out 0.4s cubic-bezier(0.7, 0, 0.84, 0)",
+        "disconnect-fade-in": "disconnect-fade-in 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+        "disconnect-fade-out": "disconnect-fade-out 0.4s cubic-bezier(0.55, 0.085, 0.68, 0.53)",
       },
       // Motion timing functions
       transitionTimingFunction: {
@@ -180,8 +252,9 @@ export default {
         'soft': 'var(--shadow-soft)'
       },
       fontFamily: {
-        'sans': ['Inter', 'system-ui', 'sans-serif'],
-        'heading': ['Poppins', 'Inter', 'system-ui', 'sans-serif'],
+        'sans': ['Manrope', 'Inter', 'system-ui', 'sans-serif'],
+        'heading': ['Manrope', 'Inter', 'system-ui', 'sans-serif'],
+        'replay': ['Replay Pro', 'Manrope', 'Inter', 'system-ui', 'sans-serif'],
       },
       fontSize: {
         // Typography scale following the design system
