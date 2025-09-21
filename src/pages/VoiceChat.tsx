@@ -1,773 +1,642 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, History, Sun, Moon, MessageCircle, X } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { ScatteredVoiceSphere } from '@/components/ScatteredVoiceSphere';
-import { useDemoVoiceChat } from '@/hooks/useLiveKitVoiceChat';
-
-interface Message {
-  id: string;
-  type: 'user' | 'ai';
-  content: string;
-  timestamp: Date;
-  isVoice?: boolean;
-}
-
-type VoiceChatState = 'idle' | 'listening' | 'processing' | 'speaking' | 'text-mode';
-
-const VoiceChat = () => {
-  const navigate = useNavigate();
-  const [currentState, setCurrentState] = useState<VoiceChatState>('idle');
-  const [currentTranscript, setCurrentTranscript] = useState('');
-  const [aiResponse, setAiResponse] = useState("Hello! I'm your AI companion. What can I help you with today?");
-  const [showTextChat, setShowTextChat] = useState(false);
-  const [inputText, setInputText] = useState('');
-  const [isTranscriptionEnabled, setIsTranscriptionEnabled] = useState(true);
-  const [userInputText, setUserInputText] = useState('');
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [isDarkTheme, setIsDarkTheme] = useState(true);
-  const [showExpandedInput, setShowExpandedInput] = useState(false);
-  const [showHistoryOverlay, setShowHistoryOverlay] = useState(false);
+import {
+    RoomAudioRenderer,
+    RoomContext,
+    useParticipants,
+    useTracks,
+  } from '@livekit/components-react';
+  import { Room, Track, RoomEvent, ConnectionState, RemoteParticipant } from 'livekit-client';
+  import '@livekit/components-styles';
+  import { useEffect, useRef, useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { VoiceChatUI } from '@/components/VoiceChatUI';
   
-  const voiceChat = useDemoVoiceChat();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const isListeningRef = useRef(false);
-  const restartTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+export default function VoiceChatPage() {
+  const [room] = useState(
+    () =>
+      new Room({
+        adaptiveStream: false,
+        dynacast: false,
+      })
+  );
+  const [connected, setConnected] = useState(false);
+  const [micEnabled, setMicEnabled] = useState(false);
+  const [agentSpeaking, setAgentSpeaking] = useState(true);
+  const [agentConnected, setAgentConnected] = useState(false);
+  const [connectionState, setConnectionState] = useState<ConnectionState>(ConnectionState.Disconnected);
+  const [autoMicEnabled, setAutoMicEnabled] = useState(true); // Auto-enable mic in listening state
+  
+  // New state for UI management
+  const [aiTranscript, setAiTranscript] = useState('');
+  const [userTranscript, setUserTranscript] = useState('');
+  const [chatHistory, setChatHistory] = useState<Array<{ role: 'ai' | 'user'; message: string; timestamp: Date }>>([]);
+  const [isListening, setIsListening] = useState(false);
+  const lastCallTime = useRef(0);
+  const { user, getLivekitTokenResponse, livekitTokenResponse, refreshLivekitTokenResponse } = useAuth();
+  const agentId = useRef('');
 
-  // Auto-start voice chat on component mount
   useEffect(() => {
-    const initializeVoiceChat = async () => {
-      await voiceChat.connect();
-      setCurrentState('listening');
-      
-      // Add initial AI greeting to messages
-      const initialMessage: Message = {
-        id: Date.now().toString(),
-        type: 'ai',
-        content: aiResponse,
-        timestamp: new Date(),
-        isVoice: true
-      };
-      setMessages([initialMessage]);
-      
-      // Start with AI greeting and then begin listening
-      setTimeout(() => {
-        if ('speechSynthesis' in window) {
-          const utterance = new SpeechSynthesisUtterance(aiResponse);
-          utterance.rate = 0.9;
-          utterance.pitch = 1.0;
-          utterance.onstart = () => setCurrentState('speaking');
-          utterance.onend = () => {
-            setCurrentState('listening');
-            startContinuousListening();
-          };
-          speechSynthesis.speak(utterance);
-        } else {
-          setCurrentState('listening');
-          startContinuousListening();
+    getLivekitTokenResponse();
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const connect = async () => {
+      if (mounted) {
+        console.log('🔄 [LiveKit] Initiating connection to room...');
+        console.log('🌐 [LiveKit] Server URL:', livekitTokenResponse.url);
+        console.log('🎫 [LiveKit] Token provided:', !!livekitTokenResponse.access_token);
+        
+        setConnectionState(ConnectionState.Connecting);
+        
+        try {
+          await room.connect(livekitTokenResponse?.url, livekitTokenResponse?.access_token, { autoSubscribe: true,  });
+          console.log('✅ [LiveKit] Successfully connected to room');
+          setConnected(true);
+
+          // start mic disabled; enable after agent finishes speaking
+          await room.localParticipant.setMicrophoneEnabled(false);
+          console.log('🎤 [LiveKit] Microphone initially disabled');
+        } catch (error) {
+          console.error('❌ [LiveKit] Connection failed:', error);
+          setConnected(false);
+          setConnectionState(ConnectionState.Disconnected);
         }
-      }, 1000);
+      }
+    };
+    if (livekitTokenResponse?.access_token) {    
+    connect();
+    }
+    return () => {
+      mounted = false;
+      console.log('🔌 [LiveKit] Disconnecting from room...');
+      room.disconnect();
+      setConnected(false);
+    };
+  }, [room, livekitTokenResponse?.access_token]);
+
+  useEffect(() => {
+    // Connection state events
+    const handleConnected = () => {
+      console.log('🟢 [LiveKit] Room connected');
+      setConnectionState(ConnectionState.Connected);
+      setConnected(true);
     };
 
-    initializeVoiceChat();
+
+    const handleDisconnected = (reason?: any) => {
+      console.log('🔴 [LiveKit] Room disconnected:', reason);
+      setConnectionState(ConnectionState.Disconnected);
+      setConnected(false);
+      setAgentSpeaking(false);
+      refreshLivekitTokenResponse();
+    };
+
+    const handleReconnecting = () => {
+      console.log('🔄 [LiveKit] Room reconnecting...');
+      setConnectionState(ConnectionState.Reconnecting);
+    };
+
+    const handleReconnected = () => {
+      console.log('🟢 [LiveKit] Room reconnected');
+      setConnectionState(ConnectionState.Connected);
+      setConnected(true);
+    };
+
+    // Participant events
+    const handleParticipantConnected = (participant: RemoteParticipant) => {
+      console.log('👥 [LiveKit] Participant connected:', {
+        identity: participant.identity,
+        name: participant.name,
+        metadata: participant.metadata,
+        sid: participant.sid
+      });
+      
+      // Check if this is the agent
+      if (participant.identity === 'agent' || participant.name === 'agent' || !participant.isLocal) {
+        agentId.current = participant.identity;
+        setAgentConnected(true);
+        console.log('🤖 [Agent] Agent connected and ready');
+      }
+    };
+
+    const handleParticipantDisconnected = (participant: RemoteParticipant) => {
+      console.log('👋 [LiveKit] Participant disconnected:', {
+        identity: participant.identity,
+        name: participant.name,
+        sid: participant.sid
+      });
+      
+      // Check if this was the agent
+      if (participant.identity === 'agent' || participant.name === 'agent' || !participant.isLocal) {
+        setAgentConnected(false);
+        setAgentSpeaking(false);
+        setIsListening(false);
+        console.log('🤖 [Agent] Agent disconnected');
+      }
+    };
+
+    // Audio track events
+    const handleTrackSubscribed = (track: any, publication: any, participant: RemoteParticipant) => {
+      console.log('🎵 [LiveKit] Track subscribed:', {
+        kind: track.kind,
+        source: track.source,
+        participant: participant.identity,
+        enabled: track.enabled,
+        muted: track.muted,
+        isAgent: !participant.isLocal
+      });
+
+      if (track.kind === Track.Kind.Audio && !participant.isLocal) {
+        console.log('🔊 [LiveKit] Agent audio track received - Agent is starting to speak');
+        
+        // Save any pending user transcript before agent starts speaking
+        if (userTranscript.trim()) {
+          console.log('💬 [Transcript] Saving user transcript before agent speaks:', userTranscript);
+          setChatHistory(prev => [...prev, {
+            role: 'user',
+            message: userTranscript.trim(),
+            timestamp: new Date()
+          }]);
+          setUserTranscript('');
+        }
+        
+        // Disable microphone when agent starts speaking
+        if (micEnabled) {
+          console.log('🎤 [LiveKit] Disabling microphone - agent is speaking');
+          setMicEnabled(false);
+          room.localParticipant.setMicrophoneEnabled(false);
+        }
+        
+        // Set agent speaking state and switch UI
+        setAgentSpeaking(true);
+        setIsListening(false);
+        console.log('🎯 [UI State] Agent started speaking - switching to AI speaking UI');
+        
+        // Ensure audio context is started and track is properly attached
+        const ensureAudioPlayback = async () => {
+          try {
+            // Force start audio context
+            console.log('🔊 [LiveKit] Starting audio context...');
+            await room.startAudio();
+            
+            // Attach the audio track to DOM
+            console.log('🔊 [LiveKit] Attaching audio track...');
+            const audioElement = track.attach();
+            if (audioElement) {
+              audioElement.autoplay = true;
+              audioElement.playsInline = true;
+              audioElement.volume = 1.0;
+              
+              // Append to body to ensure it plays
+              document.body.appendChild(audioElement);
+              
+              // Force play
+              try {
+                await audioElement.play();
+                console.log('🔊 [LiveKit] Audio element playing successfully');
+              } catch (playError) {
+                console.error('🔊 [LiveKit] Audio play failed:', playError);
+              }
+            }
+          } catch (error) {
+            console.error('🔊 [LiveKit] Error setting up audio playback:', error);
+          }
+        };
+        
+        ensureAudioPlayback();
+      }
+    };
+
+    const handleTrackUnsubscribed = (track: any, publication: any, participant: RemoteParticipant) => {
+      console.log('🔇 [LiveKit] Track unsubscribed:', {
+        kind: track.kind,
+        source: track.source,
+        participant: participant.identity,
+        isAgent: !participant.isLocal
+      });
+
+      if (track.kind === Track.Kind.Audio && !participant.isLocal) {
+        console.log('🔇 [LiveKit] Agent audio stopped - Agent finished speaking');
+        
+        // Save AI transcript to chat history if we have one
+        if (aiTranscript.trim()) {
+          console.log('💬 [Transcript] Saving AI transcript after agent stops speaking:', aiTranscript);
+          setChatHistory(prev => [...prev, {
+            role: 'ai',
+            message: aiTranscript.trim(),
+            timestamp: new Date()
+          }]);
+          setAiTranscript('');
+        }
+        
+        // Set agent speaking to false
+        setAgentSpeaking(false);
+        
+        // Switch to listening mode if agent is still connected
+        if (agentConnected) {
+          console.log('🎯 [UI State] Agent stopped speaking - switching to listening UI');
+          setIsListening(true);
+          
+          // Auto-enable microphone if setting is enabled (with small delay for state update)
+          if (autoMicEnabled) {
+            setTimeout(() => {
+              console.log('🎤 [Auto-Mic] Auto-enabling microphone after agent stops speaking');
+              handleAutoMicEnable();
+            }, 200);
+          }
+        } else {
+          console.log('🎯 [UI State] Agent disconnected - not switching to listening mode');
+          setIsListening(false);
+        }
+      }
+    };
+
+    const handleTrackMuted = (publication: any, participant: any) => {
+      console.log('🔇 [LiveKit] Track muted:', {
+        kind: publication.kind,
+        source: publication.source,
+        participant: participant.identity
+      });
+    };
+
+    const handleTrackUnmuted = (publication: any, participant: any) => {
+      console.log('🔊 [LiveKit] Track unmuted:', {
+        kind: publication.kind,
+        source: publication.source,
+        participant: participant.identity
+      });
+    };
+
+    const handleDataReceived = (payload: Uint8Array, participant?: RemoteParticipant) => {
+      const message = new TextDecoder().decode(payload);
+      console.log('📨 [LiveKit] Data received:', {
+        message,
+        from: participant?.identity || 'unknown',
+        isFromAgent: participant ? !participant.isLocal : false
+      });
+      
+      try {
+        const data = JSON.parse(message);
+        if (data.type === 'transcript') {
+          if (participant && !participant.isLocal) {
+            // AI transcript from agent
+            console.log('💬 [Transcript] AI transcript received:', data.text);
+            setAiTranscript(data.text || '');
+          } else {
+            // User transcript (from local participant or system)
+            console.log('💬 [Transcript] User transcript received:', data.text);
+            // setUserTranscript(data.text || '');
+          }
+        } else if (data.type === 'agent_speaking_start') {
+          console.log('🎯 [Agent State] Agent speaking start signal received');
+          setAgentSpeaking(true);
+          setIsListening(false);
+        } else if (data.type === 'agent_speaking_end') {
+          console.log('🎯 [Agent State] Agent speaking end signal received');
+          setAgentSpeaking(false);
+          if (agentConnected) {
+            setIsListening(true);
+          }
+        }
+      } catch (error) {
+        console.log('📨 [LiveKit] Non-JSON data received:', message);
+        // Handle plain text messages
+        if (participant && !participant.isLocal) {
+          // Treat as AI transcript
+          console.log('💬 [Transcript] Plain text from agent:', message);
+          setAiTranscript(message);
+        }
+      }
+    };
+
+    const handleAudioPlaybackChanged = () => {
+      console.log('🔊 [LiveKit] Audio playback status changed:', {
+        canPlayback: room.canPlaybackAudio
+      });
+    };
+
+    console.log('hereeee')
+
+    // Register all event listeners
+    room.on(RoomEvent.Connected, handleConnected);
+    room.on(RoomEvent.Disconnected, handleDisconnected);
+    room.on(RoomEvent.Reconnecting, handleReconnecting);
+    room.on(RoomEvent.Reconnected, handleReconnected);
+    room.on(RoomEvent.ParticipantConnected, handleParticipantConnected);
+    room.on(RoomEvent.ParticipantDisconnected, handleParticipantDisconnected);
+    room.on(RoomEvent.TrackSubscribed, handleTrackSubscribed);
+    room.on(RoomEvent.TrackUnsubscribed, handleTrackUnsubscribed);
+    room.on(RoomEvent.TrackMuted, handleTrackMuted);
+    room.on(RoomEvent.TrackUnmuted, handleTrackUnmuted);
+    // room.on(RoomEvent.DataReceived, handleDataReceived);
+    room.on(RoomEvent.AudioPlaybackStatusChanged, handleAudioPlaybackChanged);
+
+    room.on(RoomEvent.ActiveSpeakersChanged, (data) => {
+        const now = Date.now();
+        if (now - lastCallTime.current < 2000) {
+            return; // Skip if less than 1 second since last execution
+        }
+        lastCallTime.current = now;
+
+        if(data.length > 0 && data[0].identity === agentId.current) {
+            setAgentSpeaking(true);
+            setIsListening(false);
+        } else {
+            setTimeout(() => {
+                setAgentSpeaking(false);
+                setIsListening(true);
+            }, 1000);
+        }
+        console.log('🎤 [LiveKit] Active speakers changed:', data);
+    });
+
+    room.on(RoomEvent.LocalAudioSilenceDetected, (data) => {
+        const now = Date.now();
+        if (now - lastCallTime.current < 5000) {
+            return; // Skip if less than 1 second since last execution
+        }
+        lastCallTime.current = now;
+
+        if(data.isLocal) {
+            setAgentSpeaking(true);
+            setIsListening(false);
+        }
+        console.log('🎤 [LiveKit] Active speakers changed:', data);
+    });
+
+    room.on(RoomEvent.TranscriptionReceived, (data) => {
+        if (data.length > 0) {  
+            setAiTranscript(data[0].text);
+    }
+        console.log('🎤 [LiveKit] Transcription received:', data);
+    });
+
+    // Log initial room state
+    console.log('📊 [LiveKit] Initial room state:', {
+      numParticipants: room.numParticipants,
+      canPlaybackAudio: room.canPlaybackAudio,
+      state: room.state
+    });
 
     return () => {
-      // Cleanup on unmount
-      isListeningRef.current = false;
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-        recognitionRef.current = null;
-      }
-      if (restartTimeoutRef.current) {
-        clearTimeout(restartTimeoutRef.current);
-        restartTimeoutRef.current = null;
-      }
-      voiceChat.disconnect();
-      if ('speechSynthesis' in window) {
-        speechSynthesis.cancel();
-      }
+      // Clean up event listeners
+      room.off(RoomEvent.Connected, handleConnected);
+      room.off(RoomEvent.Disconnected, handleDisconnected);
+      room.off(RoomEvent.Reconnecting, handleReconnecting);
+      room.off(RoomEvent.Reconnected, handleReconnected);
+      room.off(RoomEvent.ParticipantConnected, handleParticipantConnected);
+      room.off(RoomEvent.ParticipantDisconnected, handleParticipantDisconnected);
+      room.off(RoomEvent.TrackSubscribed, handleTrackSubscribed);
+      room.off(RoomEvent.TrackUnsubscribed, handleTrackUnsubscribed);
+      room.off(RoomEvent.TrackMuted, handleTrackMuted);
+      room.off(RoomEvent.TrackUnmuted, handleTrackUnmuted);
+    //   room.off(RoomEvent.DataReceived, handleDataReceived);
+      room.off(RoomEvent.AudioPlaybackStatusChanged, handleAudioPlaybackChanged);
     };
-  }, []);
+  }, [room]);
 
-  const stopListening = useCallback(() => {
-    isListeningRef.current = false;
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-      recognitionRef.current = null;
-    }
-    if (restartTimeoutRef.current) {
-      clearTimeout(restartTimeoutRef.current);
-      restartTimeoutRef.current = null;
-    }
-  }, []);
-
-  const startContinuousListening = useCallback(() => {
-    // Don't start if already listening or if speech recognition is not supported
-    if (isListeningRef.current || !('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-      return;
-    }
-
-    // Stop any existing recognition first
-    stopListening();
-
-    const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
-    const recognition = new SpeechRecognition();
+  // State logging and management
+  useEffect(() => {
+    console.log('🎯 [UI State] Current state:', {
+      connected,
+      agentConnected,
+      agentSpeaking,
+      isListening,
+      micEnabled,
+      autoMicEnabled,
+      hasAiTranscript: !!aiTranscript,
+      hasUserTranscript: !!userTranscript,
+      aiTranscriptLength: aiTranscript.length,
+      userTranscriptLength: userTranscript.length,
+      chatHistoryLength: chatHistory.length,
+      connectionState: connectionState,
+      roomState: room.state,
+      canPlaybackAudio: room.canPlaybackAudio,
+      numParticipants: room.numParticipants
+    });
     
-    recognitionRef.current = recognition;
-    isListeningRef.current = true;
-    
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-    recognition.maxAlternatives = 1;
-
-    recognition.onstart = () => {
-      if (isListeningRef.current) {
-        setCurrentState('listening');
-      }
-    };
-
-    recognition.onresult = (event) => {
-      if (!isListeningRef.current) return;
-
-      let interimTranscript = '';
-      let finalTranscript = '';
-
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          finalTranscript += transcript;
-        } else {
-          interimTranscript += transcript;
-        }
-      }
-
-      setCurrentTranscript(interimTranscript || finalTranscript);
-
-      if (finalTranscript && finalTranscript.trim()) {
-        handleUserVoiceInput(finalTranscript.trim());
-      }
-    };
-
-    recognition.onerror = (event) => {
-      console.warn('Speech recognition error:', event.error);
-      
-      // Handle different error types
-      if (event.error === 'aborted' || event.error === 'network') {
-        // Don't restart on aborted or network errors immediately
-        return;
-      }
-      
-      if (event.error === 'not-allowed') {
-        console.error('Microphone permission denied');
-        setCurrentState('idle');
-        return;
-      }
-
-      // For other errors, try to restart after a delay
-      if (isListeningRef.current) {
-        restartTimeoutRef.current = setTimeout(() => {
-          if (isListeningRef.current && currentState === 'listening') {
-            startContinuousListening();
-          }
-        }, 2000);
-      }
-    };
-
-    recognition.onend = () => {
-      // Only restart if we're still supposed to be listening
-      if (isListeningRef.current && currentState === 'listening') {
-        restartTimeoutRef.current = setTimeout(() => {
-          if (isListeningRef.current && currentState === 'listening') {
-            startContinuousListening();
-          }
-        }, 500);
-      }
-    };
-
-    try {
-      recognition.start();
-    } catch (error) {
-      console.error('Failed to start speech recognition:', error);
-      isListeningRef.current = false;
-    }
-  }, [currentState, stopListening]);
-
-  const handleUserVoiceInput = useCallback((transcript: string) => {
-    if (!transcript.trim()) return;
-
-    // Stop listening while processing
-    stopListening();
-    setCurrentState('processing');
-    setCurrentTranscript('');
-    setUserInputText(transcript); // Show user input at bottom
-
-    // Add user message to history
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      type: 'user',
-      content: transcript,
-      timestamp: new Date(),
-      isVoice: true,
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-
-    // Simulate AI processing and response
-    setTimeout(() => {
-      const aiResponses = [
-        "That's really interesting! Tell me more about that.",
-        "I understand. How does that make you feel?",
-        "That sounds like a great experience. What was the best part?",
-        "I can see why that would be important to you. What's your next step?",
-        "Thanks for sharing that with me. Is there anything else you'd like to discuss?",
-        "That's a thoughtful perspective. What led you to think about it that way?",
-        "I appreciate you opening up about that. How can I help you with this?",
-      ];
-
-      const response = aiResponses[Math.floor(Math.random() * aiResponses.length)];
-      setAiResponse(response);
-
-      // Add AI message to history
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        type: 'ai',
-        content: response,
-        timestamp: new Date(),
-        isVoice: true,
-      };
-
-      setMessages(prev => [...prev, aiMessage]);
-
-      // Speak the response
-      if ('speechSynthesis' in window) {
-        setCurrentState('speaking');
-        const utterance = new SpeechSynthesisUtterance(response);
-        utterance.rate = 0.9;
-        utterance.pitch = 1.0;
-        utterance.onend = () => {
-          setCurrentTranscript('');
-          setUserInputText(''); // Clear user input when AI starts new question
-          setCurrentState('listening');
-          startContinuousListening();
-        };
-        speechSynthesis.speak(utterance);
-      } else {
-        setCurrentTranscript('');
-        setUserInputText(''); // Clear user input when AI starts new question
-        setCurrentState('listening');
-        startContinuousListening();
-      }
-    }, 1500);
-  }, [stopListening, startContinuousListening]);
-
-  const handleTextMessage = useCallback((text: string) => {
-    if (!text.trim()) return;
-
-    // Stop listening while processing
-    stopListening();
-    setCurrentState('processing');
-    setCurrentTranscript('');
-    setUserInputText(text); // Show user input at bottom
-
-    // Add user message to history
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      type: 'user',
-      content: text,
-      timestamp: new Date(),
-      isVoice: false,
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-
-    // Simulate AI processing and response (same logic as voice input but without duplication)
-    setTimeout(() => {
-      const aiResponses = [
-        "That's really interesting! Tell me more about that.",
-        "I understand. How does that make you feel?",
-        "That sounds like a great experience. What was the best part?",
-        "I can see why that would be important to you. What's your next step?",
-        "Thanks for sharing that with me. Is there anything else you'd like to discuss?",
-        "That's a thoughtful perspective. What led you to think about it that way?",
-        "I appreciate you opening up about that. How can I help you with this?",
-      ];
-
-      const response = aiResponses[Math.floor(Math.random() * aiResponses.length)];
-      setAiResponse(response);
-
-      // Add AI message to history
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        type: 'ai',
-        content: response,
-        timestamp: new Date(),
-        isVoice: true,
-      };
-
-      setMessages(prev => [...prev, aiMessage]);
-
-      // Speak the response
-      if ('speechSynthesis' in window) {
-        setCurrentState('speaking');
-        const utterance = new SpeechSynthesisUtterance(response);
-        utterance.rate = 0.9;
-        utterance.pitch = 1.0;
-        utterance.onend = () => {
-          setCurrentTranscript('');
-          setUserInputText(''); // Clear user input when AI starts new question
-          setCurrentState('listening');
-          startContinuousListening();
-        };
-        speechSynthesis.speak(utterance);
-      } else {
-        setCurrentTranscript('');
-        setUserInputText(''); // Clear user input when AI starts new question
-        setCurrentState('listening');
-        startContinuousListening();
-      }
-    }, 1500);
-  }, [stopListening, startContinuousListening]);
-
-  const toggleTextChat = useCallback(() => {
-    setShowTextChat(!showTextChat);
-    if (!showTextChat) {
-      // Switching to text mode
-      stopListening();
-      setCurrentState('text-mode');
-      if ('speechSynthesis' in window) {
-        speechSynthesis.cancel();
-      }
+    // Log the expected UI state
+    if (agentSpeaking) {
+      console.log('🎯 [UI Expected] Should show: AI Speaking UI with transcript');
+    } else if (isListening) {
+      console.log('🎯 [UI Expected] Should show: Listening UI with Wigloo illustration');
     } else {
-      // Switching back to voice mode
-      setCurrentState('listening');
-      startContinuousListening();
+      console.log('🎯 [UI Expected] Should show: Default/waiting state');
     }
-  }, [showTextChat, stopListening, startContinuousListening]);
+  }, [connected, agentConnected, agentSpeaking, isListening, micEnabled, autoMicEnabled, aiTranscript, userTranscript, chatHistory, connectionState, room]);
 
-  // Theme-based styles
-  const themeStyles = {
-    dark: {
-      background: 'bg-gradient-to-br from-gray-900 via-gray-800 to-black',
-      buttonBg: 'bg-white/10 backdrop-blur-sm',
-      buttonText: 'text-white/70 hover:text-white',
-      buttonHover: 'hover:bg-white/20',
-      textPrimary: 'text-white/90',
-      textSecondary: 'text-white/60',
-      inputBg: 'bg-white/10 backdrop-blur-sm',
-      inputText: 'text-white placeholder-white/60',
-      inputBorder: 'border-white/20',
-      particleColor: '#ffffff20',
-      cardBg: 'bg-gray-900/90 backdrop-blur-xl',
-      border: 'border-white/5',
-      userMessageBg: 'bg-gray-700/80 border border-gray-600/50',
-      userMessageText: 'text-white/95',
-      aiMessageBg: 'bg-gray-800/60 border border-gray-700/40',
-      aiMessageText: 'text-white/90',
-    },
-    light: {
-      background: 'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50',
-      buttonBg: 'bg-black/10 backdrop-blur-sm',
-      buttonText: 'text-gray-700 hover:text-gray-900',
-      buttonHover: 'hover:bg-black/20',
-      textPrimary: 'text-gray-900',
-      textSecondary: 'text-gray-600',
-      inputBg: 'bg-white/80 backdrop-blur-sm',
-      inputText: 'text-gray-900 placeholder-gray-500',
-      inputBorder: 'border-gray-300',
-      particleColor: '#00000015',
-      cardBg: 'bg-white/85 backdrop-blur-xl',
-      border: 'border-gray-100',
-      userMessageBg: 'bg-gray-200/90 border border-gray-300/60',
-      userMessageText: 'text-gray-800',
-      aiMessageBg: 'bg-white/90 border border-gray-200/50',
-      aiMessageText: 'text-gray-700',
+  // Auto-switch to listening when agent connects and is not speaking
+  useEffect(() => {
+    if (agentConnected && !agentSpeaking && connected) {
+      setIsListening(true);
+      console.log('🎯 [UI State] Agent connected and not speaking - auto-switching to listening mode');
+      
+      // Auto-enable microphone if setting is enabled
+      if (autoMicEnabled && !micEnabled) {
+        handleAutoMicEnable();
+      }
+    }
+  }, [agentConnected, agentSpeaking, connected, autoMicEnabled]);
+
+  // Auto-enable microphone when entering listening state
+  const handleAutoMicEnable = async () => {
+    if (autoMicEnabled && !agentSpeaking && agentConnected) {
+      console.log('🎤 [Auto-Mic] Auto-enabling microphone for listening');
+      setMicEnabled(true);
+      await room.localParticipant.setMicrophoneEnabled(true);
     }
   };
 
-  const currentTheme = isDarkTheme ? themeStyles.dark : themeStyles.light;
+  // Auto-enable mic when agent stops speaking
+  useEffect(() => {
+    if (isListening && autoMicEnabled && !micEnabled && !agentSpeaking && agentConnected) {
+      handleAutoMicEnable();
+    }
+  }, [isListening, autoMicEnabled, micEnabled, agentSpeaking, agentConnected]);
+
+  // Handler functions for the new UI
+  const handleToggleMic = async () => {
+    // Don't allow mic toggle if agent is speaking
+    if (agentSpeaking) {
+      console.log('🎤 [LiveKit] Cannot toggle mic - agent is speaking');
+      return;
+    }
+    
+    const next = !micEnabled;
+    console.log(`🎤 [LiveKit] Toggling microphone: ${next ? 'ON' : 'OFF'}`);
+    
+    try {
+      setMicEnabled(next);
+      await room.localParticipant.setMicrophoneEnabled(next);
+      
+      if (next) {
+        // User started speaking/listening
+        setIsListening(true);
+        setUserTranscript(''); // Clear any previous transcript
+        console.log('🎯 [UI State] User enabled mic - ready to speak');
+      } else {
+        // User stopped speaking
+        console.log('🎯 [UI State] User disabled mic - stopped speaking');
+        
+        // Save user transcript to chat history if we have one
+        if (userTranscript.trim()) {
+          console.log('💬 [Transcript] Saving user transcript on mic disable:', userTranscript);
+          setChatHistory(prev => [...prev, {
+            role: 'user',
+            message: userTranscript.trim(),
+            timestamp: new Date()
+          }]);
+          setUserTranscript('');
+        }
+        
+        // Stay in listening mode if agent is connected and not speaking
+        if (agentConnected && !agentSpeaking) {
+          setIsListening(true);
+          console.log('🎯 [UI State] Staying in listening mode - agent available');
+        } else {
+          setIsListening(false);
+          console.log('🎯 [UI State] Exiting listening mode - agent not available');
+        }
+      }
+    } catch (error) {
+      console.error('🎤 [LiveKit] Error toggling microphone:', error);
+      // Revert state on error
+      setMicEnabled(!next);
+    }
+  };
+
+  const handleToggleChat = () => {
+    console.log('🗨️ [VoiceChat] Chat toggled');
+  };
+
+  const handleToggleAutoMic = () => {
+    const newAutoMicState = !autoMicEnabled;
+    setAutoMicEnabled(newAutoMicState);
+    console.log(`🎤 [Auto-Mic] Auto-mic ${newAutoMicState ? 'enabled' : 'disabled'}`);
+    
+    // If disabling auto-mic and currently listening, disable mic
+    if (!newAutoMicState && micEnabled && isListening) {
+      setMicEnabled(false);
+      room.localParticipant.setMicrophoneEnabled(false);
+    }
+  };
+
+  const handleEndChat = async () => {
+    console.log('🔌 [VoiceChat] Ending chat...');
+    room.disconnect();
+    setConnected(false);
+  };
+
+  // Enable audio on first interaction if needed
+  const enableAudioIfNeeded = async () => {
+    if (!room.canPlaybackAudio) {
+      try {
+        console.log('🔊 [LiveKit] User interaction - enabling audio');
+        await room.startAudio();
+        console.log('🔊 [LiveKit] Audio enabled by user interaction');
+      } catch (error) {
+        console.error('🔊 [LiveKit] Failed to enable audio:', error);
+      }
+    }
+  };
+
+  useEffect(() => {
+    // Enable audio on component mount if possible
+    enableAudioIfNeeded();
+  }, [room]);
+
 
   return (
-    <div className={`min-h-screen ${currentTheme.background} flex flex-col relative overflow-hidden transition-all duration-700`} style={{ pointerEvents: 'auto' }}>
-      {/* Animated Background Particles */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {Array.from({ length: 100 }, (_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 rounded-full transition-colors duration-700"
-            style={{ backgroundColor: currentTheme.particleColor }}
-            initial={{
-              x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1000),
-              y: Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 1000),
-              opacity: Math.random() * 0.5 + 0.1,
-            }}
-            animate={{
-              y: [null, Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 1000)],
-              opacity: [null, Math.random() * 0.3 + 0.1],
-            }}
-            transition={{
-              duration: Math.random() * 10 + 10,
-              repeat: Infinity,
-              repeatType: "reverse",
-              ease: "linear",
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Back Button - Top Left */}
-      <div className="absolute top-6 left-6 z-50">
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('Back button clicked');
-            navigate('/');
-          }}
-          className={`rounded-full ${currentTheme.buttonText} ${currentTheme.buttonHover} ${currentTheme.buttonBg} transition-all duration-300 w-12 h-12 flex items-center justify-center cursor-pointer pointer-events-auto`}
-          title="Back to games"
-          style={{ pointerEvents: 'auto' }}
-        >
-          <ArrowLeft className="w-6 h-6" />
-        </button>
-      </div>
-
-      {/* Top Right Controls */}
-      <div className="absolute top-6 right-6 z-50 flex items-center gap-2">
-        {/* Theme Toggle */}
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('Theme button clicked, current theme:', isDarkTheme);
-            setIsDarkTheme(!isDarkTheme);
-          }}
-          className={`rounded-full ${currentTheme.buttonText} ${currentTheme.buttonHover} ${currentTheme.buttonBg} transition-all duration-300 w-12 h-12 flex items-center justify-center cursor-pointer pointer-events-auto`}
-          title="Toggle theme"
-          style={{ pointerEvents: 'auto' }}
-        >
-          <motion.div
-            initial={false}
-            animate={{ rotate: isDarkTheme ? 0 : 180 }}
-            transition={{ duration: 0.3 }}
-          >
-            {isDarkTheme ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
-          </motion.div>
-        </button>
-
-        {/* History Button */}
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('History button clicked, current state:', showHistoryOverlay);
-            setShowHistoryOverlay(!showHistoryOverlay);
-          }}
-          className={`rounded-full ${currentTheme.buttonText} ${currentTheme.buttonHover} ${currentTheme.buttonBg} transition-all duration-300 w-12 h-12 flex items-center justify-center cursor-pointer pointer-events-auto ${
-            showHistoryOverlay ? `${currentTheme.buttonBg} ${currentTheme.textPrimary}` : ''
-          }`}
-          title="Chat history"
-          style={{ pointerEvents: 'auto' }}
-        >
-          <History className="w-6 h-6" />
-        </button>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center justify-center relative z-10 px-4">
-        
-        {/* AI Response Text */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={aiResponse}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="mb-16 max-w-2xl text-center px-6"
-          >
-            <p className={`${currentTheme.textPrimary} text-2xl md:text-3xl font-medium leading-relaxed transition-colors duration-300`}>
-              {aiResponse}
-            </p>
-          </motion.div>
-        </AnimatePresence>
-
-        {/* Scattered Voice Sphere */}
-        <ScatteredVoiceSphere 
-          state={currentState}
-          isBottom={showTextChat}
-          isDarkTheme={isDarkTheme}
+    <RoomContext.Provider value={room}>
+      <div className="mobile-full-screen bg-white">
+        <VoiceChatUI
+          isAISpeaking={agentSpeaking}
+          isConnected={connected}
+          isListening={isListening}
+          aiTranscript={aiTranscript}
+          userTranscript={userTranscript}
+          chatHistory={chatHistory}
+          onToggleMic={handleToggleMic}
+          onToggleChat={handleToggleChat}
+          onEndChat={handleEndChat}
+          onToggleAutoMic={handleToggleAutoMic}
+          micEnabled={micEnabled}
+          agentConnected={agentConnected}
+          autoMicEnabled={autoMicEnabled}
+          room={room}
         />
-
-
-        {/* State Indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="mt-6 text-center"
-        >
-        </motion.div>
+        
+        {/* Audio output - hidden but necessary */}
+        <RoomAudioRenderer />
+        
+        {/* Debug panel for development */}
+        {/* {process.env.NODE_ENV === 'development' && (
+          <AudioDebugPanel room={room} />
+        )} */}
       </div>
+    </RoomContext.Provider>
+  );
+}
 
-      {/* Bottom Area */}
-      <div className="relative z-10 p-6">
-        <div className="max-w-md mx-auto space-y-4">
-          {/* User Input Display - Always maintains space to prevent jump */}
-          <div className="text-center min-h-[60px] flex items-center justify-center">
-            <motion.div
-              animate={{ 
-                opacity: userInputText ? 1 : 0,
-                scale: userInputText ? 1 : 0.95
-              }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-              className="inline-block"
-            >
-              <div className={`${currentTheme.inputBg} ${currentTheme.inputBorder} rounded-2xl px-6 py-3 transition-all duration-300 ${
-                userInputText ? 'border-opacity-100' : 'border-opacity-0 bg-opacity-0'
-              }`}>
-                <p className={`${currentTheme.textPrimary} text-sm transition-all duration-300`}>
-                  {userInputText || '\u00A0'}
-                </p>
-              </div>
-            </motion.div>
-          </div>
 
-          {/* Expandable Chat Input */}
-          <div className="relative flex justify-end">
-            <AnimatePresence mode="wait">
-              {showExpandedInput ? (
-                <motion.div
-                  key="expanded-input"
-                  initial={{ width: 56, opacity: 0 }}
-                  animate={{ width: 320, opacity: 1 }}
-                  exit={{ width: 56, opacity: 0 }}
-                  transition={{ 
-                    duration: 0.4, 
-                    ease: [0.4, 0, 0.2, 1],
-                    width: { duration: 0.5 }
-                  }}
-                  className={`${currentTheme.inputBg} rounded-full relative border ${currentTheme.inputBorder}`}
-                >
-                  <input
-                    type="text"
-                    value={inputText}
-                    onChange={(e) => setInputText(e.target.value)}
-                    placeholder="Type your message..."
-                      className={`w-full px-6 py-4 bg-transparent ${currentTheme.inputText} rounded-full pr-12 focus:outline-none focus:ring-0 focus:border-transparent border-none outline-none`}
-                      style={{ 
-                        outline: 'none', 
-                        border: 'none', 
-                        boxShadow: 'none',
-                        WebkitAppearance: 'none',
-                        MozAppearance: 'none',
-                        appearance: 'none'
-                      }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        if (inputText.trim()) {
-                          handleTextMessage(inputText);
-                          setInputText('');
-                        }
-                      }
-                    }}
-                    autoFocus
-                  />
-                  
-                  {/* Close Button */}
-                  <button
-                    onClick={() => setShowExpandedInput(false)}
-                    className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-full ${currentTheme.buttonText} transition-all duration-200 w-10 h-10 flex items-center justify-center`}
-                  >
-                    <motion.div
-                      initial={{ rotate: 0 }}
-                      animate={{ rotate: 180 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <X className="w-5 h-5" />
-                    </motion.div>
-                  </button>
-                </motion.div>
-              ) : (
-                <motion.button
-                  key="chat-button"
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.8, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: "backOut" }}
-                  onClick={() => setShowExpandedInput(true)}
-                  className={`w-14 h-14 rounded-full ${currentTheme.buttonBg} ${currentTheme.buttonText} ${currentTheme.buttonHover} flex items-center justify-center transition-all duration-300 shadow-lg`}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <MessageCircle className="w-6 h-6" />
-                </motion.button>
-              )}
-            </AnimatePresence>
-          </div>
+/**
+ * Audio Debug Panel - helps debug audio issues
+ */
+function AudioDebugPanel({ room }: { room: Room }) {
+  const tracks = useTracks();
+  const audioTracks = tracks.filter(track => track.publication.kind === 'audio');
+
+  useEffect(() => {
+    // Force enable audio playback
+    const enableAudio = async () => {
+      try {
+        if (room && !room.canPlaybackAudio) {
+          console.log('🔊 [AudioDebug] Attempting to enable audio playback...');
+          await room.startAudio();
+          console.log('🔊 [AudioDebug] Audio playback enabled');
+        }
+      } catch (error) {
+        console.error('🔊 [AudioDebug] Failed to enable audio:', error);
+      }
+    };
+
+    enableAudio();
+  }, [room, audioTracks.length]);
+
+  // Log audio track details
+  useEffect(() => {
+    audioTracks.forEach((track, index) => {
+      console.log(`🎵 [AudioDebug] Audio track ${index}:`, {
+        kind: track.publication.kind,
+        source: track.publication.source,
+        participant: track.participant.identity,
+        isLocal: track.participant.isLocal,
+        enabled: track.publication.isEnabled,
+        muted: track.publication.isMuted,
+        subscribed: track.publication.isSubscribed,
+        trackSid: track.publication.trackSid,
+      });
+
+      // Try to attach the track if it's not local
+      if (!track.participant.isLocal && track.publication.track) {
+        console.log('🔊 [AudioDebug] Ensuring remote audio track is attached');
+        track.publication.track.attach();
+      }
+    });
+  }, [audioTracks]);
+
+  return (
+    <div className="fixed bottom-4 right-4 bg-black bg-opacity-75 text-white p-2 rounded text-xs max-w-xs">
+      <div>Audio Playback: {room.canPlaybackAudio ? '✅' : '❌'}</div>
+      <div>Audio Tracks: {audioTracks.length}</div>
+      {audioTracks.map((track, index) => (
+        <div key={index} className="mt-1">
+          {track.participant.identity || 'Unknown'}: 
+          {track.publication.isEnabled ? '🟢' : '🔴'} 
+          {track.publication.isMuted ? '🔇' : '🔊'}
         </div>
-      </div>
-
-      {/* Message History Overlay */}
-      <AnimatePresence>
-        {showTextChat && (
-          <motion.div
-            initial={{ opacity: 0, y: '100%' }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: '100%' }}
-            className={`fixed inset-0 ${isDarkTheme ? 'bg-black/90' : 'bg-white/90'} backdrop-blur-sm z-20 flex flex-col transition-colors duration-300`}
-          >
-            {/* Header */}
-            <div className={`flex items-center justify-between p-4 border-b ${isDarkTheme ? 'border-white/20' : 'border-gray-200'} transition-colors duration-300`}>
-              <h2 className={`${currentTheme.textPrimary} text-lg font-semibold`}>Chat History</h2>
-              <Button
-                variant="ghost"
-                size="lg"
-                onClick={toggleTextChat}
-                className={`${currentTheme.buttonText} ${currentTheme.buttonHover} rounded-full transition-all duration-300 w-12 h-12 p-0`}
-              >
-                <ArrowLeft className="w-6 h-6" />
-              </Button>
-            </div>
-
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {messages.map((message) => (
-                <motion.div
-                  key={message.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div
-                    className={`max-w-[80%] p-3 rounded-2xl transition-all duration-300 ${
-                      message.type === 'user'
-                        ? 'bg-blue-500 text-white'
-                        : isDarkTheme 
-                          ? 'bg-white/10 text-white border border-white/20'
-                          : 'bg-gray-100 text-gray-900 border border-gray-200'
-                    }`}
-                  >
-                    <p className="text-sm leading-relaxed">{message.content}</p>
-                    <p className="text-xs mt-2 opacity-60 text-right">
-                      {message.timestamp.toLocaleTimeString([], { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
-                      })}
-                    </p>
-                  </div>
-                </motion.div>
-              ))}
-              <div ref={messagesEndRef} />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Chat History Overlay */}
-      <AnimatePresence>
-        {showHistoryOverlay && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-            style={{ pointerEvents: 'auto' }}
-          >
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className={`absolute inset-0 ${isDarkTheme ? 'bg-black/40' : 'bg-black/20'} backdrop-blur-sm`}
-              onClick={() => setShowHistoryOverlay(false)}
-            />
-            
-            {/* History Panel */}
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-              className={`relative w-full max-w-2xl max-h-[80vh] ${currentTheme.cardBg} rounded-2xl shadow-2xl overflow-hidden`}
-            >
-              {/* Header */}
-              <div className={`px-6 py-4 border-b ${currentTheme.border} flex items-center justify-between`}>
-                <h2 className={`text-lg font-medium ${currentTheme.textPrimary} opacity-90`}>
-                  Chat History
-                </h2>
-                <button
-                  onClick={() => setShowHistoryOverlay(false)}
-                  className={`rounded-full ${currentTheme.buttonText} ${currentTheme.buttonHover} ${currentTheme.buttonBg} transition-all duration-200 w-10 h-10 flex items-center justify-center`}
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Messages List */}
-              <div className="overflow-y-auto max-h-[60vh] p-4">
-                {messages.length === 0 ? (
-                  <div className={`text-center py-8 ${currentTheme.textSecondary}`}>
-                    <History className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                    <p>No chat history yet</p>
-                    <p className="text-sm mt-1">Start a conversation to see your history here</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {messages.map((message) => (
-                      <motion.div
-                        key={message.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
-                      >
-                        <div
-                          className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                            message.type === 'user'
-                              ? currentTheme.userMessageBg
-                              : currentTheme.aiMessageBg
-                          }`}
-                        >
-                          <p className={`text-sm leading-relaxed ${
-                            message.type === 'user'
-                              ? `${currentTheme.userMessageText}`
-                              : `${currentTheme.aiMessageText}`
-                          }`}>{message.content}</p>
-                          <div className="flex items-center justify-between mt-2 text-xs opacity-70">
-                            <span className="flex items-center gap-1">
-                              {message.isVoice && (
-                                <div className="w-2 h-2 rounded-full bg-current opacity-60" />
-                              )}
-                              {message.type === 'user' ? 'You' : 'AI'}
-                            </span>
-                            <span>
-                              {message.timestamp.toLocaleTimeString([], { 
-                                hour: '2-digit', 
-                                minute: '2-digit' 
-                              })}
-                            </span>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Footer */}
-              <div className={`px-6 py-3 border-t ${currentTheme.border} ${currentTheme.textSecondary} text-xs text-center opacity-70`}>
-                {messages.length > 0 && (
-                  <p>{messages.length} message{messages.length !== 1 ? 's' : ''} in this conversation</p>
-                )}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      ))}
     </div>
   );
-};
-
-export default VoiceChat;
+}

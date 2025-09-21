@@ -19,6 +19,8 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   livekitTokenResponse: LivekitTokenResponse | null;
+  refreshLivekitTokenResponse: () => Promise<void>;
+  getLivekitTokenResponse: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   signup: (userData: SignupData) => Promise<void>;
   logout: () => void;
@@ -56,7 +58,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // You might want to validate the token with the server here
         // For now, we'll just check if it exists
         const userData = localStorage.getItem("userData");
-        const livekitTokenResponse = localStorage.getItem("livekitTokenResponse");
+        // const livekitTokenResponse = localStorage.getItem("livekitTokenResponse");
         if (userData) {
           try {
             setUser(JSON.parse(userData));
@@ -69,7 +71,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
         if (livekitTokenResponse) {
           try {
-            setLivekitTokenResponse(JSON.parse(livekitTokenResponse));
+            // setLivekitTokenResponse(JSON.parse(livekitTokenResponse));
           } catch (error) {
             localStorage.removeItem("livekitTokenResponse");
           }
@@ -107,6 +109,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const getLivekitTokenResponse = async () => {
+    const access_token = localStorage.getItem("authToken");
+    if (!access_token) {
+      throw new Error("No auth token found");
+    }
+    const livekitTokenResponse = await createRoomAndToken(access_token);
+    console.log(livekitTokenResponse)
+    // localStorage.setItem("livekitTokenResponse", JSON.stringify(livekitTokenResponse));
+    setLivekitTokenResponse(livekitTokenResponse);
+  }
+
+  const refreshLivekitTokenResponse = async () => {
+    setLivekitTokenResponse(null);
+  }
+
   const logout = () => {
     localStorage.removeItem("authToken");
     localStorage.removeItem("userData");
@@ -119,11 +136,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     user,
     isAuthenticated,
     livekitTokenResponse,
+    getLivekitTokenResponse,
     isLoading,
     login,
     signup,
     logout,
     setUser,
+    refreshLivekitTokenResponse
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
