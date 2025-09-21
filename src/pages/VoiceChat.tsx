@@ -1,773 +1,527 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, History, Sun, Moon, MessageCircle, X } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { ScatteredVoiceSphere } from '@/components/ScatteredVoiceSphere';
-import { useDemoVoiceChat } from '@/hooks/useLiveKitVoiceChat';
-
-interface Message {
-  id: string;
-  type: 'user' | 'ai';
-  content: string;
-  timestamp: Date;
-  isVoice?: boolean;
-}
-
-type VoiceChatState = 'idle' | 'listening' | 'processing' | 'speaking' | 'text-mode';
-
-const VoiceChat = () => {
-  const navigate = useNavigate();
-  const [currentState, setCurrentState] = useState<VoiceChatState>('idle');
-  const [currentTranscript, setCurrentTranscript] = useState('');
-  const [aiResponse, setAiResponse] = useState("Hello! I'm your AI companion. What can I help you with today?");
-  const [showTextChat, setShowTextChat] = useState(false);
-  const [inputText, setInputText] = useState('');
-  const [isTranscriptionEnabled, setIsTranscriptionEnabled] = useState(true);
-  const [userInputText, setUserInputText] = useState('');
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [isDarkTheme, setIsDarkTheme] = useState(true);
-  const [showExpandedInput, setShowExpandedInput] = useState(false);
-  const [showHistoryOverlay, setShowHistoryOverlay] = useState(false);
+import {
+    ControlBar,
+    RoomAudioRenderer,
+    RoomContext,
+    useParticipants,
+    useTracks,
+    useConnectionState,
+  } from '@livekit/components-react';
+  import { Room, Track, RoomEvent, ConnectionState, RemoteParticipant, LocalParticipant } from 'livekit-client';
+  import '@livekit/components-styles';
+  import { useEffect, useState, useRef } from 'react';
+import { Mic, MicOff, Volume2, VolumeX, MessageSquare, Bot, Users, Wifi, WifiOff, Speaker } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
   
-  const voiceChat = useDemoVoiceChat();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
-  const isListeningRef = useRef(false);
-  const restartTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+export default function VoiceChatPage() {
+  const [room] = useState(
+    () =>
+      new Room({
+        adaptiveStream: false,
+        dynacast: false,
+      })
+  );
+  const [connected, setConnected] = useState(false);
+  const [micEnabled, setMicEnabled] = useState(false);
+  const [agentSpeaking, setAgentSpeaking] = useState(false);
+  const [connectionState, setConnectionState] = useState<ConnectionState>(ConnectionState.Disconnected);
 
-  // Auto-start voice chat on component mount
+  const { user, getLivekitTokenResponse, livekitTokenResponse,refreshLivekitTokenResponse } = useAuth();
+
+
   useEffect(() => {
-    const initializeVoiceChat = async () => {
-      await voiceChat.connect();
-      setCurrentState('listening');
-      
-      // Add initial AI greeting to messages
-      const initialMessage: Message = {
-        id: Date.now().toString(),
-        type: 'ai',
-        content: aiResponse,
-        timestamp: new Date(),
-        isVoice: true
-      };
-      setMessages([initialMessage]);
-      
-      // Start with AI greeting and then begin listening
-      setTimeout(() => {
-        if ('speechSynthesis' in window) {
-          const utterance = new SpeechSynthesisUtterance(aiResponse);
-          utterance.rate = 0.9;
-          utterance.pitch = 1.0;
-          utterance.onstart = () => setCurrentState('speaking');
-          utterance.onend = () => {
-            setCurrentState('listening');
-            startContinuousListening();
-          };
-          speechSynthesis.speak(utterance);
-        } else {
-          setCurrentState('listening');
-          startContinuousListening();
+    getLivekitTokenResponse();
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const connect = async () => {
+      if (mounted) {
+        console.log('🔄 [LiveKit] Initiating connection to room...');
+        console.log('🌐 [LiveKit] Server URL:', livekitTokenResponse.url);
+        console.log('🎫 [LiveKit] Token provided:', !!livekitTokenResponse.access_token);
+        
+        setConnectionState(ConnectionState.Connecting);
+        
+        try {
+          await room.connect(livekitTokenResponse?.url, livekitTokenResponse?.access_token, { autoSubscribe: true,  });
+          console.log('✅ [LiveKit] Successfully connected to room');
+          setConnected(true);
+
+          // start mic disabled; enable after agent finishes speaking
+          await room.localParticipant.setMicrophoneEnabled(false);
+          console.log('🎤 [LiveKit] Microphone initially disabled');
+        } catch (error) {
+          console.error('❌ [LiveKit] Connection failed:', error);
+          setConnected(false);
+          setConnectionState(ConnectionState.Disconnected);
         }
-      }, 1000);
+      }
+    };
+    if (livekitTokenResponse?.access_token) {    
+    connect();
+    }
+    return () => {
+      mounted = false;
+      console.log('🔌 [LiveKit] Disconnecting from room...');
+      room.disconnect();
+      setConnected(false);
+    };
+  }, [room, livekitTokenResponse?.access_token]);
+
+  useEffect(() => {
+    // Connection state events
+    const handleConnected = () => {
+      console.log('🟢 [LiveKit] Room connected');
+      setConnectionState(ConnectionState.Connected);
+      setConnected(true);
     };
 
-    initializeVoiceChat();
+
+    const handleDisconnected = (reason?: any) => {
+      console.log('🔴 [LiveKit] Room disconnected:', reason);
+      setConnectionState(ConnectionState.Disconnected);
+      setConnected(false);
+      setAgentSpeaking(false);
+      refreshLivekitTokenResponse();
+    };
+
+    const handleReconnecting = () => {
+      console.log('🔄 [LiveKit] Room reconnecting...');
+      setConnectionState(ConnectionState.Reconnecting);
+    };
+
+    const handleReconnected = () => {
+      console.log('🟢 [LiveKit] Room reconnected');
+      setConnectionState(ConnectionState.Connected);
+      setConnected(true);
+    };
+
+    // Participant events
+    const handleParticipantConnected = (participant: RemoteParticipant) => {
+      console.log('👥 [LiveKit] Participant connected:', {
+        identity: participant.identity,
+        name: participant.name,
+        metadata: participant.metadata,
+        sid: participant.sid
+      });
+    };
+
+    const handleParticipantDisconnected = (participant: RemoteParticipant) => {
+      console.log('👋 [LiveKit] Participant disconnected:', {
+        identity: participant.identity,
+        name: participant.name,
+        sid: participant.sid
+      });
+    };
+
+    // Audio track events
+    const handleTrackSubscribed = (track: any, publication: any, participant: RemoteParticipant) => {
+      console.log('🎵 [LiveKit] Track subscribed:', {
+        kind: track.kind,
+        source: track.source,
+        participant: participant.identity,
+        enabled: track.enabled,
+        muted: track.muted
+      });
+
+      if (track.kind === Track.Kind.Audio) {
+        console.log('🔊 [LiveKit] Audio track from agent received');
+        setAgentSpeaking(true);
+        
+        // Ensure audio context is started and track is properly attached
+        const ensureAudioPlayback = async () => {
+          try {
+            // Start audio if not already started
+            if (!room.canPlaybackAudio) {
+              console.log('🔊 [LiveKit] Starting audio context...');
+              await room.startAudio();
+            }
+            
+            // Attach the audio track
+            console.log('🔊 [LiveKit] Attaching audio track...');
+            const audioElement = track.attach();
+            if (audioElement) {
+              audioElement.autoplay = true;
+              audioElement.playsInline = true;
+              console.log('🔊 [LiveKit] Audio element configured for playback');
+            }
+          } catch (error) {
+            console.error('🔊 [LiveKit] Error setting up audio playback:', error);
+          }
+        };
+        
+        ensureAudioPlayback();
+      }
+    };
+
+    const handleTrackUnsubscribed = (track: any, publication: any, participant: RemoteParticipant) => {
+      console.log('🔇 [LiveKit] Track unsubscribed:', {
+        kind: track.kind,
+        source: track.source,
+        participant: participant.identity
+      });
+
+      if (track.kind === Track.Kind.Audio) {
+        console.log('🔇 [LiveKit] Agent audio stopped');
+        setAgentSpeaking(false);
+      }
+    };
+
+    const handleTrackMuted = (publication: any, participant: any) => {
+      console.log('🔇 [LiveKit] Track muted:', {
+        kind: publication.kind,
+        source: publication.source,
+        participant: participant.identity
+      });
+    };
+
+    const handleTrackUnmuted = (publication: any, participant: any) => {
+      console.log('🔊 [LiveKit] Track unmuted:', {
+        kind: publication.kind,
+        source: publication.source,
+        participant: participant.identity
+      });
+    };
+
+    const handleDataReceived = (payload: Uint8Array, participant?: RemoteParticipant) => {
+      const message = new TextDecoder().decode(payload);
+      console.log('📨 [LiveKit] Data received:', {
+        message,
+        from: participant?.identity || 'unknown'
+      });
+    };
+
+    const handleAudioPlaybackChanged = () => {
+      console.log('🔊 [LiveKit] Audio playback status changed:', {
+        canPlayback: room.canPlaybackAudio
+      });
+    };
+
+    console.log('hereeee')
+
+    // Register all event listeners
+    room.on(RoomEvent.Connected, handleConnected);
+    room.on(RoomEvent.Disconnected, handleDisconnected);
+    room.on(RoomEvent.Reconnecting, handleReconnecting);
+    room.on(RoomEvent.Reconnected, handleReconnected);
+    room.on(RoomEvent.ParticipantConnected, handleParticipantConnected);
+    room.on(RoomEvent.ParticipantDisconnected, handleParticipantDisconnected);
+    room.on(RoomEvent.TrackSubscribed, handleTrackSubscribed);
+    room.on(RoomEvent.TrackUnsubscribed, handleTrackUnsubscribed);
+    room.on(RoomEvent.TrackMuted, handleTrackMuted);
+    room.on(RoomEvent.TrackUnmuted, handleTrackUnmuted);
+    room.on(RoomEvent.DataReceived, handleDataReceived);
+    room.on(RoomEvent.AudioPlaybackStatusChanged, handleAudioPlaybackChanged);
+
+    // Log initial room state
+    console.log('📊 [LiveKit] Initial room state:', {
+      numParticipants: room.numParticipants,
+      canPlaybackAudio: room.canPlaybackAudio,
+      state: room.state
+    });
 
     return () => {
-      // Cleanup on unmount
-      isListeningRef.current = false;
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-        recognitionRef.current = null;
-      }
-      if (restartTimeoutRef.current) {
-        clearTimeout(restartTimeoutRef.current);
-        restartTimeoutRef.current = null;
-      }
-      voiceChat.disconnect();
-      if ('speechSynthesis' in window) {
-        speechSynthesis.cancel();
-      }
+      // Clean up event listeners
+      room.off(RoomEvent.Connected, handleConnected);
+      room.off(RoomEvent.Disconnected, handleDisconnected);
+      room.off(RoomEvent.Reconnecting, handleReconnecting);
+      room.off(RoomEvent.Reconnected, handleReconnected);
+      room.off(RoomEvent.ParticipantConnected, handleParticipantConnected);
+      room.off(RoomEvent.ParticipantDisconnected, handleParticipantDisconnected);
+      room.off(RoomEvent.TrackSubscribed, handleTrackSubscribed);
+      room.off(RoomEvent.TrackUnsubscribed, handleTrackUnsubscribed);
+      room.off(RoomEvent.TrackMuted, handleTrackMuted);
+      room.off(RoomEvent.TrackUnmuted, handleTrackUnmuted);
+      room.off(RoomEvent.DataReceived, handleDataReceived);
+      room.off(RoomEvent.AudioPlaybackStatusChanged, handleAudioPlaybackChanged);
     };
-  }, []);
+  }, [room]);
 
-  const stopListening = useCallback(() => {
-    isListeningRef.current = false;
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-      recognitionRef.current = null;
-    }
-    if (restartTimeoutRef.current) {
-      clearTimeout(restartTimeoutRef.current);
-      restartTimeoutRef.current = null;
-    }
-  }, []);
+  return (
+    <RoomContext.Provider value={room}>
+      <div className="flex flex-col items-center justify-between h-screen p-6 bg-gradient-to-br from-indigo-100 to-purple-200">
+        {/* Status Panel at the top */}
+        <ConnectionStatusPanel 
+          connectionState={connectionState}
+          connected={connected}
+          room={room}
+        />
 
-  const startContinuousListening = useCallback(() => {
-    // Don't start if already listening or if speech recognition is not supported
-    if (isListeningRef.current || !('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-      return;
-    }
+        <div className="flex-1 flex flex-col items-center justify-center w-full">
+          <h1 className="text-2xl font-bold mb-6 text-gray-800">
+            Voice Chat with Agent
+          </h1>
 
-    // Stop any existing recognition first
-    stopListening();
+          {connected ? (
+            <>
+              <AgentStatus agentSpeaking={agentSpeaking} />
+              
+              {/* Audio Enable Button - helps with browser audio context */}
+              {!room.canPlaybackAudio && (
+                <button
+                  onClick={async () => {
+                    try {
+                      console.log('🔊 [LiveKit] User clicked to enable audio');
+                      await room.startAudio();
+                      console.log('🔊 [LiveKit] Audio enabled by user interaction');
+                    } catch (error) {
+                      console.error('🔊 [LiveKit] Failed to enable audio:', error);
+                    }
+                  }}
+                  className="mb-4 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center space-x-2"
+                >
+                  <Volume2 className="w-4 h-4" />
+                  <span>Enable Audio</span>
+                </button>
+              )}
+              
+              <UserMic
+                micEnabled={micEnabled}
+                onToggle={async () => {
+                  const next = !micEnabled;
+                  console.log(`🎤 [LiveKit] Toggling microphone: ${next ? 'ON' : 'OFF'}`);
+                  setMicEnabled(next);
+                  await room.localParticipant.setMicrophoneEnabled(next);
+                }}
+              />
+            </>
+          ) : (
+            <div className="text-center">
+              <p className="text-gray-600 mb-2">Connecting to room...</p>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+            </div>
+          )}
+        </div>
 
-    const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
-    const recognition = new SpeechRecognition();
-    
-    recognitionRef.current = recognition;
-    isListeningRef.current = true;
-    
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-    recognition.maxAlternatives = 1;
+        {/* Agent audio output - ensure audio is rendered properly */}
+        <RoomAudioRenderer />
+        <AudioDebugPanel room={room} />
 
-    recognition.onstart = () => {
-      if (isListeningRef.current) {
-        setCurrentState('listening');
-      }
-    };
+        {/* Default controls at bottom */}
+        <ControlBar
+          variation="minimal"
+          controls={{
+            microphone: true,
+            camera: false,
+            screenShare: false,
+          }}
+        />
+      </div>
+    </RoomContext.Provider>
+  );
+}
 
-    recognition.onresult = (event) => {
-      if (!isListeningRef.current) return;
-
-      let interimTranscript = '';
-      let finalTranscript = '';
-
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript;
-        if (event.results[i].isFinal) {
-          finalTranscript += transcript;
-        } else {
-          interimTranscript += transcript;
-        }
-      }
-
-      setCurrentTranscript(interimTranscript || finalTranscript);
-
-      if (finalTranscript && finalTranscript.trim()) {
-        handleUserVoiceInput(finalTranscript.trim());
-      }
-    };
-
-    recognition.onerror = (event) => {
-      console.warn('Speech recognition error:', event.error);
-      
-      // Handle different error types
-      if (event.error === 'aborted' || event.error === 'network') {
-        // Don't restart on aborted or network errors immediately
-        return;
-      }
-      
-      if (event.error === 'not-allowed') {
-        console.error('Microphone permission denied');
-        setCurrentState('idle');
-        return;
-      }
-
-      // For other errors, try to restart after a delay
-      if (isListeningRef.current) {
-        restartTimeoutRef.current = setTimeout(() => {
-          if (isListeningRef.current && currentState === 'listening') {
-            startContinuousListening();
-          }
-        }, 2000);
-      }
-    };
-
-    recognition.onend = () => {
-      // Only restart if we're still supposed to be listening
-      if (isListeningRef.current && currentState === 'listening') {
-        restartTimeoutRef.current = setTimeout(() => {
-          if (isListeningRef.current && currentState === 'listening') {
-            startContinuousListening();
-          }
-        }, 500);
-      }
-    };
-
-    try {
-      recognition.start();
-    } catch (error) {
-      console.error('Failed to start speech recognition:', error);
-      isListeningRef.current = false;
-    }
-  }, [currentState, stopListening]);
-
-  const handleUserVoiceInput = useCallback((transcript: string) => {
-    if (!transcript.trim()) return;
-
-    // Stop listening while processing
-    stopListening();
-    setCurrentState('processing');
-    setCurrentTranscript('');
-    setUserInputText(transcript); // Show user input at bottom
-
-    // Add user message to history
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      type: 'user',
-      content: transcript,
-      timestamp: new Date(),
-      isVoice: true,
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-
-    // Simulate AI processing and response
-    setTimeout(() => {
-      const aiResponses = [
-        "That's really interesting! Tell me more about that.",
-        "I understand. How does that make you feel?",
-        "That sounds like a great experience. What was the best part?",
-        "I can see why that would be important to you. What's your next step?",
-        "Thanks for sharing that with me. Is there anything else you'd like to discuss?",
-        "That's a thoughtful perspective. What led you to think about it that way?",
-        "I appreciate you opening up about that. How can I help you with this?",
-      ];
-
-      const response = aiResponses[Math.floor(Math.random() * aiResponses.length)];
-      setAiResponse(response);
-
-      // Add AI message to history
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        type: 'ai',
-        content: response,
-        timestamp: new Date(),
-        isVoice: true,
-      };
-
-      setMessages(prev => [...prev, aiMessage]);
-
-      // Speak the response
-      if ('speechSynthesis' in window) {
-        setCurrentState('speaking');
-        const utterance = new SpeechSynthesisUtterance(response);
-        utterance.rate = 0.9;
-        utterance.pitch = 1.0;
-        utterance.onend = () => {
-          setCurrentTranscript('');
-          setUserInputText(''); // Clear user input when AI starts new question
-          setCurrentState('listening');
-          startContinuousListening();
-        };
-        speechSynthesis.speak(utterance);
-      } else {
-        setCurrentTranscript('');
-        setUserInputText(''); // Clear user input when AI starts new question
-        setCurrentState('listening');
-        startContinuousListening();
-      }
-    }, 1500);
-  }, [stopListening, startContinuousListening]);
-
-  const handleTextMessage = useCallback((text: string) => {
-    if (!text.trim()) return;
-
-    // Stop listening while processing
-    stopListening();
-    setCurrentState('processing');
-    setCurrentTranscript('');
-    setUserInputText(text); // Show user input at bottom
-
-    // Add user message to history
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      type: 'user',
-      content: text,
-      timestamp: new Date(),
-      isVoice: false,
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-
-    // Simulate AI processing and response (same logic as voice input but without duplication)
-    setTimeout(() => {
-      const aiResponses = [
-        "That's really interesting! Tell me more about that.",
-        "I understand. How does that make you feel?",
-        "That sounds like a great experience. What was the best part?",
-        "I can see why that would be important to you. What's your next step?",
-        "Thanks for sharing that with me. Is there anything else you'd like to discuss?",
-        "That's a thoughtful perspective. What led you to think about it that way?",
-        "I appreciate you opening up about that. How can I help you with this?",
-      ];
-
-      const response = aiResponses[Math.floor(Math.random() * aiResponses.length)];
-      setAiResponse(response);
-
-      // Add AI message to history
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        type: 'ai',
-        content: response,
-        timestamp: new Date(),
-        isVoice: true,
-      };
-
-      setMessages(prev => [...prev, aiMessage]);
-
-      // Speak the response
-      if ('speechSynthesis' in window) {
-        setCurrentState('speaking');
-        const utterance = new SpeechSynthesisUtterance(response);
-        utterance.rate = 0.9;
-        utterance.pitch = 1.0;
-        utterance.onend = () => {
-          setCurrentTranscript('');
-          setUserInputText(''); // Clear user input when AI starts new question
-          setCurrentState('listening');
-          startContinuousListening();
-        };
-        speechSynthesis.speak(utterance);
-      } else {
-        setCurrentTranscript('');
-        setUserInputText(''); // Clear user input when AI starts new question
-        setCurrentState('listening');
-        startContinuousListening();
-      }
-    }, 1500);
-  }, [stopListening, startContinuousListening]);
-
-  const toggleTextChat = useCallback(() => {
-    setShowTextChat(!showTextChat);
-    if (!showTextChat) {
-      // Switching to text mode
-      stopListening();
-      setCurrentState('text-mode');
-      if ('speechSynthesis' in window) {
-        speechSynthesis.cancel();
-      }
-    } else {
-      // Switching back to voice mode
-      setCurrentState('listening');
-      startContinuousListening();
-    }
-  }, [showTextChat, stopListening, startContinuousListening]);
-
-  // Theme-based styles
-  const themeStyles = {
-    dark: {
-      background: 'bg-gradient-to-br from-gray-900 via-gray-800 to-black',
-      buttonBg: 'bg-white/10 backdrop-blur-sm',
-      buttonText: 'text-white/70 hover:text-white',
-      buttonHover: 'hover:bg-white/20',
-      textPrimary: 'text-white/90',
-      textSecondary: 'text-white/60',
-      inputBg: 'bg-white/10 backdrop-blur-sm',
-      inputText: 'text-white placeholder-white/60',
-      inputBorder: 'border-white/20',
-      particleColor: '#ffffff20',
-      cardBg: 'bg-gray-900/90 backdrop-blur-xl',
-      border: 'border-white/5',
-      userMessageBg: 'bg-gray-700/80 border border-gray-600/50',
-      userMessageText: 'text-white/95',
-      aiMessageBg: 'bg-gray-800/60 border border-gray-700/40',
-      aiMessageText: 'text-white/90',
-    },
-    light: {
-      background: 'bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50',
-      buttonBg: 'bg-black/10 backdrop-blur-sm',
-      buttonText: 'text-gray-700 hover:text-gray-900',
-      buttonHover: 'hover:bg-black/20',
-      textPrimary: 'text-gray-900',
-      textSecondary: 'text-gray-600',
-      inputBg: 'bg-white/80 backdrop-blur-sm',
-      inputText: 'text-gray-900 placeholder-gray-500',
-      inputBorder: 'border-gray-300',
-      particleColor: '#00000015',
-      cardBg: 'bg-white/85 backdrop-blur-xl',
-      border: 'border-gray-100',
-      userMessageBg: 'bg-gray-200/90 border border-gray-300/60',
-      userMessageText: 'text-gray-800',
-      aiMessageBg: 'bg-white/90 border border-gray-200/50',
-      aiMessageText: 'text-gray-700',
+/**
+ * Connection Status Panel - shows comprehensive connection information
+ */
+function ConnectionStatusPanel({ connectionState, connected, room }: { 
+  connectionState: ConnectionState; 
+  connected: boolean; 
+  room: Room;
+}) {
+  const participants = useParticipants();
+  const tracks = useTracks();
+  
+  const getConnectionStateColor = (state: ConnectionState) => {
+    switch (state) {
+      case ConnectionState.Connected:
+        return 'bg-green-100 text-green-700 border-green-200';
+      case ConnectionState.Connecting:
+      case ConnectionState.Reconnecting:
+        return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+      case ConnectionState.Disconnected:
+        return 'bg-red-100 text-red-700 border-red-200';
+      default:
+        return 'bg-gray-100 text-gray-700 border-gray-200';
     }
   };
 
-  const currentTheme = isDarkTheme ? themeStyles.dark : themeStyles.light;
+  const getConnectionStateIcon = (state: ConnectionState) => {
+    switch (state) {
+      case ConnectionState.Connected:
+        return <Wifi className="w-4 h-4" />;
+      case ConnectionState.Connecting:
+      case ConnectionState.Reconnecting:
+        return <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>;
+      case ConnectionState.Disconnected:
+        return <WifiOff className="w-4 h-4" />;
+      default:
+        return <WifiOff className="w-4 h-4" />;
+    }
+  };
+
+  const audioTracks = tracks.filter(track => track.publication.kind === 'audio');
+  const remoteAudioTracks = audioTracks.filter(track => track.participant.isLocal === false);
 
   return (
-    <div className={`min-h-screen ${currentTheme.background} flex flex-col relative overflow-hidden transition-all duration-700`} style={{ pointerEvents: 'auto' }}>
-      {/* Animated Background Particles */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {Array.from({ length: 100 }, (_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 rounded-full transition-colors duration-700"
-            style={{ backgroundColor: currentTheme.particleColor }}
-            initial={{
-              x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 1000),
-              y: Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 1000),
-              opacity: Math.random() * 0.5 + 0.1,
-            }}
-            animate={{
-              y: [null, Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 1000)],
-              opacity: [null, Math.random() * 0.3 + 0.1],
-            }}
-            transition={{
-              duration: Math.random() * 10 + 10,
-              repeat: Infinity,
-              repeatType: "reverse",
-              ease: "linear",
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Back Button - Top Left */}
-      <div className="absolute top-6 left-6 z-50">
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('Back button clicked');
-            navigate('/');
-          }}
-          className={`rounded-full ${currentTheme.buttonText} ${currentTheme.buttonHover} ${currentTheme.buttonBg} transition-all duration-300 w-12 h-12 flex items-center justify-center cursor-pointer pointer-events-auto`}
-          title="Back to games"
-          style={{ pointerEvents: 'auto' }}
-        >
-          <ArrowLeft className="w-6 h-6" />
-        </button>
-      </div>
-
-      {/* Top Right Controls */}
-      <div className="absolute top-6 right-6 z-50 flex items-center gap-2">
-        {/* Theme Toggle */}
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('Theme button clicked, current theme:', isDarkTheme);
-            setIsDarkTheme(!isDarkTheme);
-          }}
-          className={`rounded-full ${currentTheme.buttonText} ${currentTheme.buttonHover} ${currentTheme.buttonBg} transition-all duration-300 w-12 h-12 flex items-center justify-center cursor-pointer pointer-events-auto`}
-          title="Toggle theme"
-          style={{ pointerEvents: 'auto' }}
-        >
-          <motion.div
-            initial={false}
-            animate={{ rotate: isDarkTheme ? 0 : 180 }}
-            transition={{ duration: 0.3 }}
-          >
-            {isDarkTheme ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
-          </motion.div>
-        </button>
-
-        {/* History Button */}
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('History button clicked, current state:', showHistoryOverlay);
-            setShowHistoryOverlay(!showHistoryOverlay);
-          }}
-          className={`rounded-full ${currentTheme.buttonText} ${currentTheme.buttonHover} ${currentTheme.buttonBg} transition-all duration-300 w-12 h-12 flex items-center justify-center cursor-pointer pointer-events-auto ${
-            showHistoryOverlay ? `${currentTheme.buttonBg} ${currentTheme.textPrimary}` : ''
-          }`}
-          title="Chat history"
-          style={{ pointerEvents: 'auto' }}
-        >
-          <History className="w-6 h-6" />
-        </button>
-      </div>
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center justify-center relative z-10 px-4">
-        
-        {/* AI Response Text */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={aiResponse}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="mb-16 max-w-2xl text-center px-6"
-          >
-            <p className={`${currentTheme.textPrimary} text-2xl md:text-3xl font-medium leading-relaxed transition-colors duration-300`}>
-              {aiResponse}
-            </p>
-          </motion.div>
-        </AnimatePresence>
-
-        {/* Scattered Voice Sphere */}
-        <ScatteredVoiceSphere 
-          state={currentState}
-          isBottom={showTextChat}
-          isDarkTheme={isDarkTheme}
-        />
-
-
-        {/* State Indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="mt-6 text-center"
-        >
-        </motion.div>
-      </div>
-
-      {/* Bottom Area */}
-      <div className="relative z-10 p-6">
-        <div className="max-w-md mx-auto space-y-4">
-          {/* User Input Display - Always maintains space to prevent jump */}
-          <div className="text-center min-h-[60px] flex items-center justify-center">
-            <motion.div
-              animate={{ 
-                opacity: userInputText ? 1 : 0,
-                scale: userInputText ? 1 : 0.95
-              }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-              className="inline-block"
-            >
-              <div className={`${currentTheme.inputBg} ${currentTheme.inputBorder} rounded-2xl px-6 py-3 transition-all duration-300 ${
-                userInputText ? 'border-opacity-100' : 'border-opacity-0 bg-opacity-0'
-              }`}>
-                <p className={`${currentTheme.textPrimary} text-sm transition-all duration-300`}>
-                  {userInputText || '\u00A0'}
-                </p>
-              </div>
-            </motion.div>
+    <div className="w-full max-w-4xl mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Connection Status */}
+        <div className={`p-4 rounded-lg border-2 ${getConnectionStateColor(connectionState)}`}>
+          <div className="flex items-center space-x-2 mb-2">
+            {getConnectionStateIcon(connectionState)}
+            <h3 className="font-semibold">Connection</h3>
           </div>
+          <p className="text-sm capitalize">{connectionState.toLowerCase()}</p>
+          <p className="text-xs mt-1">
+            Audio Playback: {room.canPlaybackAudio ? '✅ Enabled' : '❌ Disabled'}
+          </p>
+        </div>
 
-          {/* Expandable Chat Input */}
-          <div className="relative flex justify-end">
-            <AnimatePresence mode="wait">
-              {showExpandedInput ? (
-                <motion.div
-                  key="expanded-input"
-                  initial={{ width: 56, opacity: 0 }}
-                  animate={{ width: 320, opacity: 1 }}
-                  exit={{ width: 56, opacity: 0 }}
-                  transition={{ 
-                    duration: 0.4, 
-                    ease: [0.4, 0, 0.2, 1],
-                    width: { duration: 0.5 }
-                  }}
-                  className={`${currentTheme.inputBg} rounded-full relative border ${currentTheme.inputBorder}`}
-                >
-                  <input
-                    type="text"
-                    value={inputText}
-                    onChange={(e) => setInputText(e.target.value)}
-                    placeholder="Type your message..."
-                      className={`w-full px-6 py-4 bg-transparent ${currentTheme.inputText} rounded-full pr-12 focus:outline-none focus:ring-0 focus:border-transparent border-none outline-none`}
-                      style={{ 
-                        outline: 'none', 
-                        border: 'none', 
-                        boxShadow: 'none',
-                        WebkitAppearance: 'none',
-                        MozAppearance: 'none',
-                        appearance: 'none'
-                      }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        if (inputText.trim()) {
-                          handleTextMessage(inputText);
-                          setInputText('');
-                        }
-                      }
-                    }}
-                    autoFocus
-                  />
-                  
-                  {/* Close Button */}
-                  <button
-                    onClick={() => setShowExpandedInput(false)}
-                    className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-full ${currentTheme.buttonText} transition-all duration-200 w-10 h-10 flex items-center justify-center`}
-                  >
-                    <motion.div
-                      initial={{ rotate: 0 }}
-                      animate={{ rotate: 180 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <X className="w-5 h-5" />
-                    </motion.div>
-                  </button>
-                </motion.div>
-              ) : (
-                <motion.button
-                  key="chat-button"
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.8, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: "backOut" }}
-                  onClick={() => setShowExpandedInput(true)}
-                  className={`w-14 h-14 rounded-full ${currentTheme.buttonBg} ${currentTheme.buttonText} ${currentTheme.buttonHover} flex items-center justify-center transition-all duration-300 shadow-lg`}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <MessageCircle className="w-6 h-6" />
-                </motion.button>
-              )}
-            </AnimatePresence>
+        {/* Participants */}
+        <div className="p-4 rounded-lg border-2 bg-blue-100 text-blue-700 border-blue-200">
+          <div className="flex items-center space-x-2 mb-2">
+            <Users className="w-4 h-4" />
+            <h3 className="font-semibold">Participants</h3>
+          </div>
+          <p className="text-sm">Total: {participants.length}</p>
+          <div className="text-xs mt-1 space-y-1">
+            {participants.map((p, index) => (
+              <div key={p.sid} className="flex items-center space-x-1">
+                <span className={`w-2 h-2 rounded-full ${p.isLocal ? 'bg-blue-500' : 'bg-green-500'}`}></span>
+                <span>{p.identity || `Participant ${index + 1}`} {p.isLocal && '(You)'}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Audio Status */}
+        <div className="p-4 rounded-lg border-2 bg-purple-100 text-purple-700 border-purple-200">
+          <div className="flex items-center space-x-2 mb-2">
+            <Speaker className="w-4 h-4" />
+            <h3 className="font-semibold">Audio</h3>
+          </div>
+          <p className="text-sm">Remote Audio: {remoteAudioTracks.length} tracks</p>
+          <div className="text-xs mt-1">
+            {remoteAudioTracks.map((track, index) => (
+              <div key={index} className="flex items-center space-x-1">
+                <span className={`w-2 h-2 rounded-full ${track.publication.isMuted ? 'bg-red-500' : 'bg-green-500'}`}></span>
+                <span>{track.participant.identity || 'Unknown'}: {track.publication.isMuted ? 'Muted' : 'Playing'}</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
-
-      {/* Message History Overlay */}
-      <AnimatePresence>
-        {showTextChat && (
-          <motion.div
-            initial={{ opacity: 0, y: '100%' }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: '100%' }}
-            className={`fixed inset-0 ${isDarkTheme ? 'bg-black/90' : 'bg-white/90'} backdrop-blur-sm z-20 flex flex-col transition-colors duration-300`}
-          >
-            {/* Header */}
-            <div className={`flex items-center justify-between p-4 border-b ${isDarkTheme ? 'border-white/20' : 'border-gray-200'} transition-colors duration-300`}>
-              <h2 className={`${currentTheme.textPrimary} text-lg font-semibold`}>Chat History</h2>
-              <Button
-                variant="ghost"
-                size="lg"
-                onClick={toggleTextChat}
-                className={`${currentTheme.buttonText} ${currentTheme.buttonHover} rounded-full transition-all duration-300 w-12 h-12 p-0`}
-              >
-                <ArrowLeft className="w-6 h-6" />
-              </Button>
-            </div>
-
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {messages.map((message) => (
-                <motion.div
-                  key={message.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div
-                    className={`max-w-[80%] p-3 rounded-2xl transition-all duration-300 ${
-                      message.type === 'user'
-                        ? 'bg-blue-500 text-white'
-                        : isDarkTheme 
-                          ? 'bg-white/10 text-white border border-white/20'
-                          : 'bg-gray-100 text-gray-900 border border-gray-200'
-                    }`}
-                  >
-                    <p className="text-sm leading-relaxed">{message.content}</p>
-                    <p className="text-xs mt-2 opacity-60 text-right">
-                      {message.timestamp.toLocaleTimeString([], { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
-                      })}
-                    </p>
-                  </div>
-                </motion.div>
-              ))}
-              <div ref={messagesEndRef} />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Chat History Overlay */}
-      <AnimatePresence>
-        {showHistoryOverlay && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-            style={{ pointerEvents: 'auto' }}
-          >
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className={`absolute inset-0 ${isDarkTheme ? 'bg-black/40' : 'bg-black/20'} backdrop-blur-sm`}
-              onClick={() => setShowHistoryOverlay(false)}
-            />
-            
-            {/* History Panel */}
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-              className={`relative w-full max-w-2xl max-h-[80vh] ${currentTheme.cardBg} rounded-2xl shadow-2xl overflow-hidden`}
-            >
-              {/* Header */}
-              <div className={`px-6 py-4 border-b ${currentTheme.border} flex items-center justify-between`}>
-                <h2 className={`text-lg font-medium ${currentTheme.textPrimary} opacity-90`}>
-                  Chat History
-                </h2>
-                <button
-                  onClick={() => setShowHistoryOverlay(false)}
-                  className={`rounded-full ${currentTheme.buttonText} ${currentTheme.buttonHover} ${currentTheme.buttonBg} transition-all duration-200 w-10 h-10 flex items-center justify-center`}
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-
-              {/* Messages List */}
-              <div className="overflow-y-auto max-h-[60vh] p-4">
-                {messages.length === 0 ? (
-                  <div className={`text-center py-8 ${currentTheme.textSecondary}`}>
-                    <History className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                    <p>No chat history yet</p>
-                    <p className="text-sm mt-1">Start a conversation to see your history here</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {messages.map((message) => (
-                      <motion.div
-                        key={message.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
-                      >
-                        <div
-                          className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                            message.type === 'user'
-                              ? currentTheme.userMessageBg
-                              : currentTheme.aiMessageBg
-                          }`}
-                        >
-                          <p className={`text-sm leading-relaxed ${
-                            message.type === 'user'
-                              ? `${currentTheme.userMessageText}`
-                              : `${currentTheme.aiMessageText}`
-                          }`}>{message.content}</p>
-                          <div className="flex items-center justify-between mt-2 text-xs opacity-70">
-                            <span className="flex items-center gap-1">
-                              {message.isVoice && (
-                                <div className="w-2 h-2 rounded-full bg-current opacity-60" />
-                              )}
-                              {message.type === 'user' ? 'You' : 'AI'}
-                            </span>
-                            <span>
-                              {message.timestamp.toLocaleTimeString([], { 
-                                hour: '2-digit', 
-                                minute: '2-digit' 
-                              })}
-                            </span>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Footer */}
-              <div className={`px-6 py-3 border-t ${currentTheme.border} ${currentTheme.textSecondary} text-xs text-center opacity-70`}>
-                {messages.length > 0 && (
-                  <p>{messages.length} message{messages.length !== 1 ? 's' : ''} in this conversation</p>
-                )}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
-};
+}
 
-export default VoiceChat;
+/**
+ * Show whether agent is present in the room
+ */
+function AgentStatus({ agentSpeaking }: { agentSpeaking: boolean }) {
+  const participants = useParticipants();
+  const agentIdentity = "agent"; // use the same identity your backend assigns to AI agent
+  const agent = participants.find((p) => !p.isLocal);
+    console.log(participants);
+  return (
+    <div className="mb-8">
+      {agent ? (
+        <div className="flex items-center space-x-4">
+          <span className="px-4 py-2 rounded-xl bg-green-100 text-green-700 font-medium flex items-center space-x-2">
+            <Bot className="w-4 h-4" />
+            <span>✅ Agent connected</span>
+          </span>
+          {agentSpeaking && (
+            <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-sm font-medium flex items-center space-x-1 animate-pulse">
+              <Volume2 className="w-3 h-3" />
+              <span>Speaking</span>
+            </span>
+          )}
+        </div>
+      ) : (
+        <span className="px-4 py-2 rounded-xl bg-red-100 text-red-700 font-medium flex items-center space-x-2">
+          <Bot className="w-4 h-4" />
+          <span>❌ Agent not connected</span>
+        </span>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Audio Debug Panel - helps debug audio issues
+ */
+function AudioDebugPanel({ room }: { room: Room }) {
+  const tracks = useTracks();
+  const audioTracks = tracks.filter(track => track.publication.kind === 'audio');
+
+  useEffect(() => {
+    // Force enable audio playback
+    const enableAudio = async () => {
+      try {
+        if (room && !room.canPlaybackAudio) {
+          console.log('🔊 [AudioDebug] Attempting to enable audio playback...');
+          await room.startAudio();
+          console.log('🔊 [AudioDebug] Audio playback enabled');
+        }
+      } catch (error) {
+        console.error('🔊 [AudioDebug] Failed to enable audio:', error);
+      }
+    };
+
+    enableAudio();
+  }, [room, audioTracks.length]);
+
+  // Log audio track details
+  useEffect(() => {
+    audioTracks.forEach((track, index) => {
+      console.log(`🎵 [AudioDebug] Audio track ${index}:`, {
+        kind: track.publication.kind,
+        source: track.publication.source,
+        participant: track.participant.identity,
+        isLocal: track.participant.isLocal,
+        enabled: track.publication.isEnabled,
+        muted: track.publication.isMuted,
+        subscribed: track.publication.isSubscribed,
+        trackSid: track.publication.trackSid,
+      });
+
+      // Try to attach the track if it's not local
+      if (!track.participant.isLocal && track.publication.track) {
+        console.log('🔊 [AudioDebug] Ensuring remote audio track is attached');
+        track.publication.track.attach();
+      }
+    });
+  }, [audioTracks]);
+
+  if (process.env.NODE_ENV !== 'development') {
+    return null;
+  }
+
+  return (
+    <div className="fixed bottom-4 right-4 bg-black bg-opacity-75 text-white p-2 rounded text-xs max-w-xs">
+      <div>Audio Playback: {room.canPlaybackAudio ? '✅' : '❌'}</div>
+      <div>Audio Tracks: {audioTracks.length}</div>
+      {audioTracks.map((track, index) => (
+        <div key={index} className="mt-1">
+          {track.participant.identity || 'Unknown'}: 
+          {track.publication.isEnabled ? '🟢' : '🔴'} 
+          {track.publication.isMuted ? '🔇' : '🔊'}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Show mic status + button
+ */
+function UserMic({ micEnabled, onToggle }: { micEnabled: boolean; onToggle: () => void }) {
+  return (
+    <div className="flex flex-col items-center">
+      <button
+        onClick={onToggle}
+        className={`flex items-center justify-center w-20 h-20 rounded-full shadow-lg ${
+          micEnabled ? "bg-red-500" : "bg-green-500"
+        } text-white`}
+      >
+        {micEnabled ? <MicOff size={32} /> : <Mic size={32} />}
+      </button>
+      <span className="mt-3 text-gray-700 font-medium">
+        {micEnabled ? "Mic On (speaking)" : "Mic Off (waiting)"}
+      </span>
+    </div>
+  );
+}
