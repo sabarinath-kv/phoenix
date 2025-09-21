@@ -6,6 +6,7 @@ import { GameTimer } from "@/components/GameTimer";
 import { GameCard } from "@/components/GameCard";
 import { ResultScreen } from "@/components/ResultScreen";
 import { useGameRedirect } from "@/hooks/useGameRedirect";
+import { useGameSession } from "@/hooks/useGameSession";
 
 interface GameMistake {
   challengeType: string;
@@ -31,6 +32,7 @@ const FEEDBACK_DURATION = 1500; // 1.5 seconds
 export const LetterReversalSpotter: React.FC = () => {
   const navigate = useNavigate();
   const gameRedirect = useGameRedirect("letter-reversal-spotter");
+  const gameSession = useGameSession(7); // gameId 7 for letter-reversal-spotter
   const speechSynthRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   // Game state
@@ -333,6 +335,14 @@ export const LetterReversalSpotter: React.FC = () => {
         if (newTime <= 0) {
           setGameState("finished");
           window.speechSynthesis.cancel();
+          // Create game session with hardcoded data only if session is active
+          if (gameSession.isSessionActive) {
+            gameSession
+              .endSessionWithHardcodedData("letter-reversal-spotter")
+              .catch((error) => {
+                console.error("Failed to save game session:", error);
+              });
+          }
           return 0;
         }
         return newTime;
@@ -340,7 +350,7 @@ export const LetterReversalSpotter: React.FC = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [gameState, updateDifficulty]);
+  }, [gameState, updateDifficulty, gameSession]);
 
   // Start game
   const startGame = useCallback(() => {
@@ -354,8 +364,9 @@ export const LetterReversalSpotter: React.FC = () => {
     setSelectedAnswer(null);
     setIsCorrect(null);
     setCurrentChallenge(null);
+    gameSession.startSession(); // Start tracking the game session
     startNewChallenge();
-  }, [startNewChallenge]);
+  }, [startNewChallenge, gameSession]);
 
   // Restart game
   const restartGame = useCallback(() => {

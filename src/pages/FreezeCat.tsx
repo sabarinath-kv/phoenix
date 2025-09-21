@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useGameRedirect } from "@/hooks/useGameRedirect";
+import { useGameSession } from "@/hooks/useGameSession";
 import { FREEZE_CAT, ANIMALS } from "@/constants/game";
 
 type GameState = "instructions" | "countdown" | "playing" | "completed";
@@ -25,6 +26,7 @@ interface GameStats {
 export const FreezeCat = () => {
   const navigate = useNavigate();
   const gameRedirect = useGameRedirect("freeze-cat");
+  const gameSession = useGameSession(5); // gameId 5 for freeze-cat
   const [gameState, setGameState] = useState<GameState>("instructions");
   const [countdown, setCountdown] = useState<number>(
     FREEZE_CAT.COUNTDOWN_DURATION
@@ -202,6 +204,7 @@ export const FreezeCat = () => {
           countdownTimerRef.current = undefined;
           setTimeout(() => {
             setGameState("playing");
+            gameSession.startSession(); // Start tracking the game session
           }, 100);
           return 0;
         }
@@ -210,10 +213,13 @@ export const FreezeCat = () => {
     }, 1000);
 
     countdownTimerRef.current = countdownInterval;
-  }, []);
+  }, [gameSession]);
 
   // End game
-  const endGame = useCallback(() => {
+  const endGame = useCallback(async () => {
+    // Prevent multiple calls
+    if (gameState === "completed") return;
+
     setGameState("completed");
 
     // Clear all timers
@@ -229,7 +235,16 @@ export const FreezeCat = () => {
       clearInterval(countdownTimerRef.current);
       countdownTimerRef.current = undefined;
     }
-  }, []);
+
+    // Create game session with hardcoded data only if session is active
+    if (gameSession.isSessionActive) {
+      try {
+        await gameSession.endSessionWithHardcodedData("freeze-cat");
+      } catch (error) {
+        console.error("Failed to save game session:", error);
+      }
+    }
+  }, [gameState, gameSession]);
 
   // Reset game
   const resetGame = useCallback(() => {
@@ -300,7 +315,7 @@ export const FreezeCat = () => {
 
       gameTimerRef.current = gameTimer;
     }
-  }, [gameState, spawnAnimals, endGame]);
+  }, [gameState]); // Removed problematic dependencies
 
   // Cleanup on unmount
   useEffect(() => {
