@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useGameRedirect } from "@/hooks/useGameRedirect";
 
 type GameState = "instructions" | "countdown" | "playing" | "completed";
 
@@ -44,6 +45,7 @@ const SPAWN_RATE_MAX = 800; // maximum ms between spawns
 
 export const SymbolSpotter = () => {
   const navigate = useNavigate();
+  const gameRedirect = useGameRedirect('symbol-spotter');
   const [gameState, setGameState] = useState<GameState>("instructions");
   const [targetEmoji, setTargetEmoji] = useState("");
   const [flyingEmojis, setFlyingEmojis] = useState<FlyingEmoji[]>([]);
@@ -642,14 +644,42 @@ export const SymbolSpotter = () => {
                 </div>
               </div>
 
-              <div className="text-center">
-                <Button
-                  onClick={resetGame}
-                  size="lg"
-                  className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl"
-                >
-                  Play Again
-                </Button>
+              <div className="text-center space-y-3">
+                {gameRedirect.isInRedirectFlow ? (
+                  <>
+                    <Button
+                      onClick={gameRedirect.handleGoToNextGame}
+                      size="lg"
+                      className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl w-full"
+                    >
+                      {gameRedirect.isLastGame ? 'Finish All Games' : 'Go to Next Game'}
+                    </Button>
+                    <Button
+                      onClick={resetGame}
+                      variant="outline"
+                      className="text-gray-600 hover:text-gray-800 w-full"
+                    >
+                      Play Again
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      onClick={resetGame}
+                      size="lg"
+                      className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl"
+                    >
+                      Play Again
+                    </Button>
+                    <Button
+                      onClick={() => navigate("/")}
+                      variant="ghost"
+                      className="text-gray-600 hover:text-gray-800"
+                    >
+                      Back to Games
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>

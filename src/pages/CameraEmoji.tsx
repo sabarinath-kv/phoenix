@@ -6,6 +6,7 @@ import { GameInstructionsModal } from "@/components/GameInstructionsModal";
 import { ProgressStepper } from "@/components/ProgressStepper";
 import { GameSuccessModal } from "@/components/GameSuccessModal";
 import { Button } from "@/components/ui/button";
+import { useGameRedirect } from "@/hooks/useGameRedirect";
 
 type GameState = "instructions" | "playing" | "completed";
 
@@ -13,6 +14,7 @@ const EMOJIS = ["😐", "😠", "😢", "😊", "😁"]; // neutral, angry, sad,
 
 export const CameraEmoji = () => {
   const navigate = useNavigate();
+  const gameRedirect = useGameRedirect("emotion-detector");
   const [gameState, setGameState] = useState<GameState>("instructions");
   const [currentEmojiIndex, setCurrentEmojiIndex] = useState(0);
   const [completedEmojis, setCompletedEmojis] = useState<number[]>([]);
@@ -62,7 +64,7 @@ export const CameraEmoji = () => {
     setIsEmotionDetected(true);
 
     // Add current emoji to completed list using functional update
-    setCompletedEmojis(prev => [...prev, currentEmojiIndex]);
+    setCompletedEmojis((prev) => [...prev, currentEmojiIndex]);
 
     // Clean up any existing timeouts
     if (successTimeoutRef.current) {
@@ -85,7 +87,7 @@ export const CameraEmoji = () => {
         // Move to next emoji
         const nextIndex = currentEmojiIndex + 1;
         console.log(`➡️ MOVING TO NEXT: ${EMOJIS[nextIndex]}`);
-        
+
         // Reset states for next emoji
         setCurrentEmojiIndex(nextIndex);
         setIsEmotionDetected(false);
@@ -93,7 +95,9 @@ export const CameraEmoji = () => {
 
         // Start recognition for next emoji after 2 seconds
         recognitionTimeoutRef.current = setTimeout(() => {
-          console.log("🔍 RECOGNITION STARTED: 2-second delay completed for next emoji");
+          console.log(
+            "🔍 RECOGNITION STARTED: 2-second delay completed for next emoji"
+          );
           setIsRecognitionActive(true);
         }, 2000);
       }
@@ -159,6 +163,9 @@ export const CameraEmoji = () => {
         isOpen={showSuccessModal}
         onPlayAgain={handlePlayAgain}
         onGoBack={handleGoBack}
+        isInRedirectFlow={gameRedirect.isInRedirectFlow}
+        onGoToNextGame={gameRedirect.handleGoToNextGame}
+        isLastGame={gameRedirect.isLastGame}
       />
 
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 relative overflow-hidden">

@@ -1,7 +1,7 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import React from "react";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 interface GameMistake {
   challengeType: string;
@@ -19,6 +19,10 @@ interface ResultScreenProps {
   title?: string;
   message?: string;
   character?: string;
+  // Game redirect props
+  isInRedirectFlow?: boolean;
+  onGoToNextGame?: () => void;
+  isLastGame?: boolean;
 }
 
 export const ResultScreen: React.FC<ResultScreenProps> = ({
@@ -29,10 +33,16 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
   onBackToMenu,
   title = "Great Job!",
   message = "You helped Panda find the right letters!",
-  character = "🐼"
+  character = "🐼",
+  isInRedirectFlow = false,
+  onGoToNextGame,
+  isLastGame = false,
 }) => {
   const correctAnswers = totalChallenges - mistakes.length;
-  const accuracy = totalChallenges > 0 ? Math.round((correctAnswers / totalChallenges) * 100) : 0;
+  const accuracy =
+    totalChallenges > 0
+      ? Math.round((correctAnswers / totalChallenges) * 100)
+      : 0;
 
   const getPerformanceMessage = () => {
     if (accuracy >= 90) return "Outstanding! You're a letter detective! 🕵️";
@@ -65,21 +75,21 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
           <div className="p-8 text-center space-y-6">
             {/* Character and Title */}
             <motion.div
-              animate={{ 
+              animate={{
                 rotate: [0, 10, -10, 0],
-                scale: [1, 1.1, 1]
+                scale: [1, 1.1, 1],
               }}
-              transition={{ 
+              transition={{
                 duration: 2,
                 repeat: Infinity,
-                repeatType: "reverse"
+                repeatType: "reverse",
               }}
               className="text-8xl mb-4"
             >
               {character}
             </motion.div>
 
-            <motion.h2 
+            <motion.h2
               className="text-3xl font-bold text-purple-700"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -88,7 +98,7 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
               {title}
             </motion.h2>
 
-            <motion.p 
+            <motion.p
               className="text-lg text-purple-600"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -98,7 +108,7 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
             </motion.p>
 
             {/* Stats */}
-            <motion.div 
+            <motion.div
               className="bg-white/80 rounded-xl p-4 space-y-3"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -106,15 +116,19 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
             >
               <div className="grid grid-cols-2 gap-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">{correctAnswers}</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    {correctAnswers}
+                  </div>
                   <div className="text-sm text-gray-600">Correct</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-red-500">{mistakes.length}</div>
+                  <div className="text-2xl font-bold text-red-500">
+                    {mistakes.length}
+                  </div>
                   <div className="text-sm text-gray-600">Mistakes</div>
                 </div>
               </div>
-              
+
               <div className="text-center pt-2 border-t border-gray-200">
                 <div className={`text-3xl font-bold ${getPerformanceColor()}`}>
                   {accuracy}%
@@ -122,7 +136,7 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
                 <div className="text-sm text-gray-600">Accuracy</div>
               </div>
 
-              <motion.p 
+              <motion.p
                 className={`text-center font-semibold ${getPerformanceColor()}`}
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
@@ -134,17 +148,20 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
 
             {/* Mistakes Summary (if any) */}
             {mistakes.length > 0 && (
-              <motion.div 
+              <motion.div
                 className="bg-orange-50 rounded-xl p-4 text-left"
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5 }}
               >
-                <h4 className="font-bold text-orange-700 mb-2">💡 Learning Points:</h4>
+                <h4 className="font-bold text-orange-700 mb-2">
+                  💡 Learning Points:
+                </h4>
                 <div className="space-y-1 text-sm">
                   {mistakes.slice(0, 3).map((mistake, index) => (
                     <div key={index} className="text-orange-600">
-                      • {mistake.challengeType}: Expected "{mistake.expected}", chose "{mistake.chosen}"
+                      • {mistake.challengeType}: Expected "{mistake.expected}",
+                      chose "{mistake.chosen}"
                     </div>
                   ))}
                   {mistakes.length > 3 && (
@@ -157,26 +174,46 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
             )}
 
             {/* Action Buttons */}
-            <motion.div 
+            <motion.div
               className="space-y-3"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.6 }}
             >
-              <Button
-                onClick={onRestart}
-                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-3 text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
-              >
-                🎮 Play Again
-              </Button>
-              
-              <Button
-                onClick={onBackToMenu}
-                variant="outline"
-                className="w-full border-2 border-purple-300 text-purple-700 hover:bg-purple-50 font-semibold py-3 rounded-xl"
-              >
-                🏠 Back to Games
-              </Button>
+              {isInRedirectFlow && onGoToNextGame ? (
+                <>
+                  <Button
+                    onClick={onGoToNextGame}
+                    className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-3 text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
+                  >
+                    {isLastGame ? "🏁 Finish All Games" : "➡️ Go to Next Game"}
+                  </Button>
+                  <Button
+                    onClick={onRestart}
+                    variant="outline"
+                    className="w-full border-2 border-purple-300 text-purple-700 hover:bg-purple-50 font-semibold py-3 rounded-xl"
+                  >
+                    🎮 Play Again
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    onClick={onRestart}
+                    className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-3 text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
+                  >
+                    🎮 Play Again
+                  </Button>
+
+                  <Button
+                    onClick={onBackToMenu}
+                    variant="outline"
+                    className="w-full border-2 border-purple-300 text-purple-700 hover:bg-purple-50 font-semibold py-3 rounded-xl"
+                  >
+                    🏠 Back to Games
+                  </Button>
+                </>
+              )}
             </motion.div>
           </div>
         </Card>

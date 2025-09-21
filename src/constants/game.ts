@@ -15,15 +15,15 @@ export const FREEZE_CAT = {
 
 // Animal types for Freeze Cat
 export const ANIMALS = {
-  CAT: '🐱', // The forbidden animal
-  OTHERS: ['🐶', '🐰', '🐼', '🐸', '🐷', '🐮', '🦊', '🐻'] // Animals to tap
+  CAT: "🐱", // The forbidden animal
+  OTHERS: ["🐶", "🐰", "🐼", "🐸", "🐷", "🐮", "🦊", "🐻"], // Animals to tap
 } as const;
 
 // Difficulty levels
 export const DIFFICULTY_LEVELS = {
   EASY: 1,
   MEDIUM: 2,
-  HARD: 3
+  HARD: 3,
 } as const;
 
 // Temple Run Game Constants
@@ -69,5 +69,11 @@ export const SYMBOL_SPOTTER = {
   COUNTDOWN_DURATION: 3,
   CENTER_BOX_SIZE: 350,
   SPAWN_RATE_MIN: 300,
-  SPAWN_RATE_MAX: 800
+  SPAWN_RATE_MAX: 800,
 } as const;
+
+export const GAME_CLASS = {
+  ADHD: ["symbol-spotter", "bubble-popping", "freeze-cat"],
+  DYSLEXIA: ["letter-sound", "symbol-spotter", "letter-reversal-spotter"],
+  AUTISM: ["emotion-adventure", "emotion-detector"],
+};

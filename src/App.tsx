@@ -15,6 +15,7 @@ import { FreezeCat } from "./pages/FreezeCat";
 import { LetterSoundMatcher } from "./pages/LetterSoundMatcher";
 import { TempleRun } from "./pages/games/TempleRun";
 import { LetterReversalSpotter } from "./pages/games/LetterReversalSpotter";
+import { GameRedirect } from "./pages/GameRedirect";
 import ParentCompanionAI from "./pages/ParentCompanionAI";
 import NotFound from "./pages/NotFound";
 import { Homepage } from "./pages/Homepage";
@@ -106,11 +107,22 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
-            <Route path="/homepage" element={
-              <ProtectedRoute>
-                <Homepage />
-              </ProtectedRoute>
-            } />
+            <Route
+              path="/homepage"
+              element={
+                <ProtectedRoute>
+                  <Homepage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/game-redirect"
+              element={
+                <ProtectedRoute>
+                  <GameRedirect />
+                </ProtectedRoute>
+              }
+            />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
