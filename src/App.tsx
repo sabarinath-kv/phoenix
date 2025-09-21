@@ -12,6 +12,7 @@ import { LetterSoundMatcher } from "./pages/LetterSoundMatcher";
 import { TempleRun } from "./pages/games/TempleRun";
 import { LetterReversalSpotter } from "./pages/games/LetterReversalSpotter";
 import ParentCompanionAI from "./pages/ParentCompanionAI";
+import VoiceChat from "./pages/VoiceChat";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/games/temple-run" element={<TempleRun />} />
           <Route path="/games/letter-reversal-spotter" element={<LetterReversalSpotter />} />
           <Route path="/parent-companion" element={<ParentCompanionAI />} />
+          <Route path="/voice-chat" element={<VoiceChat />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

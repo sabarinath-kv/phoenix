@@ -1,7 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { FaceDetectionTest } from "@/components/FaceDetectionTest";
 import { Chip } from "@/components/ui/chip";
+import { Mic, MessageCircle } from "lucide-react";
 import ParentCompanionAI from './ParentCompanionAI';
 
 interface GameCard {
@@ -130,9 +132,26 @@ export const GameSelection = () => {
             <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">
               Welcome to Learning Time
             </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto mb-8">
               Pick a game and let's have fun learning together. Each game is designed to help children develop important skills while having fun.
             </p>
+            
+            {/* Voice Chat Feature Button */}
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+              <Button
+                onClick={() => navigate('/voice-chat')}
+                size="lg"
+                className="bg-gradient-primary hover:opacity-90 text-white px-8 py-4 text-lg font-semibold shadow-hover group"
+              >
+                <Mic className="w-6 h-6 mr-3 group-hover:animate-pulse" />
+                Start Voice Chat
+              </Button>
+              
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <MessageCircle className="w-4 h-4" />
+                <span>Talk with our AI companion!</span>
+              </div>
+            </div>
           </div>
 
           {/* Game Cards Grid */}
