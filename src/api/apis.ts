@@ -26,9 +26,9 @@ export const createRoomAndToken = async (token: string): Promise<LivekitTokenRes
         }
       );
       return response.data as LivekitTokenResponse;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new Error(error.response?.data?.message || "Signup failed");
+    } catch (error: any) {
+      if (error.response) {
+        throw new Error(error.response?.data?.message || "Token creation failed");
       }
       throw new Error("Network error occurred");
     }

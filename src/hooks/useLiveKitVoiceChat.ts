@@ -107,7 +107,9 @@ export const useLiveKitVoiceChat = (config?: VoiceChatConfig) => {
       };
 
       const localAudioTrack = await room.localParticipant.setMicrophoneEnabled(true, audioOptions);
-      localAudioTrackRef.current = localAudioTrack as LocalAudioTrack;
+      if (localAudioTrack?.track) {
+        localAudioTrackRef.current = localAudioTrack.track as LocalAudioTrack;
+      }
 
     } catch (error) {
       console.error('Failed to connect to LiveKit room:', error);
