@@ -15,7 +15,7 @@ export function WinglooIllustration({ isListening, className = "" }: WinglooIllu
         {/* Animated background glow */}
         <div className={`absolute w-[300px] h-[300px] ''}`} />
         
-        <PreloadedImage 
+        <img 
             src={wiglooImage} 
             alt="Wigloo listening"
             className="w-full h-full object-cover animate-cloud-float"

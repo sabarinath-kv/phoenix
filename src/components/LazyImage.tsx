@@ -87,7 +87,7 @@ export function LazyImage({
         <img
           src={fallback}
           alt={alt}
-          className={cn('w-full h-full object-cover', className)}
+          className={cn('w-full h-full', className)}
           {...props}
         />
       )}
@@ -100,7 +100,7 @@ export function LazyImage({
           onLoad={handleLoad}
           onError={handleError}
           className={cn(
-            'w-full h-full object-cover transition-opacity duration-300',
+            'w-full h-full transition-opacity duration-300',
             shouldShowImage ? 'opacity-100' : 'opacity-0',
             className
           )}
