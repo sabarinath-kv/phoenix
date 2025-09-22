@@ -21,6 +21,7 @@ import VoiceChat from "./pages/VoiceChat";
 import NotFound from "./pages/NotFound";
 import { Homepage } from "./pages/Homepage";
 import FollowupChatPage from "./pages/FollowupChat";
+import { GameInsights } from "./pages/GameInsights";
 
 const queryClient = new QueryClient();
 
@@ -130,6 +131,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <GameRedirect />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/game-insights"
+              element={
+                <ProtectedRoute>
+                  <GameInsights />
                 </ProtectedRoute>
               }
             />

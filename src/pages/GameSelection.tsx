@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FaceDetectionTest } from "@/components/FaceDetectionTest";
 import { Chip } from "@/components/ui/chip";
-import { Mic, MessageCircle, LogOut, Heart, Clock, Check, Circle } from "lucide-react";
+import { Mic, MessageCircle, LogOut, Heart, Clock, Check, Circle, BarChart3 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
 import ParentCompanionAI from "./ParentCompanionAI";
@@ -174,8 +174,17 @@ export const GameSelection = () => {
         {/* Yellow Header Background */}
         <div className="bg-yellow-400 relative">
           <div className="container mx-auto px-6 py-8 relative">
-            {/* Logout Button */}
-            <div className="absolute top-4 right-4">
+            {/* Header Buttons */}
+            <div className="absolute top-4 right-4 flex gap-2">
+              <Button
+                onClick={() => navigate("/game-insights")}
+                variant="ghost"
+                size="icon"
+                className="text-gray-700 hover:bg-black/10 hover:text-gray-800 transition-all duration-300"
+                title="Game Insights"
+              >
+                <BarChart3 className="w-5 h-5" />
+              </Button>
               <Button
                 onClick={handleLogout}
                 variant="ghost"
