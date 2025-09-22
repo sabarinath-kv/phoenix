@@ -6,10 +6,11 @@ import { GameInstructionsModal } from "@/components/GameInstructionsModal";
 import { ProgressStepper } from "@/components/ProgressStepper";
 import { GameSuccessModal } from "@/components/GameSuccessModal";
 import { Button } from "@/components/ui/button";
+import BackButton from "@/components/ui/BackButton";
 import { useGameRedirect } from "@/hooks/useGameRedirect";
 import { useGameSession } from "@/hooks/useGameSession";
 
-type GameState = "instructions" | "playing" | "completed";
+type GameState = "instructions" | "countdown" | "playing" | "completed";
 
 const EMOJIS = ["😐", "😠", "😢", "😊", "😁"]; // neutral, angry, sad, happy, happy with teeth
 
@@ -18,6 +19,7 @@ export const CameraEmoji = () => {
   const gameRedirect = useGameRedirect("emotion-detector");
   const gameSession = useGameSession(1); // gameId 1 for emotion-detector
   const [gameState, setGameState] = useState<GameState>("instructions");
+  const [countdown, setCountdown] = useState(3);
   const [currentEmojiIndex, setCurrentEmojiIndex] = useState(0);
   const [completedEmojis, setCompletedEmojis] = useState<number[]>([]);
   const [isEmotionDetected, setIsEmotionDetected] = useState(false);
@@ -29,6 +31,22 @@ export const CameraEmoji = () => {
   const recognitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const currentEmoji = EMOJIS[currentEmojiIndex];
+
+  const startCountdown = () => {
+    setGameState("countdown");
+    setCountdown(3);
+    
+    const countdownInterval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(countdownInterval);
+          startGame();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
 
   const startGame = () => {
     console.log(`🎮 GAME STARTED: Starting with first emoji ${EMOJIS[0]}`);
@@ -166,7 +184,7 @@ export const CameraEmoji = () => {
       {/* Instructions Modal */}
       <GameInstructionsModal
         isOpen={gameState === "instructions"}
-        onStartGame={startGame}
+        onStartGame={startCountdown}
       />
 
       {/* Success Modal */}
@@ -179,7 +197,19 @@ export const CameraEmoji = () => {
         isLastGame={gameRedirect.isLastGame}
       />
 
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 relative overflow-hidden">
+      {/* Countdown Screen */}
+      {gameState === "countdown" && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-gradient-to-br from-orange-100 to-yellow-100">
+          <div className="text-center">
+            <div className="text-8xl font-bold text-orange-600 animate-pulse">
+              {countdown}
+            </div>
+            <p className="text-2xl text-orange-700 mt-4">Get Ready!</p>
+          </div>
+        </div>
+      )}
+
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-red-50 relative overflow-hidden">
         {/* Floating Camera Box for Mobile/Small screens */}
         <div className="fixed bottom-4 right-4 z-20 lg:hidden">
           {(gameState === "playing" || gameState === "completed") && (
@@ -204,71 +234,46 @@ export const CameraEmoji = () => {
         </div>
 
         {/* Header */}
-        <header className="bg-gradient-to-r from-blue-400 via-green-400 to-yellow-400 text-white shadow-xl">
-          <div className="container mx-auto px-4 py-4 md:py-6">
-            <div className="flex items-center justify-between">
-              <Button
-                onClick={() => navigate("/")}
-                variant="ghost"
-                className="group flex items-center gap-2 text-white/90 hover:text-white hover:bg-white/20 px-4 py-2 rounded-full transition-all duration-300 hover:scale-105 backdrop-blur-sm border border-white/20 hover:border-white/40"
-              >
-                <svg
-                  className="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
-                <span className="font-medium text-sm">Back to Games</span>
-              </Button>
-              <div className="flex-1 text-center">
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">
-                  Copy My Face
-                </h1>
-                <p className="text-white/90 mt-1 text-sm sm:text-base">
-                  Make the same face as the emoji
-                </p>
-              </div>
-              <div className="w-32"></div> {/* Spacer for centering */}
+        <header className="bg-white/90 backdrop-blur-sm border border-white/40 relative" style={{ height: '100px' }}>
+          <div className="container mx-auto px-4 py-6">
+            <div className="flex items-center justify-center">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">
+                Copy My Face
+              </h1>
             </div>
           </div>
+          {/* Back Button */}
+          <BackButton onClick={() => navigate("/")} />
         </header>
 
         {/* Main Content - Mobile First Design */}
         <main className="container mx-auto px-4 py-4 sm:py-6 lg:py-8">
           <div className="max-w-6xl mx-auto">
-            {/* Progress Stepper - Show during playing state */}
-            {gameState === "playing" && (
-              <div className="mb-6">
-                <ProgressStepper
-                  totalSteps={EMOJIS.length}
-                  currentStep={currentEmojiIndex}
-                  completedSteps={completedEmojis}
-                  className="mb-4"
-                />
-              </div>
-            )}
-
             {/* Mobile Layout: Emoji-first, full width */}
             <div className="lg:hidden">
               {/* Main Game Area - Takes full mobile width */}
               <div className="mb-6">
                 {gameState === "playing" && (
-                  <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-8 shadow-xl mx-2">
-                    <EmojiPrompt
-                      emoji={currentEmoji}
-                      onEmotionDetected={handleEmotionDetected}
-                      onTimeout={handleTimeout}
-                      duration={30000}
-                      isEmotionDetected={isEmotionDetected}
-                      recognitionActive={isRecognitionActive}
-                    />
+                  <div className="space-y-4">
+                    <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-8 shadow-xl mx-2">
+                      <EmojiPrompt
+                        emoji={currentEmoji}
+                        onEmotionDetected={handleEmotionDetected}
+                        onTimeout={handleTimeout}
+                        duration={30000}
+                        isEmotionDetected={isEmotionDetected}
+                        recognitionActive={isRecognitionActive}
+                      />
+                    </div>
+                    {/* Progress Stepper - Below emoji box with margin */}
+                    <div className="mt-6 px-2">
+                      <ProgressStepper
+                        totalSteps={EMOJIS.length}
+                        currentStep={currentEmojiIndex}
+                        completedSteps={completedEmojis}
+                        className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 shadow-lg"
+                      />
+                    </div>
                   </div>
                 )}
               </div>
@@ -276,16 +281,6 @@ export const CameraEmoji = () => {
 
             {/* Desktop Layout: Side by side */}
             <div className="hidden lg:block">
-              {/* Progress Stepper for Desktop */}
-              {gameState === "playing" && (
-                <div className="mb-8">
-                  <ProgressStepper
-                    totalSteps={EMOJIS.length}
-                    currentStep={currentEmojiIndex}
-                    completedSteps={completedEmojis}
-                  />
-                </div>
-              )}
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
                 {/* Camera Section - Desktop */}
@@ -325,6 +320,17 @@ export const CameraEmoji = () => {
                       />
                     )}
                   </div>
+                  {/* Progress Stepper - Below emoji box for desktop */}
+                  {gameState === "playing" && (
+                    <div className="mt-6">
+                      <ProgressStepper
+                        totalSteps={EMOJIS.length}
+                        currentStep={currentEmojiIndex}
+                        completedSteps={completedEmojis}
+                        className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 shadow-lg"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

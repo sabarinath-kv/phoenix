@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import BackButton from "@/components/ui/BackButton";
+import GameControls from "@/components/ui/GameControls";
+import { CommonInstructionsModal } from "@/components/CommonInstructionsModal";
 import { useGameRedirect } from "@/hooks/useGameRedirect";
 import { useGameSession } from "@/hooks/useGameSession";
 import { LETTER_SOUND, LETTER_SOUND_ITEMS } from "@/constants/game";
@@ -301,108 +304,65 @@ export const LetterSoundMatcher = () => {
       )}
 
       {/* Instructions Modal */}
-      {gameState === "instructions" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-200/80 via-green-200/80 to-yellow-200/80 backdrop-blur-sm" />
-
-          <div className="relative bg-white/90 backdrop-blur-sm rounded-3xl p-6 sm:p-8 shadow-2xl border-2 border-white/50 mx-4 max-w-lg w-full">
-            <div className="text-center mb-6">
-              <div className="text-6xl mb-4">🔤</div>
-              <h2 className="text-2xl font-bold text-blue-700 mb-2">
-                Letter-Sound Matching
-              </h2>
-              <p className="text-blue-600 text-lg">
-                Match letters with sounds!
-              </p>
-            </div>
-
-            <div className="space-y-4 mb-8">
-              <div className="flex items-center gap-4 bg-blue-50/60 rounded-2xl p-4 border border-blue-200">
-                <div className="text-3xl">👂</div>
-                <div>
-                  <p className="font-bold text-blue-700">Listen!</p>
-                  <p className="text-sm text-blue-600">
-                    Hear the letter sound and see the word
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4 bg-green-50/60 rounded-2xl p-4 border border-green-200">
-                <div className="text-3xl">👆</div>
-                <div>
-                  <p className="font-bold text-green-700">Tap!</p>
-                  <p className="text-sm text-green-600">
-                    Tap the picture that starts with that sound
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4 bg-yellow-50/60 rounded-2xl p-4 border border-yellow-200">
-                <div className="text-3xl">🎯</div>
-                <div>
-                  <p className="font-bold text-yellow-700">Learn!</p>
-                  <p className="text-sm text-yellow-600">
-                    Practice letters A through G - works on any device!
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="text-center">
-              <Button
-                onClick={startCountdown}
-                size="lg"
-                className="bg-gradient-to-r from-blue-400 to-green-400 hover:from-blue-500 hover:to-green-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl"
-              >
-                Let's Play
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CommonInstructionsModal
+        isOpen={gameState === "instructions"}
+        title="Letter-Sound Matching"
+        subtitle="Match letters with sounds!"
+        instructions={[
+          {
+            icon: "👂",
+            text: "Listen!",
+            subtext: "Hear the letter sound and see the word"
+          },
+          {
+            icon: "👆",
+            text: "Tap!",
+            subtext: "Tap the picture that starts with that sound"
+          },
+          {
+            icon: "🎯",
+            text: "Learn!",
+            subtext: "Practice letters A through G - works on any device!"
+          }
+        ]}
+        onStartGame={startCountdown}
+        buttonText="LET'S START"
+      />
 
       {/* Countdown Screen */}
       {gameState === "countdown" && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-gradient-to-br from-blue-100 to-green-100">
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-gradient-to-br from-orange-100 to-yellow-100">
           <div className="text-center">
-            <div className="text-8xl font-bold text-blue-600 animate-pulse">
+            <div className="text-8xl font-bold text-orange-600 animate-pulse">
               {countdown}
             </div>
-            <p className="text-2xl text-blue-700 mt-4">Get Ready!</p>
-            <p className="text-sm text-gray-600 mt-2">State: {gameState}</p>
+            <p className="text-2xl text-orange-700 mt-4">Get Ready!</p>
           </div>
         </div>
       )}
 
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-green-50 to-yellow-50">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-red-50">
         {/* Header */}
-        <header className="bg-gradient-to-r from-blue-400 via-green-400 to-yellow-400 text-white shadow-xl relative z-30">
-          <div className="container mx-auto px-4 py-4 md:py-6">
-            <div className="flex justify-between items-center">
-              <Button
-                onClick={() => navigate("/")}
-                variant="ghost"
-                className="text-white hover:bg-white/20"
-              >
-                ← Back
-              </Button>
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-center flex-1">
+        <header className="bg-white/90 backdrop-blur-sm border border-white/40 relative z-30" style={{ height: '100px' }}>
+          <div className="container mx-auto px-4 py-6">
+            <div className="flex items-center justify-center">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">
                 Letter-Sound Matching
               </h1>
-              <div className="w-16"></div>
             </div>
-
-            {/* Game Stats */}
-            {(gameState === "playing" || gameState === "completed") && (
-              <div className="flex items-center justify-center mt-4 gap-6 flex-wrap">
-                <div className="text-lg font-bold">Score: {stats.score}</div>
-                <div className="text-lg font-bold">
-                  Round: {stats.currentRound + 1}/{stats.totalRounds}
-                </div>
-              </div>
-            )}
           </div>
+          {/* Back Button */}
+          <BackButton onClick={() => navigate("/")} />
         </header>
+
+        {/* Game Controls */}
+        {(gameState === "playing" || gameState === "completed") && (
+          <GameControls 
+            score={stats.score} 
+            currentRound={stats.currentRound} 
+            totalRounds={stats.totalRounds} 
+          />
+        )}
 
         {/* Game Content */}
         {gameState === "playing" && (

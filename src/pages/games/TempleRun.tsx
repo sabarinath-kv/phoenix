@@ -4,6 +4,8 @@ import { Canvas } from '@react-three/fiber';
 import { Environment, OrbitControls, PerspectiveCamera, Effects } from '@react-three/drei';
 import { EffectComposer, Bloom, DepthOfField, Noise, Vignette } from '@react-three/postprocessing';
 import { Button } from '@/components/ui/button';
+import BackButton from '@/components/ui/BackButton';
+import GameControls from '@/components/ui/GameControls';
 import { TEMPLE_RUN } from '@/constants/game';
 import { useOrientation } from '@/utils/useOrientation';
 import { Terrain } from '@/components/world/Terrain';
@@ -260,77 +262,45 @@ export const TempleRun = () => {
     <div className="h-screen w-screen overflow-hidden bg-gradient-to-b from-sky-300 to-orange-200">
       {/* No orientation restriction - works in both portrait and landscape */}
 
-      {/* Enhanced Game HUD - Responsive for portrait/landscape */}
-      <div className="absolute top-0 left-0 right-0 z-40 p-3">
-        {orientation === 'portrait' ? (
-          // Portrait layout - more compact
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <Button
-                onClick={() => navigate('/')}
-                variant="ghost"
-                className="text-white bg-black/40 hover:bg-black/60 backdrop-blur-sm border border-white/20 rounded-lg text-sm px-3 py-2"
-              >
-                ← Back
-              </Button>
-              
-              <div className="flex items-center space-x-3">
-                <div className="text-2xl font-bold text-white bg-black/40 rounded-lg px-4 py-2 backdrop-blur-sm border border-white/20">
-                  {score.toLocaleString()}
-                </div>
-                <div className="text-sm text-white bg-black/30 rounded-lg px-3 py-1 backdrop-blur-sm">
-                  {distance}m
-                </div>
-              </div>
-            </div>
-            
-            {gameSpeed > 1 && (
-              <div className="text-center">
-                <div className="inline-block text-xs text-yellow-300 bg-red-500/30 rounded-lg px-3 py-1 backdrop-blur-sm animate-pulse">
-                  SPEED BOOST! {gameSpeed.toFixed(1)}x
-                </div>
-              </div>
-            )}
+      {/* Header */}
+      <header className="absolute top-0 left-0 right-0 z-40 p-3">
+        <div className="bg-white/90 backdrop-blur-sm border border-white/40 rounded-xl relative" style={{ height: '100px' }}>
+          <div className="flex items-center justify-center h-full">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-800">
+              Temple Run
+            </h1>
           </div>
-        ) : (
-          // Landscape layout - original design
-          <div className="flex justify-between items-start">
-            <Button
-              onClick={() => navigate('/')}
-              variant="ghost"
-              className="text-white bg-black/40 hover:bg-black/60 backdrop-blur-sm border border-white/20 rounded-xl"
-            >
-              ← Back to Games
-            </Button>
-            
-            <div className="text-center space-y-2">
-              <div className="text-4xl font-bold text-white bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent bg-black/40 rounded-xl px-6 py-3 backdrop-blur-sm border border-white/20">
-                {score.toLocaleString()}
-              </div>
-              <div className="text-lg text-white bg-black/30 rounded-lg px-4 py-1 backdrop-blur-sm">
-                {distance}m
-              </div>
-              {gameSpeed > 1 && (
-                <div className="text-sm text-yellow-300 bg-red-500/30 rounded-lg px-3 py-1 backdrop-blur-sm animate-pulse">
-                  SPEED BOOST! {gameSpeed.toFixed(1)}x
-                </div>
-              )}
-            </div>
-            
-            <div className="w-32"></div>
+          {/* Back Button */}
+          <BackButton onClick={() => navigate('/')} />
+        </div>
+      </header>
+
+      {/* Game Controls */}
+      <GameControls className="bottom-20">
+        <div className="text-center">
+          <div className="text-2xl font-bold text-blue-600">{score.toLocaleString()}</div>
+          <div className="text-sm text-gray-600">Score</div>
+        </div>
+        <div className="text-center">
+          <div className="text-lg font-bold text-green-600">{distance}m</div>
+          <div className="text-sm text-gray-600">Distance</div>
+        </div>
+        {gameSpeed > 1 && (
+          <div className="text-center">
+            <div className="text-sm font-bold text-red-600 animate-pulse">{gameSpeed.toFixed(1)}x</div>
+            <div className="text-xs text-gray-600">Speed</div>
           </div>
         )}
-      </div>
+      </GameControls>
 
-      {/* Enhanced Countdown Overlay */}
+      {/* Countdown Overlay */}
       {gameState === 'countdown' && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-30 flex items-center justify-center bg-gradient-to-br from-orange-100 to-yellow-100">
           <div className="text-center">
-            <div className="text-9xl font-bold text-transparent bg-gradient-to-r from-yellow-400 via-red-500 to-purple-600 bg-clip-text animate-pulse mb-6 drop-shadow-2xl">
+            <div className="text-8xl font-bold text-orange-600 animate-pulse">
               {countdown}
             </div>
-            <div className="text-3xl text-white mb-4 animate-bounce">🚗 GET READY! 🚗</div>
-            <div className="text-lg text-yellow-300">Navigate the crossroad traffic...</div>
+            <p className="text-2xl text-orange-700 mt-4">Get Ready!</p>
           </div>
         </div>
       )}

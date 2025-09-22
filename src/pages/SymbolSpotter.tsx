@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import BackButton from "@/components/ui/BackButton";
+import GameControls from "@/components/ui/GameControls";
+import { CommonInstructionsModal } from "@/components/CommonInstructionsModal";
 import { useGameRedirect } from "@/hooks/useGameRedirect";
 import { useGameSession } from "@/hooks/useGameSession";
 
@@ -420,75 +423,35 @@ export const SymbolSpotter = () => {
       `}</style>
 
       {/* Instructions Modal */}
-      {gameState === "instructions" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-200/80 via-yellow-200/80 to-red-200/80 backdrop-blur-sm" />
-
-          <div className="relative bg-white/90 backdrop-blur-sm rounded-3xl p-6 sm:p-8 shadow-2xl border-2 border-white/50 mx-4 max-w-md w-full">
-            <div className="text-center mb-6">
-              <div className="text-6xl mb-4">🔍</div>
-              <h2 className="text-2xl font-bold text-orange-700 mb-2">
-                Symbol Spotter
-              </h2>
-              <p className="text-orange-600 text-lg">
-                Catch the flying symbols!
-              </p>
-            </div>
-
-            <div className="space-y-4 mb-8">
-              <div className="flex items-center gap-4 bg-orange-50/60 rounded-2xl p-4 border border-orange-200">
-                <div className="text-3xl">👀</div>
-                <div>
-                  <p className="font-bold text-orange-700">Watch!</p>
-                  <p className="text-sm text-orange-600">
-                    Look for the target symbol at the top
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4 bg-yellow-50/60 rounded-2xl p-4 border border-yellow-200">
-                <div className="text-3xl">🎯</div>
-                <div>
-                  <p className="font-bold text-yellow-700">Click!</p>
-                  <p className="text-sm text-yellow-600">
-                    Click the target symbol when it's in the center box
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4 bg-red-50/60 rounded-2xl p-4 border border-red-200">
-                <div className="text-3xl">⏱️</div>
-                <div>
-                  <p className="font-bold text-red-700">Quick!</p>
-                  <p className="text-sm text-red-600">
-                    You have 5 seconds to score as much as possible
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4 bg-green-50/60 rounded-2xl p-4 border border-green-200">
-                <div className="text-3xl">📊</div>
-                <div>
-                  <p className="font-bold text-green-700">Score!</p>
-                  <p className="text-sm text-green-600">
-                    +1 for correct, -1 for wrong clicks
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="text-center">
-              <Button
-                onClick={startCountdown}
-                size="lg"
-                className="bg-gradient-to-r from-orange-400 to-red-400 hover:from-orange-500 hover:to-red-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl"
-              >
-                Let's Play
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CommonInstructionsModal
+        isOpen={gameState === "instructions"}
+        title="Symbol Spotter"
+        subtitle="Catch the flying symbols!"
+        instructions={[
+          {
+            icon: "👀",
+            text: "Watch!",
+            subtext: "Look for the target symbol at the top"
+          },
+          {
+            icon: "🎯",
+            text: "Click!",
+            subtext: "Click the target symbol when it's in the center box"
+          },
+          {
+            icon: "⏱️",
+            text: "Quick!",
+            subtext: "You have 5 seconds to score as much as possible"
+          },
+          {
+            icon: "📊",
+            text: "Score!",
+            subtext: "+1 for correct, -1 for wrong clicks"
+          }
+        ]}
+        onStartGame={startCountdown}
+        buttonText="LET'S START"
+      />
 
       {/* Countdown Screen */}
       {gameState === "countdown" && (
@@ -504,52 +467,36 @@ export const SymbolSpotter = () => {
 
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-red-50 relative overflow-hidden">
         {/* Header */}
-        <header className="bg-gradient-to-r from-orange-400 via-yellow-400 to-red-400 text-white shadow-xl relative z-30">
-          <div className="container mx-auto px-4 py-4 md:py-6">
-            <div className="flex items-center justify-between">
-              <Button
-                onClick={() => navigate("/")}
-                variant="ghost"
-                className="group flex items-center gap-2 text-white/90 hover:text-white hover:bg-white/20 px-4 py-2 rounded-full transition-all duration-300 hover:scale-105 backdrop-blur-sm border border-white/20 hover:border-white/40"
-              >
-                <svg
-                  className="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
-                <span className="font-medium text-sm">Back to Games</span>
-              </Button>
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-center flex-1">
+        <header className="bg-white/90 backdrop-blur-sm border border-white/40 relative z-30" style={{ height: '100px' }}>
+          <div className="container mx-auto px-4 py-6">
+            <div className="flex items-center justify-center">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">
                 Symbol Spotter
               </h1>
-              <div className="w-32"></div> {/* Spacer for centering */}
             </div>
-
-            {/* Target Emoji Display */}
-            {(gameState === "playing" || gameState === "completed") && (
-              <div className="flex items-center justify-center mt-4 gap-4">
-                <span className="text-lg font-semibold">Target:</span>
-                <div className="text-4xl bg-white/20 rounded-full px-4 py-2">
-                  {targetEmoji}
-                </div>
-                <div className="text-lg font-bold">Score: {score}</div>
-                {gameState === "playing" && (
-                  <div className="text-lg font-bold">
-                    Time: {Math.ceil(gameTimeLeft / 1000)}s
-                  </div>
-                )}
-              </div>
-            )}
           </div>
+          {/* Back Button */}
+          <BackButton onClick={() => navigate("/")} />
         </header>
+
+        {/* Target Emoji Display */}
+        {(gameState === "playing" || gameState === "completed") && (
+          <div className="fixed top-28 left-1/2 transform -translate-x-1/2 z-40">
+            <div className="bg-white/90 backdrop-blur-sm border border-white/40 rounded-2xl px-4 py-2 shadow-lg">
+              <div className="flex items-center gap-3">
+                <div className="text-sm text-gray-600 font-medium">
+                  Find this symbol:
+                </div>
+                <div className="text-2xl">{targetEmoji}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Game Controls */}
+        {(gameState === "playing" || gameState === "completed") && (
+          <GameControls score={score} timeLeft={gameTimeLeft} />
+        )}
 
         {/* Game Area */}
         <div

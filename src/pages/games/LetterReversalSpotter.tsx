@@ -2,6 +2,9 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import BackButton from "@/components/ui/BackButton";
+import GameControls from "@/components/ui/GameControls";
+import { CommonInstructionsModal } from "@/components/CommonInstructionsModal";
 import { GameTimer } from "@/components/GameTimer";
 import { GameCard } from "@/components/GameCard";
 import { ResultScreen } from "@/components/ResultScreen";
@@ -420,112 +423,66 @@ export const LetterReversalSpotter: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-yellow-100 via-pink-100 to-purple-100 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-red-50 p-4">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <Button
-          onClick={() => navigate("/")}
-          variant="ghost"
-          className="text-purple-700 hover:text-purple-900 hover:bg-purple-100"
-        >
-          ← Back to Games
-        </Button>
+      <header className="bg-white/90 backdrop-blur-sm border border-white/40 relative mb-6" style={{ height: '100px' }}>
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex items-center justify-center">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">
+              Letter Reversal
+            </h1>
+          </div>
+        </div>
+        {/* Back Button */}
+        <BackButton onClick={() => navigate("/")} />
+      </header>
 
-        {(gameState === "playing" || gameState === "feedback") && (
+      {/* Game Timer */}
+      {(gameState === "playing" || gameState === "feedback") && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-40">
           <GameTimer
             timeLeft={timeLeft}
             totalTime={GAME_DURATION}
-            className="flex-1 max-w-md mx-4"
+            className=""
           />
-        )}
+        </div>
+      )}
 
-        {(gameState === "playing" || gameState === "feedback") && (
-          <div className="bg-white/90 backdrop-blur-sm rounded-xl p-3 shadow-lg border-2 border-purple-200">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-700">{score}</div>
-              <div className="text-sm text-purple-600">Score</div>
-            </div>
-          </div>
-        )}
-      </div>
+      {/* Game Controls */}
+      {(gameState === "playing" || gameState === "feedback") && (
+        <GameControls score={score} />
+      )}
 
       {/* Instructions Screen */}
-      {gameState === "instructions" && (
-        <motion.div
-          className="max-w-2xl mx-auto text-center"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-xl border-4 border-purple-300">
-            <motion.div
-              animate={{
-                rotate: [0, 10, -10, 0],
-                scale: [1, 1.1, 1],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                repeatType: "reverse",
-              }}
-              className="text-8xl mb-6"
-            >
-              🐼
-            </motion.div>
-
-            <h1 className="text-4xl font-bold text-purple-700 mb-4">
-              Letter Reversal Spotter
-            </h1>
-
-            <p className="text-xl text-purple-600 mb-6">
-              Help Panda find the right letters and words! 🔊 Listen for voice
-              cues!
-            </p>
-
-            <div className="bg-purple-50 rounded-xl p-6 mb-6 text-left">
-              <h3 className="text-lg font-bold text-purple-700 mb-4">
-                How to Play:
-              </h3>
-              <div className="space-y-3 text-purple-600">
-                <div className="flex items-start gap-3">
-                  <span className="text-2xl">🔊</span>
-                  <div>
-                    <strong>Listen:</strong> Voice will tell you what to find
-                    (e.g., "Tap the letter F")
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="text-2xl">📈</span>
-                  <div>
-                    <strong>Difficulty:</strong> Gets harder every 15 seconds -
-                    letters → words → mirrored letters
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="text-2xl">🎯</span>
-                  <div>
-                    <strong>Scoring:</strong> Harder challenges give more
-                    points!
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <span className="text-2xl">⏰</span>
-                  <div>
-                    <strong>Time Limit:</strong> 60 seconds of non-stop
-                    challenges!
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <Button
-              onClick={startGame}
-              className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-4 px-8 text-xl rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
-            >
-              🚀 Start Playing!
-            </Button>
-          </div>
-        </motion.div>
-      )}
+      <CommonInstructionsModal
+        isOpen={gameState === "instructions"}
+        title="Letter Reversal"
+        subtitle="Help Panda find the right letters and words! 🔊 Listen for voice cues!"
+        instructions={[
+          {
+            icon: "🔊",
+            text: "Listen!",
+            subtext: "Voice will tell you what to find (e.g., 'Tap the letter F')"
+          },
+          {
+            icon: "📈",
+            text: "Difficulty!",
+            subtext: "Gets harder every 15 seconds - letters → words → mirrored letters"
+          },
+          {
+            icon: "🎯",
+            text: "Scoring!",
+            subtext: "Harder challenges give more points!"
+          },
+          {
+            icon: "⏰",
+            text: "Time Limit!",
+            subtext: "60 seconds of non-stop challenges!"
+          }
+        ]}
+        onStartGame={startGame}
+        buttonText="LET'S START"
+      />
 
       {/* Game Screen */}
       {(gameState === "playing" || gameState === "feedback") &&
@@ -538,31 +495,19 @@ export const LetterReversalSpotter: React.FC = () => {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.3 }}
           >
-            {/* Difficulty Indicator */}
-            <motion.div
-              className="bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl p-3 mb-4 inline-block"
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              key={difficultyLevel}
-            >
-              <div className="font-bold">
-                Level {difficultyLevel}: {getDifficultyLabel(difficultyLevel)}
-              </div>
-            </motion.div>
-
             {/* Challenge Prompt */}
             <motion.div
-              className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-lg border-2 border-purple-200 mb-8"
+              className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-lg border-2 border-orange-200 mb-8 mt-12"
               key={currentChallenge.prompt}
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.3 }}
             >
               <div className="text-6xl mb-4">🐼</div>
-              <h2 className="text-3xl font-bold text-purple-700 mb-2">
+              <h2 className="text-3xl font-bold text-orange-700 mb-2">
                 {currentChallenge.prompt}
               </h2>
-              <div className="text-lg text-purple-600">
+              <div className="text-lg text-orange-600">
                 🔊 Listen for the voice cue!
               </div>
             </motion.div>
@@ -606,34 +551,6 @@ export const LetterReversalSpotter: React.FC = () => {
               </AnimatePresence>
             </div>
 
-            {/* Feedback Message */}
-            {gameState === "feedback" && (
-              <motion.div
-                className="mt-8"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                <div
-                  className={`text-2xl font-bold ${
-                    isCorrect ? "text-green-600" : "text-red-600"
-                  }`}
-                >
-                  {isCorrect
-                    ? "🎉 Correct! Great job!"
-                    : "😅 Oops! Try again next time!"}
-                </div>
-                {!isCorrect && (
-                  <div className="text-lg text-purple-600 mt-2">
-                    The correct answer was:{" "}
-                    <strong>{currentChallenge.correctAnswer}</strong>
-                  </div>
-                )}
-                <div className="text-sm text-purple-500 mt-2">
-                  +{currentChallenge.difficulty * 10} points for this difficulty
-                  level!
-                </div>
-              </motion.div>
-            )}
           </motion.div>
         )}
 

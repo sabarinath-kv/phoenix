@@ -52,7 +52,7 @@ export const EmojiPrompt = ({
   }, [duration, onTimeout, recognitionActive, isEmotionDetected]);
 
   return (
-    <div className={`bg-gradient-primary rounded-3xl ${className}`}>
+    <div className={`bg-white/80 backdrop-blur-sm rounded-3xl border border-white/40 ${className}`}>
       <div className="p-8 text-center">
         <div className="relative mb-6 h-32 sm:h-40 flex items-center justify-center">
           {isEmotionDetected ? (

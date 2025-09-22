@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import BackButton from "@/components/ui/BackButton";
+import GameControls from "@/components/ui/GameControls";
+import { CommonInstructionsModal } from "@/components/CommonInstructionsModal";
 import { useGameRedirect } from "@/hooks/useGameRedirect";
 import { useGameSession } from "@/hooks/useGameSession";
 import { FREEZE_CAT, ANIMALS } from "@/constants/game";
@@ -338,110 +341,62 @@ export const FreezeCat = () => {
   return (
     <>
       {/* Instructions Modal */}
-      {gameState === "instructions" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-200/80 via-pink-200/80 to-blue-200/80 backdrop-blur-sm" />
-
-          <div className="relative bg-white/90 backdrop-blur-sm rounded-3xl p-6 sm:p-8 shadow-2xl border-2 border-white/50 mx-4 max-w-md w-full">
-            <div className="text-center mb-6">
-              <div className="text-6xl mb-4">🐱</div>
-              <h2 className="text-2xl font-bold text-purple-700 mb-2">
-                Freeze Cat
-              </h2>
-              <p className="text-purple-600 text-lg">
-                Tap the animals, but don't tap the cats! Watch out - there are
-                many cats!
-              </p>
-            </div>
-
-            <div className="space-y-4 mb-8">
-              <div className="flex items-center gap-4 bg-green-50/60 rounded-2xl p-4 border border-green-200">
-                <div className="text-3xl">🐶</div>
-                <div>
-                  <p className="font-bold text-green-700">Tap Animals!</p>
-                  <p className="text-sm text-green-600">
-                    Tap dogs, rabbits, and other animals for points
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4 bg-red-50/60 rounded-2xl p-4 border border-red-200">
-                <div className="text-3xl">🐱</div>
-                <div>
-                  <p className="font-bold text-red-700">Stay Frozen!</p>
-                  <p className="text-sm text-red-600">
-                    Don't tap the cats or you'll lose points - there are many!
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4 bg-blue-50/60 rounded-2xl p-4 border border-blue-200">
-                <div className="text-3xl">⏱️</div>
-                <div>
-                  <p className="font-bold text-blue-700">Quick Thinking!</p>
-                  <p className="text-sm text-blue-600">
-                    You have 20 seconds to score as much as possible
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="text-center">
-              <Button
-                onClick={startCountdown}
-                size="lg"
-                className="bg-gradient-to-r from-purple-400 to-pink-400 hover:from-purple-500 hover:to-pink-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl"
-              >
-                Let's Play
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CommonInstructionsModal
+        isOpen={gameState === "instructions"}
+        title="Freeze Cat"
+        subtitle="Tap the animals, but don't tap the cats! Watch out - there are many cats!"
+        instructions={[
+          {
+            icon: "🐶",
+            text: "Tap Animals!",
+            subtext: "Tap dogs, rabbits, and other animals for points"
+          },
+          {
+            icon: "🐱",
+            text: "Stay Frozen!",
+            subtext: "Don't tap the cats or you'll lose points - there are many!"
+          },
+          {
+            icon: "⏱️",
+            text: "Quick Thinking!",
+            subtext: "You have 20 seconds to score as much as possible"
+          }
+        ]}
+        onStartGame={startCountdown}
+        buttonText="LET'S START"
+      />
 
       {/* Countdown Screen */}
+      {/* Countdown Screen */}
       {gameState === "countdown" && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-gradient-to-br from-purple-100 to-pink-100">
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-gradient-to-br from-orange-100 to-yellow-100">
           <div className="text-center">
-            <div className="text-8xl font-bold text-purple-600 animate-pulse">
+            <div className="text-8xl font-bold text-orange-600 animate-pulse">
               {countdown}
             </div>
-            <p className="text-2xl text-purple-700 mt-4">Get Ready!</p>
+            <p className="text-2xl text-orange-700 mt-4">Get Ready!</p>
           </div>
         </div>
       )}
 
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 relative overflow-hidden">
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-red-50 relative overflow-hidden">
         {/* Header */}
-        <header className="bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 text-white shadow-xl relative z-30">
-          <div className="container mx-auto px-4 py-4 md:py-6">
-            <div className="flex justify-between items-center">
-              <Button
-                onClick={() => navigate("/")}
-                variant="ghost"
-                className="text-white hover:bg-white/20"
-              >
-                ← Back
-              </Button>
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-center flex-1">
+        <header className="bg-white/90 backdrop-blur-sm border border-white/40 relative z-30" style={{ height: '100px' }}>
+          <div className="container mx-auto px-4 py-6">
+            <div className="flex items-center justify-center">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">
                 Freeze Cat
               </h1>
-              <div className="w-16"></div> {/* Spacer for centering */}
             </div>
-
-            {/* Game Stats */}
-            {(gameState === "playing" || gameState === "completed") && (
-              <div className="flex items-center justify-center mt-4 gap-4 flex-wrap">
-                <div className="text-lg font-bold">Score: {stats.score}</div>
-                {gameState === "playing" && (
-                  <div className="text-lg font-bold">
-                    Time: {Math.ceil(gameTimeLeft / 1000)}s
-                  </div>
-                )}
-              </div>
-            )}
           </div>
+          {/* Back Button */}
+          <BackButton onClick={() => navigate("/")} />
         </header>
+
+        {/* Game Controls */}
+        {(gameState === "playing" || gameState === "completed") && (
+          <GameControls score={stats.score} timeLeft={gameTimeLeft} />
+        )}
 
         {/* Game Grid - Landscape Optimized */}
         <div className="flex items-center justify-center min-h-[calc(100vh-140px)] p-4">
@@ -455,7 +410,7 @@ export const FreezeCat = () => {
                 <div
                   key={index}
                   className={`
-                    aspect-square rounded-2xl border-4 border-dashed border-purple-300 
+                    aspect-square rounded-2xl border-4 border-dashed border-orange-300 
                     bg-white/50 backdrop-blur-sm flex items-center justify-center text-4xl sm:text-5xl md:text-6xl
                     transition-all duration-200 cursor-pointer
                     ${
@@ -463,7 +418,7 @@ export const FreezeCat = () => {
                         ? "bg-white/80 border-solid scale-105 shadow-lg"
                         : "hover:bg-white/60"
                     }
-                    ${animal ? "border-green-400 bg-green-50/80" : ""}
+                    ${animal ? "border-orange-400 bg-orange-50/80" : ""}
                   `}
                   onClick={() => animal && handleAnimalTap(animal)}
                 >
