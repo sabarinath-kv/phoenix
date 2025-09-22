@@ -29,7 +29,7 @@ export const GameInsights = () => {
           <img 
             src={gameInsightsImage} 
             alt="Result 1"
-            className="absolute w-full h-auto "
+            className="absolute w-full h-full"
             style={{ zIndex: 10 }}
           />
 
