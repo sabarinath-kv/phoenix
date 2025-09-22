@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { PreloadedImage } from "@/components/LazyImage";
 
 // Import game insights image
 import gameInsightsImage from "@/assets/images/game-insights.png";
@@ -26,7 +27,7 @@ export const GameInsights = () => {
           }}
         >
           {/* Result1 Image - Absolute positioned */}
-          <img 
+          <PreloadedImage 
             src={gameInsightsImage} 
             alt="Result 1"
             className="absolute w-full h-full"

@@ -6,6 +6,7 @@ import { Chip } from "@/components/ui/chip";
 import { Mic, MessageCircle, LogOut, Heart, Clock, Check, Circle, BarChart3 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
+import { PreloadedImage } from "@/components/LazyImage";
 import ParentCompanionAI from "./ParentCompanionAI";
 
 // Import game images
@@ -275,7 +276,7 @@ export const GameSelection = () => {
                     <div className={`w-7 h-7 rounded-full mr-20 border-3 shadow-sm transition-all duration-300
                       `}>
                       {game.status === 'completed' && (
-                        <img src={checkLine} className="w-6 h-6 text-white m-1" alt="check" />
+                        <PreloadedImage src={checkLine} className="w-6 h-6 text-white m-1" alt="check" />
                       )}
                       {game.status === 'in-progress' && (
                         <div className="w-6 h-6 rounded-full bg-[#FDD201] m-1 border-[3px] border-[#A9A6A2]" />
@@ -305,7 +306,7 @@ export const GameSelection = () => {
 
                       {/* Game Illustration - With padding and rounded corners like reference */}
                       <div className="w-[134px] py-2 pr-2">
-                        <img 
+                        <PreloadedImage 
                           src={game.imageUrl} 
                           alt={game.name}
                           className="w-full h-full object-contain rounded-2xl"

@@ -1,4 +1,5 @@
 import React from 'react';
+import { PreloadedImage } from './LazyImage';
 import wiglooImage from '../assets/images/wigloo-image.png';
 
 interface WinglooIllustrationProps {
@@ -14,18 +15,13 @@ export function WinglooIllustration({ isListening, className = "" }: WinglooIllu
         {/* Animated background glow */}
         <div className={`absolute w-[300px] h-[300px] ''}`} />
         
-        <img 
+        <PreloadedImage 
             src={wiglooImage} 
             alt="Wigloo listening"
             className="w-full h-full object-cover animate-cloud-float"
-            onError={(e) => {
+            onError={() => {
               // Fallback to CSS illustration if image fails to load
-              const target = e.target as HTMLImageElement;
-              target.style.display = 'none';
-              const fallback = target.nextElementSibling as HTMLElement;
-              if (fallback) {
-                fallback.style.display = 'flex';
-              }
+            
             }}
           />
         
