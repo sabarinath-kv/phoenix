@@ -48,24 +48,24 @@ interface FreezeCatMetrics {
   false_alarms: number; // Clicked on cats
   correct_rejections: number; // Not clicking cats
   response_time: number; // Average time to click non-cats
-  
+
   // Pattern Recognition
   learning_curve: number; // 0-1 score for error reduction over time
   position_memory: number; // 0-1 score for remembering cat positions
-  
+
   // Cognitive Load
   accuracy_vs_speed: {
     fast_appearances: number; // Accuracy when animals appear/disappear quickly
     slow_appearances: number; // Accuracy when more time to think
   };
-  
+
   // Raw data for analysis
   all_taps: TapEvent[];
   all_appearances: AnimalAppearance[];
   game_duration: number;
   total_animals_spawned: number;
   position_error_patterns: number[]; // Error count per position (0-8)
-  temporal_accuracy: Array<{time: number, accuracy: number}>; // Accuracy over time
+  temporal_accuracy: Array<{ time: number; accuracy: number }>; // Accuracy over time
 }
 
 interface GameStats {
@@ -100,8 +100,12 @@ export const FreezeCat = () => {
   const [allAppearances, setAllAppearances] = useState<AnimalAppearance[]>([]);
   const [totalAnimalsSpawned, setTotalAnimalsSpawned] = useState(0);
   const [gameStartTime, setGameStartTime] = useState<number>(0);
-  const [positionErrorPatterns, setPositionErrorPatterns] = useState<number[]>([0, 0, 0, 0, 0, 0, 0, 0, 0]);
-  const [temporalAccuracy, setTemporalAccuracy] = useState<Array<{time: number, accuracy: number}>>([]);
+  const [positionErrorPatterns, setPositionErrorPatterns] = useState<number[]>([
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+  ]);
+  const [temporalAccuracy, setTemporalAccuracy] = useState<
+    Array<{ time: number; accuracy: number }>
+  >([]);
 
   // Refs for cleanup
   const countdownTimerRef = useRef<NodeJS.Timeout>();
@@ -115,7 +119,7 @@ export const FreezeCat = () => {
     allAppearances: [] as AnimalAppearance[],
     totalAnimalsSpawned: 0,
     positionErrorPatterns: [0, 0, 0, 0, 0, 0, 0, 0, 0],
-    temporalAccuracy: [] as Array<{time: number, accuracy: number}>,
+    temporalAccuracy: [] as Array<{ time: number; accuracy: number }>,
   });
 
   // Ref to store current score for accurate session data
@@ -218,10 +222,10 @@ export const FreezeCat = () => {
       );
 
       // Track animals that disappeared without being tapped
-      prev.forEach(animal => {
+      prev.forEach((animal) => {
         if (now - animal.showTime >= FREEZE_CAT.ANIMAL_DISPLAY_TIME) {
-          setAllAppearances(prevAppearances => 
-            prevAppearances.map(appearance => 
+          setAllAppearances((prevAppearances) =>
+            prevAppearances.map((appearance) =>
               appearance.animalId === animal.id && !appearance.hideTime
                 ? { ...appearance, hideTime: now }
                 : appearance
@@ -268,8 +272,8 @@ export const FreezeCat = () => {
           gameTime,
         };
 
-        setAllAppearances(prev => [...prev, appearance]);
-        setTotalAnimalsSpawned(prev => prev + 1);
+        setAllAppearances((prev) => [...prev, appearance]);
+        setTotalAnimalsSpawned((prev) => prev + 1);
       }
 
       return newAnimals;
@@ -306,11 +310,11 @@ export const FreezeCat = () => {
         appearanceDuration,
       };
 
-      setAllTaps(prev => [...prev, tapEvent]);
+      setAllTaps((prev) => [...prev, tapEvent]);
 
       // Update appearance tracking
-      setAllAppearances(prev => 
-        prev.map(appearance => 
+      setAllAppearances((prev) =>
+        prev.map((appearance) =>
           appearance.animalId === animal.id
             ? {
                 ...appearance,
@@ -324,7 +328,7 @@ export const FreezeCat = () => {
 
       // Track position error patterns (for pattern recognition)
       if (!isCorrect) {
-        setPositionErrorPatterns(prev => {
+        setPositionErrorPatterns((prev) => {
           const newPatterns = [...prev];
           newPatterns[animal.position]++;
           return newPatterns;
@@ -333,16 +337,21 @@ export const FreezeCat = () => {
 
       // Update temporal accuracy tracking (every 5 seconds)
       const timeSegment = Math.floor(gameTime / 5000); // 5-second segments
-      setTemporalAccuracy(prev => {
-        const existing = prev.find(ta => Math.floor(ta.time / 5000) === timeSegment);
+      setTemporalAccuracy((prev) => {
+        const existing = prev.find(
+          (ta) => Math.floor(ta.time / 5000) === timeSegment
+        );
         if (existing) {
           // Update existing segment accuracy
-          const segmentTaps = allTaps.filter(tap => 
-            Math.floor(tap.gameTime / 5000) === timeSegment
-          ).length + 1; // +1 for current tap
-          const segmentCorrect = allTaps.filter(tap => 
-            Math.floor(tap.gameTime / 5000) === timeSegment && tap.isCorrect
-          ).length + (isCorrect ? 1 : 0);
+          const segmentTaps =
+            allTaps.filter(
+              (tap) => Math.floor(tap.gameTime / 5000) === timeSegment
+            ).length + 1; // +1 for current tap
+          const segmentCorrect =
+            allTaps.filter(
+              (tap) =>
+                Math.floor(tap.gameTime / 5000) === timeSegment && tap.isCorrect
+            ).length + (isCorrect ? 1 : 0);
           existing.accuracy = segmentCorrect / segmentTaps;
         } else {
           prev.push({ time: gameTime, accuracy: isCorrect ? 1 : 0 });
@@ -408,61 +417,88 @@ export const FreezeCat = () => {
   const calculateFreezeCatMetrics = useCallback((): FreezeCatMetrics => {
     const gameDuration = FREEZE_CAT.GAME_DURATION;
     const totalTaps = allTaps.length;
-    const catTaps = allTaps.filter(tap => tap.isCat).length;
-    const nonCatTaps = allTaps.filter(tap => !tap.isCat).length;
-    
+    const catTaps = allTaps.filter((tap) => tap.isCat).length;
+    const nonCatTaps = allTaps.filter((tap) => !tap.isCat).length;
+
     // Core Inhibition Metrics
     const falseAlarms = catTaps; // Clicked on cats (should not click)
-    const catsAppeared = allAppearances.filter(app => app.isCat).length;
-    const catsNotTapped = allAppearances.filter(app => app.isCat && !app.wasTapped).length;
+    const catsAppeared = allAppearances.filter((app) => app.isCat).length;
+    const catsNotTapped = allAppearances.filter(
+      (app) => app.isCat && !app.wasTapped
+    ).length;
     const correctRejections = catsNotTapped; // Not clicking cats (correct inhibition)
-    
+
     // Average response time for non-cats only
     const nonCatResponseTimes = allTaps
-      .filter(tap => !tap.isCat)
-      .map(tap => tap.responseTime);
-    const avgResponseTime = nonCatResponseTimes.length > 0
-      ? nonCatResponseTimes.reduce((sum, time) => sum + time, 0) / nonCatResponseTimes.length
-      : 0;
+      .filter((tap) => !tap.isCat)
+      .map((tap) => tap.responseTime);
+    const avgResponseTime =
+      nonCatResponseTimes.length > 0
+        ? nonCatResponseTimes.reduce((sum, time) => sum + time, 0) /
+          nonCatResponseTimes.length
+        : 0;
 
     // Pattern Recognition Metrics
     // Learning curve - errors should decrease over time
     let learningCurve = 0;
     if (temporalAccuracy.length >= 2) {
-      const firstHalf = temporalAccuracy.slice(0, Math.ceil(temporalAccuracy.length / 2));
-      const secondHalf = temporalAccuracy.slice(Math.floor(temporalAccuracy.length / 2));
-      
-      const firstHalfAccuracy = firstHalf.reduce((sum, ta) => sum + ta.accuracy, 0) / firstHalf.length;
-      const secondHalfAccuracy = secondHalf.reduce((sum, ta) => sum + ta.accuracy, 0) / secondHalf.length;
-      
-      learningCurve = Math.max(0, (secondHalfAccuracy - firstHalfAccuracy)); // 0-1 improvement
+      const firstHalf = temporalAccuracy.slice(
+        0,
+        Math.ceil(temporalAccuracy.length / 2)
+      );
+      const secondHalf = temporalAccuracy.slice(
+        Math.floor(temporalAccuracy.length / 2)
+      );
+
+      const firstHalfAccuracy =
+        firstHalf.reduce((sum, ta) => sum + ta.accuracy, 0) / firstHalf.length;
+      const secondHalfAccuracy =
+        secondHalf.reduce((sum, ta) => sum + ta.accuracy, 0) /
+        secondHalf.length;
+
+      learningCurve = Math.max(0, secondHalfAccuracy - firstHalfAccuracy); // 0-1 improvement
     }
-    
+
     // Position memory - lower error variance across positions indicates better memory
     let positionMemory = 1;
-    if (positionErrorPatterns.some(errors => errors > 0)) {
-      const totalErrors = positionErrorPatterns.reduce((sum, errors) => sum + errors, 0);
+    if (positionErrorPatterns.some((errors) => errors > 0)) {
+      const totalErrors = positionErrorPatterns.reduce(
+        (sum, errors) => sum + errors,
+        0
+      );
       const avgErrorsPerPosition = totalErrors / 9;
-      const variance = positionErrorPatterns.reduce((sum, errors) => 
-        sum + Math.pow(errors - avgErrorsPerPosition, 2), 0) / 9;
+      const variance =
+        positionErrorPatterns.reduce(
+          (sum, errors) => sum + Math.pow(errors - avgErrorsPerPosition, 2),
+          0
+        ) / 9;
       const maxPossibleVariance = Math.pow(totalErrors, 2) / 9; // If all errors in one position
-      positionMemory = maxPossibleVariance > 0 ? 1 - (variance / maxPossibleVariance) : 1;
+      positionMemory =
+        maxPossibleVariance > 0 ? 1 - variance / maxPossibleVariance : 1;
     }
 
     // Cognitive Load - Accuracy vs Speed
     const fastThreshold = 1000; // 1 second - considered "fast" appearance
     const slowThreshold = 3000; // 3 seconds - considered "slow" appearance
-    
-    const fastAppearanceTaps = allTaps.filter(tap => tap.appearanceDuration <= fastThreshold);
-    const slowAppearanceTaps = allTaps.filter(tap => tap.appearanceDuration >= slowThreshold);
-    
-    const fastAccuracy = fastAppearanceTaps.length > 0
-      ? fastAppearanceTaps.filter(tap => tap.isCorrect).length / fastAppearanceTaps.length
-      : 0;
-    
-    const slowAccuracy = slowAppearanceTaps.length > 0
-      ? slowAppearanceTaps.filter(tap => tap.isCorrect).length / slowAppearanceTaps.length
-      : 0;
+
+    const fastAppearanceTaps = allTaps.filter(
+      (tap) => tap.appearanceDuration <= fastThreshold
+    );
+    const slowAppearanceTaps = allTaps.filter(
+      (tap) => tap.appearanceDuration >= slowThreshold
+    );
+
+    const fastAccuracy =
+      fastAppearanceTaps.length > 0
+        ? fastAppearanceTaps.filter((tap) => tap.isCorrect).length /
+          fastAppearanceTaps.length
+        : 0;
+
+    const slowAccuracy =
+      slowAppearanceTaps.length > 0
+        ? slowAppearanceTaps.filter((tap) => tap.isCorrect).length /
+          slowAppearanceTaps.length
+        : 0;
 
     return {
       false_alarms: falseAlarms,
@@ -481,86 +517,127 @@ export const FreezeCat = () => {
       position_error_patterns: positionErrorPatterns,
       temporal_accuracy: temporalAccuracy,
     };
-  }, [allTaps, allAppearances, totalAnimalsSpawned, positionErrorPatterns, temporalAccuracy]);
+  }, [
+    allTaps,
+    allAppearances,
+    totalAnimalsSpawned,
+    positionErrorPatterns,
+    temporalAccuracy,
+  ]);
 
   // Metrics calculation using current ref values
-  const calculateFreezeCatMetricsFromRefs = useCallback((): FreezeCatMetrics => {
-    const { allTaps, allAppearances, totalAnimalsSpawned, positionErrorPatterns, temporalAccuracy } = metricsDataRef.current;
-    
-    const gameDuration = FREEZE_CAT.GAME_DURATION;
-    const totalTaps = allTaps.length;
-    const catTaps = allTaps.filter(tap => tap.isCat).length;
-    
-    // Core Inhibition Metrics
-    const falseAlarms = catTaps; // Clicked on cats (should not click)
-    const catsAppeared = allAppearances.filter(app => app.isCat).length;
-    const catsNotTapped = allAppearances.filter(app => app.isCat && !app.wasTapped).length;
-    const correctRejections = catsNotTapped; // Not clicking cats (correct inhibition)
-    
-    // Average response time for non-cats only
-    const nonCatResponseTimes = allTaps
-      .filter(tap => !tap.isCat)
-      .map(tap => tap.responseTime);
-    const avgResponseTime = nonCatResponseTimes.length > 0
-      ? nonCatResponseTimes.reduce((sum, time) => sum + time, 0) / nonCatResponseTimes.length
-      : 0;
+  const calculateFreezeCatMetricsFromRefs =
+    useCallback((): FreezeCatMetrics => {
+      const {
+        allTaps,
+        allAppearances,
+        totalAnimalsSpawned,
+        positionErrorPatterns,
+        temporalAccuracy,
+      } = metricsDataRef.current;
 
-    // Pattern Recognition Metrics
-    let learningCurve = 0;
-    if (temporalAccuracy.length >= 2) {
-      const firstHalf = temporalAccuracy.slice(0, Math.ceil(temporalAccuracy.length / 2));
-      const secondHalf = temporalAccuracy.slice(Math.floor(temporalAccuracy.length / 2));
-      
-      const firstHalfAccuracy = firstHalf.reduce((sum, ta) => sum + ta.accuracy, 0) / firstHalf.length;
-      const secondHalfAccuracy = secondHalf.reduce((sum, ta) => sum + ta.accuracy, 0) / secondHalf.length;
-      
-      learningCurve = Math.max(0, (secondHalfAccuracy - firstHalfAccuracy));
-    }
-    
-    // Position memory
-    let positionMemory = 1;
-    if (positionErrorPatterns.some(errors => errors > 0)) {
-      const totalErrors = positionErrorPatterns.reduce((sum, errors) => sum + errors, 0);
-      const avgErrorsPerPosition = totalErrors / 9;
-      const variance = positionErrorPatterns.reduce((sum, errors) => 
-        sum + Math.pow(errors - avgErrorsPerPosition, 2), 0) / 9;
-      const maxPossibleVariance = Math.pow(totalErrors, 2) / 9;
-      positionMemory = maxPossibleVariance > 0 ? 1 - (variance / maxPossibleVariance) : 1;
-    }
+      const gameDuration = FREEZE_CAT.GAME_DURATION;
+      const totalTaps = allTaps.length;
+      const catTaps = allTaps.filter((tap) => tap.isCat).length;
 
-    // Cognitive Load - Accuracy vs Speed
-    const fastThreshold = 1000;
-    const slowThreshold = 3000;
-    
-    const fastAppearanceTaps = allTaps.filter(tap => tap.appearanceDuration <= fastThreshold);
-    const slowAppearanceTaps = allTaps.filter(tap => tap.appearanceDuration >= slowThreshold);
-    
-    const fastAccuracy = fastAppearanceTaps.length > 0
-      ? fastAppearanceTaps.filter(tap => tap.isCorrect).length / fastAppearanceTaps.length
-      : 0;
-    
-    const slowAccuracy = slowAppearanceTaps.length > 0
-      ? slowAppearanceTaps.filter(tap => tap.isCorrect).length / slowAppearanceTaps.length
-      : 0;
+      // Core Inhibition Metrics
+      const falseAlarms = catTaps; // Clicked on cats (should not click)
+      const catsAppeared = allAppearances.filter((app) => app.isCat).length;
+      const catsNotTapped = allAppearances.filter(
+        (app) => app.isCat && !app.wasTapped
+      ).length;
+      const correctRejections = catsNotTapped; // Not clicking cats (correct inhibition)
 
-    return {
-      false_alarms: falseAlarms,
-      correct_rejections: correctRejections,
-      response_time: avgResponseTime,
-      learning_curve: learningCurve,
-      position_memory: positionMemory,
-      accuracy_vs_speed: {
-        fast_appearances: fastAccuracy,
-        slow_appearances: slowAccuracy,
-      },
-      all_taps: allTaps,
-      all_appearances: allAppearances,
-      game_duration: gameDuration,
-      total_animals_spawned: totalAnimalsSpawned,
-      position_error_patterns: positionErrorPatterns,
-      temporal_accuracy: temporalAccuracy,
-    };
-  }, []);
+      // Average response time for non-cats only
+      const nonCatResponseTimes = allTaps
+        .filter((tap) => !tap.isCat)
+        .map((tap) => tap.responseTime);
+      const avgResponseTime =
+        nonCatResponseTimes.length > 0
+          ? nonCatResponseTimes.reduce((sum, time) => sum + time, 0) /
+            nonCatResponseTimes.length
+          : 0;
+
+      // Pattern Recognition Metrics
+      let learningCurve = 0;
+      if (temporalAccuracy.length >= 2) {
+        const firstHalf = temporalAccuracy.slice(
+          0,
+          Math.ceil(temporalAccuracy.length / 2)
+        );
+        const secondHalf = temporalAccuracy.slice(
+          Math.floor(temporalAccuracy.length / 2)
+        );
+
+        const firstHalfAccuracy =
+          firstHalf.reduce((sum, ta) => sum + ta.accuracy, 0) /
+          firstHalf.length;
+        const secondHalfAccuracy =
+          secondHalf.reduce((sum, ta) => sum + ta.accuracy, 0) /
+          secondHalf.length;
+
+        learningCurve = Math.max(0, secondHalfAccuracy - firstHalfAccuracy);
+      }
+
+      // Position memory
+      let positionMemory = 1;
+      if (positionErrorPatterns.some((errors) => errors > 0)) {
+        const totalErrors = positionErrorPatterns.reduce(
+          (sum, errors) => sum + errors,
+          0
+        );
+        const avgErrorsPerPosition = totalErrors / 9;
+        const variance =
+          positionErrorPatterns.reduce(
+            (sum, errors) => sum + Math.pow(errors - avgErrorsPerPosition, 2),
+            0
+          ) / 9;
+        const maxPossibleVariance = Math.pow(totalErrors, 2) / 9;
+        positionMemory =
+          maxPossibleVariance > 0 ? 1 - variance / maxPossibleVariance : 1;
+      }
+
+      // Cognitive Load - Accuracy vs Speed
+      const fastThreshold = 1000;
+      const slowThreshold = 3000;
+
+      const fastAppearanceTaps = allTaps.filter(
+        (tap) => tap.appearanceDuration <= fastThreshold
+      );
+      const slowAppearanceTaps = allTaps.filter(
+        (tap) => tap.appearanceDuration >= slowThreshold
+      );
+
+      const fastAccuracy =
+        fastAppearanceTaps.length > 0
+          ? fastAppearanceTaps.filter((tap) => tap.isCorrect).length /
+            fastAppearanceTaps.length
+          : 0;
+
+      const slowAccuracy =
+        slowAppearanceTaps.length > 0
+          ? slowAppearanceTaps.filter((tap) => tap.isCorrect).length /
+            slowAppearanceTaps.length
+          : 0;
+
+      return {
+        false_alarms: falseAlarms,
+        correct_rejections: correctRejections,
+        response_time: avgResponseTime,
+        learning_curve: learningCurve,
+        position_memory: positionMemory,
+        accuracy_vs_speed: {
+          fast_appearances: fastAccuracy,
+          slow_appearances: slowAccuracy,
+        },
+        all_taps: allTaps,
+        all_appearances: allAppearances,
+        game_duration: gameDuration,
+        total_animals_spawned: totalAnimalsSpawned,
+        position_error_patterns: positionErrorPatterns,
+        temporal_accuracy: temporalAccuracy,
+      };
+    }, []);
 
   // End game
   const endGame = useCallback(async () => {
@@ -590,9 +667,7 @@ export const FreezeCat = () => {
         const currentScore = scoreRef.current;
         const success = currentScore > 50; // Consider success if score > 50
 
-        await gameSession.endSession(success, currentScore, {
-          freezeCatMetrics
-        });
+        await gameSession.endSession(success, currentScore, freezeCatMetrics);
       } catch (error) {
         console.error("Failed to save game session:", error);
       }

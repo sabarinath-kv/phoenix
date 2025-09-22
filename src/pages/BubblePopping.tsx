@@ -1010,9 +1010,11 @@ export const BubblePopping = () => {
         const currentScore = scoreRef.current;
         const success = currentScore > 100; // Consider success if score > 100
 
-        await gameSession.endSession(success, currentScore, {
-          bubblePoppingMetrics,
-        });
+        await gameSession.endSession(
+          success,
+          currentScore,
+          bubblePoppingMetrics
+        );
       } catch (error) {
         console.error("Failed to save game session:", error);
         // Game continues even if session saving fails

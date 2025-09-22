@@ -737,13 +737,13 @@ export const SymbolSpotter = () => {
       clearInterval(gameTimerRef.current);
     }
 
-        // Calculate comprehensive metrics using current ref values
+    // Calculate comprehensive metrics using current ref values
     if (gameSession.isSessionActive) {
       try {
         const metrics = calculateMetricsFromRefs();
         const currentScore = scoreRef.current;
         const success = currentScore > 0; // Game is successful if score is positive
-        
+
         console.log("Game ending with metrics:", {
           score: currentScore,
           success,
@@ -752,10 +752,8 @@ export const SymbolSpotter = () => {
           symbolsInZone: metricsDataRef.current.symbolsInZone.length,
           metrics,
         });
-        
-        await gameSession.endSession(success, currentScore, {
-          metrics,
-        });
+
+        await gameSession.endSession(success, currentScore, metrics);
       } catch (error) {
         console.error("Failed to save game session:", error);
       }
