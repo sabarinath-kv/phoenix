@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { WinglooIllustration } from './WinglooIllustration';
 import { useParticipants } from '@livekit/components-react';
 import { Room } from 'livekit-client';
+import wiglooImage from '@/assets/images/wigloo-image.png';
 
 interface VoiceChatUIProps {
   isAISpeaking: boolean;
@@ -18,6 +19,9 @@ interface VoiceChatUIProps {
   autoMicEnabled: boolean;
   room: Room;
   isConnected: boolean;
+  isTextChatMode: boolean;
+  textMessages: Array<{ role: 'ai' | 'user'; message: string; timestamp: Date }>;
+  onSendTextMessage: (message: string) => void;
 }
 
 export function VoiceChatUI({
@@ -34,15 +38,22 @@ export function VoiceChatUI({
   agentConnected,
   autoMicEnabled,
   room,
-  isConnected
+  isConnected,
+  isTextChatMode,
+  textMessages,
+  onSendTextMessage
 }: VoiceChatUIProps) {
-  const [showChatHistory, setShowChatHistory] = useState(false);
   const [currentView, setCurrentView] = useState<'thinking' | 'speaking' | 'listening'>('thinking');
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [isSlideTransition, setIsSlideTransition] = useState(false);
 
   const handleChatToggle = () => {
-    setShowChatHistory(!showChatHistory);
-    onToggleChat();
+    setIsSlideTransition(true);
+    // Small delay for smooth transition
+    setTimeout(() => {
+      onToggleChat();
+      setIsSlideTransition(false);
+    }, 150);
   };
 
   // Handle smooth transitions between UI states
@@ -74,18 +85,25 @@ export function VoiceChatUI({
     });
   }, [agentConnected, isAISpeaking, isListening, micEnabled, aiTranscript, userTranscript]);
 
-  if (showChatHistory) {
+  if (isTextChatMode) {
     return (
-      <ChatHistoryBottomSheet
-        chatHistory={chatHistory}
-        onClose={() => setShowChatHistory(false)}
-      />
+      <div className={`transition-all duration-300 ease-in-out ${
+        isSlideTransition ? 'transform translate-y-full opacity-0' : 'transform translate-y-0 opacity-100'
+      }`}>
+        <ChatBottomSheet
+          messages={textMessages}
+          onClose={handleChatToggle}
+          onSendMessage={onSendTextMessage}
+        />
+      </div>
     );
   }
 
   return (
-    <div className={`flex flex-col mobile-full-screen overflow-hidden transition-colors duration-500 ease-in-out ${
+    <div className={`flex flex-col mobile-full-screen overflow-hidden transition-all duration-500 ease-in-out ${
       isListening || !isConnected ? 'bg-[#F0F0F0]' : 'bg-white'
+    } ${
+      isSlideTransition ? 'transform translate-y-full opacity-0' : 'transform translate-y-0 opacity-100'
     }`}>
       {/* Background Layer with Flex Positioning */}
       <div className="flex-1 flex flex-col relative">
@@ -139,6 +157,7 @@ export function VoiceChatUI({
                 agentConnected={agentConnected}
                 isAISpeaking={isAISpeaking}
                 autoMicEnabled={autoMicEnabled}
+                isTextChatMode={isTextChatMode}
               />
             </div>
           </div>
@@ -307,7 +326,8 @@ function ControlPanel({
   micEnabled,
   agentConnected,
   isAISpeaking,
-  autoMicEnabled
+  autoMicEnabled,
+  isTextChatMode
 }: {
   onChatToggle: () => void;
   onMicToggle: () => void;
@@ -316,18 +336,28 @@ function ControlPanel({
   agentConnected: boolean;
   isAISpeaking: boolean;
   autoMicEnabled: boolean;
+  isTextChatMode?: boolean;
 }) {
   return (
     <div className="flex items-center gap-3 p-1.5 bg-white/50 border border-[rgba(224,208,187,0.5)] rounded-full">
       {/* Chat Button */}
       <button 
         onClick={onChatToggle}
-        className="flex items-center gap-2 px-4 py-4 bg-white border border-[rgba(224,208,187,0.5)] rounded-full hover:bg-gray-50 transition-colors"
+        className={`relative flex items-center gap-2 px-4 py-4 border border-[rgba(224,208,187,0.5)] rounded-full transition-all duration-200 ${
+          isTextChatMode 
+            ? 'bg-[#3B82F6] text-white border-[#3B82F6]' 
+            : 'bg-white hover:bg-gray-50'
+        }`}
       >
+        {isTextChatMode && (
+          <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white animate-pulse"></div>
+        )}
         <svg width="24" height="24" viewBox="0 0 18 18" fill="none" className="flex-shrink-0">
-          <path d="M12.7487 6.66775L11.3322 5.25122L2.00327 14.5802V15.9967H3.4198L12.7487 6.66775ZM14.1653 5.25122L15.5818 3.8347L14.1653 2.41816L12.7487 3.8347L14.1653 5.25122ZM4.24959 18H0V13.7504L13.457 0.293369C13.8482 -0.0977898 14.4824 -0.0977898 14.8735 0.293369L17.7066 3.12643C18.0978 3.51759 18.0978 4.1518 17.7066 4.54295L4.24959 18Z" fill="#3B3839"/>
+          <path d="M12.7487 6.66775L11.3322 5.25122L2.00327 14.5802V15.9967H3.4198L12.7487 6.66775ZM14.1653 5.25122L15.5818 3.8347L14.1653 2.41816L12.7487 3.8347L14.1653 5.25122ZM4.24959 18H0V13.7504L13.457 0.293369C13.8482 -0.0977898 14.4824 -0.0977898 14.8735 0.293369L17.7066 3.12643C18.0978 3.51759 18.0978 4.1518 17.7066 4.54295L4.24959 18Z" fill={isTextChatMode ? 'white' : '#3B3839'}/>
         </svg>
-        <span className="text-[#2E2E2E] text-sm font-semibold leading-6 tracking-[0.4px] font-sans">
+        <span className={`text-sm font-semibold leading-6 tracking-[0.4px] font-sans ${
+          isTextChatMode ? 'text-white' : 'text-[#2E2E2E]'
+        }`}>
           Chat
         </span>
       </button>
@@ -441,91 +471,193 @@ function ListeningView({ isListening, userTranscript, message }: { isListening: 
 }
 
 
-function ChatHistoryBottomSheet({ 
-  chatHistory, 
-  onClose 
+function ChatBottomSheet({ 
+  messages, 
+  onClose,
+  onSendMessage
 }: { 
-  chatHistory: Array<{ role: 'ai' | 'user'; message: string; timestamp: Date }>; 
+  messages: Array<{ role: 'ai' | 'user'; message: string; timestamp: Date }>; 
   onClose: () => void;
+  onSendMessage: (message: string) => void;
 }) {
   const [newMessage, setNewMessage] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const handleSendMessage = () => {
     if (newMessage.trim()) {
-      // Handle sending text message
-      console.log('Sending message:', newMessage);
+      onSendMessage(newMessage.trim());
       setNewMessage('');
     }
   };
 
-  return (
-    <div className="flex flex-col mobile-full-screen bg-white z-50">
-      {/* Header */}
-      <div className="flex items-center justify-between bg-[#F0F0F0] border-b border-[rgba(224,208,187,0.5)] px-4 py-4 flex-shrink-0">
-        <h2 className="text-[#393738] text-xl font-semibold font-replay">
-          Chat History
-        </h2>
-        <button 
-          onClick={onClose}
-          className="flex items-center justify-center p-2 rounded-full bg-white border border-[rgba(224,208,187,0.5)] hover:bg-gray-50 transition-colors"
-        >
-          <svg className="w-5 h-5" viewBox="0 0 19 19" fill="none">
-            <path d="M2.79 2.79L16.21 16.21M16.21 2.79L2.79 16.21" 
-                  stroke="#393738" strokeWidth="2" strokeLinecap="round"/>
-          </svg>
-        </button>
-      </div>
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
-      {/* Chat Messages Container */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="flex flex-col space-y-4">
-            {chatHistory.map((chat, index) => (
+  return (
+    <div className="flex flex-col mobile-full-screen bg-[#F0F0F0] overflow-hidden transition-all duration-300 ease-in-out">
+      {/* Bottom Sheet Container with rounded top corners */}
+      <div className="flex-1 flex flex-col relative overflow-hidden bg-white/95 backdrop-blur-sm rounded-t-3xl border-t border-l border-r border-white/40 shadow-sm mt-4 mx-4">
+        {/* Background gradient effects */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="relative w-full h-full overflow-hidden">
+            {/* Gradient blobs using flexbox positioning */}
+            <div className="absolute inset-0">
               <div 
-                key={index}
-                className={`flex ${chat.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div 
-                  className={`flex flex-col max-w-[80%] rounded-2xl px-4 py-3 ${
-                    chat.role === 'user' 
-                      ? 'bg-[#E391F5] text-white' 
-                      : 'bg-[#F0F0F0] text-[#393738] border border-[rgba(224,208,187,0.5)]'
-                  }`}
-                >
-                  <p className="text-sm font-normal leading-[18px] font-sans">
-                    {chat.message}
-                  </p>
-                  <p className="text-xs opacity-70 mt-1 self-end">
-                    {chat.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </p>
-                </div>
-              </div>
-            ))}
+                className="absolute rounded-full transition-all duration-700 ease-in-out"
+                style={{
+                  width: '372px',
+                  height: '362px',
+                  left: '30%',
+                  top: '60%',
+                  backgroundColor: '#F7E06D',
+                  filter: 'blur(207.4px)',
+                }}
+              />
+              <div 
+                className="absolute rounded-full transition-all duration-700 ease-in-out"
+                style={{
+                  width: '303px',
+                  height: '224px',
+                  left: '-10%',
+                  bottom: '0%',
+                  backgroundColor: '#EEBF9B',
+                  filter: 'blur(207.4px)',
+                }}
+              />
+              <div 
+                className="absolute rounded-full transition-all duration-700 ease-in-out"
+                style={{
+                  width: '372px',
+                  height: '246px',
+                  left: '0%',
+                  top: '-20%',
+                  backgroundColor: '#F9E99B',
+                  filter: 'blur(207.4px)',
+                }}
+              />
+              <div 
+                className="absolute rounded-full transition-all duration-700 ease-in-out"
+                style={{
+                  width: '447.76px',
+                  height: '477.57px',
+                  left: '-15%',
+                  top: '15%',
+                  backgroundColor: '#FFFFFF',
+                  filter: 'blur(100px)',
+                }}
+              />
+              <div 
+                className="absolute rounded-full transition-all duration-700 ease-in-out"
+                style={{
+                  width: '303px',
+                  height: '224px',
+                  right: '10%',
+                  top: '-15%',
+                  backgroundColor: '#E391F5',
+                  filter: 'blur(207.4px)',
+                }}
+              />
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Message Input */}
-      <div className="flex-shrink-0 bg-[#F0F0F0] border-t border-[rgba(224,208,187,0.5)] p-4">
-        <div className="flex items-center gap-3">
-          <input
-            type="text"
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Type a message..."
-            className="flex-1 bg-white border border-[rgba(224,208,187,0.5)] rounded-full px-4 py-3 text-sm font-normal font-sans focus:outline-none focus:border-[#E391F5] transition-colors"
-            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-          />
-          <button
-            onClick={handleSendMessage}
-            disabled={!newMessage.trim()}
-            className="flex items-center justify-center bg-[#E391F5] text-white rounded-full p-3 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-purple-600 transition-colors flex-shrink-0"
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
-              <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" 
-                    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
+        {/* Content Layer with proper flex layout */}
+        <div className="relative z-10 flex flex-col h-full p-4 rounded-t-3xl overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-4 flex-shrink-0">
+            <h2 className="text-[#454344] text-xl font-semibold font-['Replay_Pro']">
+              Chat with Wingloo
+            </h2>
+            <button 
+              onClick={onClose}
+              className="flex items-center justify-center w-10 h-10 rounded-full bg-white/80 backdrop-blur-xs border border-white/40 hover:bg-white/90 transition-all duration-200"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 19 19" fill="none">
+                <path d="M2.79 2.79L16.21 16.21M16.21 2.79L2.79 16.21" 
+                      stroke="#393738" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            </button>
+          </div>
+
+          {/* Chat Messages Container */}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 overflow-y-auto">
+              <div className="flex flex-col space-y-3">
+                {messages.length === 0 ? (
+                  <div className="flex justify-center items-center h-32">
+                    <p className="text-[#393738]/60 text-sm font-normal font-sans">
+                      Start a conversation with Wingloo!
+                    </p>
+                  </div>
+                ) : (
+                  messages.map((message, index) => (
+                    <div 
+                      key={index}
+                      className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`}
+                    >
+                      {message.role === 'ai' ? (
+                        <div className="flex items-start gap-2 max-w-[85%]">
+                          {/* Wingloo Avatar */}
+                          <div className="flex-shrink-0 mt-1">
+                            <img 
+                              src={wiglooImage} 
+                              alt="Wingloo" 
+                              className="w-8 h-8 rounded-full object-cover border shadow-sm"
+                            />
+                          </div>
+                          {/* AI Message Bubble */}
+                          <div className="bg-white/90 backdrop-blur-sm text-[#393738] border border-white/40 rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
+                            <p className="text-sm font-normal leading-[20px] font-sans">
+                              {message.message}
+                            </p>
+                            <p className="text-xs mt-2 text-[#393738]/50 text-right">
+                              {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="bg-white/90 backdrop-blur-sm text-[#393738] border border-white/40 rounded-2xl rounded-br-md px-4 py-3 shadow-sm max-w-[85%]">
+                          <p className="text-sm font-normal leading-[20px] font-sans">
+                            {message.message}
+                          </p>
+                          <p className="text-xs mt-2 text-[#393738]/60 text-right">
+                            {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+            </div>
+          </div>
+
+          {/* Message Input */}
+          <div className="flex-shrink-0 mt-4">
+            <div className="flex items-center gap-3 p-2 bg-white/80 backdrop-blur-sm border-0 rounded-full shadow-sm">
+              <input
+                type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Type a message..."
+                className="flex-1 bg-transparent px-4 py-3 text-sm font-normal font-sans placeholder:text-[#393738]/50 border-0 outline-0 focus:outline-0 focus:border-0 focus:ring-0 focus:shadow-none"
+                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+              />
+              <button
+                onClick={handleSendMessage}
+                disabled={!newMessage.trim()}
+                className="flex items-center justify-center bg-[#3B82F6] text-white rounded-full w-10 h-10 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition-all duration-200 flex-shrink-0 shadow-sm"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                  <path d="M22 2L11 13M22 2L15 22L11 13M22 2L2 9L11 13" 
+                        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

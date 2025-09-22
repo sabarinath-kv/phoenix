@@ -30,6 +30,10 @@ export default function VoiceChatPage() {
   const [userTranscript, setUserTranscript] = useState('');
   const [chatHistory, setChatHistory] = useState<Array<{ role: 'ai' | 'user'; message: string; timestamp: Date }>>([]);
   const [isListening, setIsListening] = useState(false);
+  
+  // Text chat mode state
+  const [isTextChatMode, setIsTextChatMode] = useState(false);
+  const [textMessages, setTextMessages] = useState<Array<{ role: 'ai' | 'user'; message: string; timestamp: Date }>>([]);
   const lastCallTime = useRef(0);
   const { user, getLivekitTokenResponse, livekitTokenResponse, refreshLivekitTokenResponse } = useAuth();
   const agentId = useRef('');
@@ -79,8 +83,11 @@ export default function VoiceChatPage() {
     // Connection state events
     const handleConnected = () => {
       console.log('🟢 [LiveKit] Room connected');
-      setConnectionState(ConnectionState.Connected);
-      setConnected(true);
+      setTimeout(() => {
+        setConnectionState(ConnectionState.Connected);
+        setConnected(true);
+
+      }, 1000);
     };
 
 
@@ -288,6 +295,17 @@ export default function VoiceChatPage() {
             console.log('💬 [Transcript] User transcript received:', data.text);
             // setUserTranscript(data.text || '');
           }
+        } else if (data.type === 'text_message_response') {
+          // Handle AI response to text message
+          if (participant && !participant.isLocal) {
+            console.log('💬 [TextChat] AI text response received:', data.content);
+            const aiResponse = {
+              role: 'ai' as const,
+              message: data.content,
+              timestamp: new Date()
+            };
+            setTextMessages(prev => [...prev, aiResponse]);
+          }
         } else if (data.type === 'agent_speaking_start') {
           console.log('🎯 [Agent State] Agent speaking start signal received');
           setAgentSpeaking(true);
@@ -329,7 +347,7 @@ export default function VoiceChatPage() {
     room.on(RoomEvent.TrackUnsubscribed, handleTrackUnsubscribed);
     room.on(RoomEvent.TrackMuted, handleTrackMuted);
     room.on(RoomEvent.TrackUnmuted, handleTrackUnmuted);
-    // room.on(RoomEvent.DataReceived, handleDataReceived);
+    room.on(RoomEvent.DataReceived, handleDataReceived);
     room.on(RoomEvent.AudioPlaybackStatusChanged, handleAudioPlaybackChanged);
 
     room.on(RoomEvent.ActiveSpeakersChanged, (data) => {
@@ -391,7 +409,7 @@ export default function VoiceChatPage() {
       room.off(RoomEvent.TrackUnsubscribed, handleTrackUnsubscribed);
       room.off(RoomEvent.TrackMuted, handleTrackMuted);
       room.off(RoomEvent.TrackUnmuted, handleTrackUnmuted);
-    //   room.off(RoomEvent.DataReceived, handleDataReceived);
+      room.off(RoomEvent.DataReceived, handleDataReceived);
       room.off(RoomEvent.AudioPlaybackStatusChanged, handleAudioPlaybackChanged);
     };
   }, [room]);
@@ -429,7 +447,7 @@ export default function VoiceChatPage() {
   // Auto-switch to listening when agent connects and is not speaking
   useEffect(() => {
     if (agentConnected && !agentSpeaking && connected) {
-      setIsListening(true);
+    //   setIsListening(true);
       console.log('🎯 [UI State] Agent connected and not speaking - auto-switching to listening mode');
       
       // Auto-enable microphone if setting is enabled
@@ -508,6 +526,22 @@ export default function VoiceChatPage() {
 
   const handleToggleChat = () => {
     console.log('🗨️ [VoiceChat] Chat toggled');
+    setIsTextChatMode(!isTextChatMode);
+    
+    if (!isTextChatMode) {
+      // Entering text chat mode - pause voice chat
+      if (micEnabled) {
+        setMicEnabled(false);
+        room.localParticipant.setMicrophoneEnabled(false);
+      }
+      console.log('🗨️ [VoiceChat] Entered text chat mode - voice disabled');
+    } else {
+      // Exiting text chat mode - resume voice chat
+      if (agentConnected && !agentSpeaking && autoMicEnabled) {
+        handleAutoMicEnable();
+      }
+      console.log('🗨️ [VoiceChat] Exited text chat mode - voice resumed');
+    }
   };
 
   const handleToggleAutoMic = () => {
@@ -519,6 +553,53 @@ export default function VoiceChatPage() {
     if (!newAutoMicState && micEnabled && isListening) {
       setMicEnabled(false);
       room.localParticipant.setMicrophoneEnabled(false);
+    }
+  };
+
+  const handleSendTextMessage = async (message: string) => {
+    if (!message.trim() || !connected) return;
+    
+    // Add user message to text messages
+    const userMessage = {
+      role: 'user' as const,
+      message: message.trim(),
+      timestamp: new Date()
+    };
+    setTextMessages(prev => [...prev, userMessage]);
+    
+    try {
+      // Send text message via LiveKit data channel
+      await room.localParticipant.publishData(
+        new TextEncoder().encode(JSON.stringify({ 
+          type: 'text_message', 
+          content: message.trim() 
+        })),
+        { reliable: true }
+      );
+      
+      console.log('📤 [TextChat] Sent text message:', message);
+      
+      // Note: AI response will come via DataReceived event from the agent
+      // If no response comes within 5 seconds, show a fallback message
+      setTimeout(() => {
+        // Check if we got a response from the agent
+        setTextMessages(current => {
+          const lastMessage = current[current.length - 1];
+          if (lastMessage && lastMessage.role === 'user' && lastMessage.message === message.trim()) {
+            // No AI response received, add fallback
+            const fallbackResponse = {
+              role: 'ai' as const,
+              message: `I received your message: "${message.trim()}". Let me think about that...`,
+              timestamp: new Date()
+            };
+            return [...current, fallbackResponse];
+          }
+          return current;
+        });
+      }, 5000);
+      
+    } catch (error) {
+      console.error('❌ [TextChat] Failed to send text message:', error);
     }
   };
 
@@ -565,6 +646,9 @@ export default function VoiceChatPage() {
           agentConnected={agentConnected}
           autoMicEnabled={autoMicEnabled}
           room={room}
+          isTextChatMode={isTextChatMode}
+          textMessages={textMessages}
+          onSendTextMessage={handleSendTextMessage}
         />
         
         {/* Audio output - hidden but necessary */}
