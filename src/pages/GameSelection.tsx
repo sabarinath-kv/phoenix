@@ -3,8 +3,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FaceDetectionTest } from "@/components/FaceDetectionTest";
 import { Chip } from "@/components/ui/chip";
-import { Mic, MessageCircle, LogOut } from "lucide-react";
+import { Mic, MessageCircle, LogOut, Heart } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { motion } from "framer-motion";
 import ParentCompanionAI from "./ParentCompanionAI";
 
 interface GameCard {
@@ -244,7 +245,30 @@ export const GameSelection = () => {
       </main>
 
       {/* Parent Companion AI Floating Button */}
-      <ParentCompanionAI />
+      <motion.button
+        key="floating-button"
+        className={`fixed bottom-6 right-6 w-16 h-16 rounded-full shadow-hover backdrop-blur-sm border border-primary/20 bg-primary/90 hover:bg-primary`}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        onClick={() => navigate('/parent-companion')}
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ delay: 0.5, type: "spring" }}
+      >
+        <Heart className="w-8 h-8 text-white mx-auto" />
+        <motion.div
+          className="absolute inset-0 rounded-full border-2 border-primary/40"
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.7, 0, 0.7]
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
+        />
+      </motion.button>
     </div>
   );
 };

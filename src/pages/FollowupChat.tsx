@@ -9,8 +9,9 @@ import {
   import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { VoiceChatUI } from '@/components/VoiceChatUI';
+import { FollowupChatUI } from '@/components/FollowupChatUI';
   
-export default function VoiceChatPage() {
+export default function FollowupChatPage() {
   const [room] = useState(
     () =>
       new Room({
@@ -546,7 +547,7 @@ export default function VoiceChatPage() {
   return (
     <RoomContext.Provider value={room}>
       <div className="mobile-full-screen bg-white">
-        <VoiceChatUI
+        <FollowupChatUI
           isAISpeaking={agentSpeaking}
           isConnected={connected}
           isListening={isListening}
