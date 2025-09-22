@@ -92,8 +92,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Store auth token and user data
       localStorage.setItem("authToken", response.access_token);
       localStorage.setItem("userData", JSON.stringify(response.user));
-      localStorage.setItem("livekitTokenResponse", JSON.stringify(livekitTokenResponse));
-      setLivekitTokenResponse(livekitTokenResponse);
       setUser(response.user);
     } catch (error) {
       throw error;
