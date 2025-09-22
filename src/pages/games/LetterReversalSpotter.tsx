@@ -15,6 +15,54 @@ interface GameMistake {
   isCorrect: boolean;
 }
 
+// Enhanced metrics tracking interfaces
+interface LetterReversalEvent {
+  timestamp: number;
+  challengeId: string;
+  challengeType: string;
+  prompt: string;
+  correctAnswer: string;
+  selectedAnswer: string;
+  isCorrect: boolean;
+  responseTime: number;
+  gameTime: number;
+  difficultyLevel: number;
+  optionViewTimes: number[]; // Time spent looking at each option
+  totalComparisonTime: number;
+  doubleCheckCount: number; // How many times user looked back
+  systematicCheck: boolean; // Whether user checked all options
+}
+
+interface LetterReversalMetrics {
+  // Accuracy Metrics
+  correct_identification: number; // 0-1 ratio of exact matches
+  mirror_confusion: number; // Count of mirror confusions
+  rotation_confusion: number; // Count of rotation confusions
+
+  // Processing Metrics
+  comparison_time: number; // Average time studying options
+  double_checking: number; // 0-1 ratio of double-checks
+  systematic_checking: number; // 0-1 ratio of systematic checking
+
+  // Specific Letter Issues
+  problem_letters: Array<{
+    pair: string;
+    error_count: number;
+    accuracy: number;
+  }>;
+  consistency: number; // 0-1 score for repeated errors
+
+  // Raw data for analysis
+  all_events: LetterReversalEvent[];
+  game_duration: number;
+  total_challenges: number;
+  difficulty_progression: Array<{
+    time: number;
+    level: number;
+    performance: number;
+  }>;
+}
+
 interface Challenge {
   type: "letter-confusion" | "word-confusion" | "mirrored-letter";
   prompt: string;
@@ -48,6 +96,48 @@ export const LetterReversalSpotter: React.FC = () => {
   const [totalChallenges, setTotalChallenges] = useState(0);
   const [usedChallenges, setUsedChallenges] = useState<Set<string>>(new Set());
   const [difficultyLevel, setDifficultyLevel] = useState(1);
+
+  // Enhanced metrics tracking state
+  const [allEvents, setAllEvents] = useState<LetterReversalEvent[]>([]);
+  const [gameStartTime, setGameStartTime] = useState<number>(0);
+  const [challengeStartTime, setChallengeStartTime] = useState<number>(0);
+  const [optionInteractions, setOptionInteractions] = useState<{
+    [key: string]: number;
+  }>({});
+  const [doubleCheckCount, setDoubleCheckCount] = useState(0);
+  const [difficultyProgression, setDifficultyProgression] = useState<
+    Array<{
+      time: number;
+      level: number;
+      performance: number;
+    }>
+  >([]);
+
+  // Refs to store current metrics data for accurate calculation
+  const metricsDataRef = useRef({
+    allEvents: [] as LetterReversalEvent[],
+    difficultyProgression: [] as Array<{
+      time: number;
+      level: number;
+      performance: number;
+    }>,
+  });
+
+  // Ref to store current score for accurate session data
+  const scoreRef = useRef(0);
+
+  // Keep refs in sync with state for accurate metrics calculation
+  useEffect(() => {
+    metricsDataRef.current.allEvents = allEvents;
+  }, [allEvents]);
+
+  useEffect(() => {
+    metricsDataRef.current.difficultyProgression = difficultyProgression;
+  }, [difficultyProgression]);
+
+  useEffect(() => {
+    scoreRef.current = score;
+  }, [score]);
 
   // Voice synthesis function with consistent settings
   const speakText = useCallback((text: string) => {
@@ -237,6 +327,316 @@ export const LetterReversalSpotter: React.FC = () => {
     return finalPool[Math.floor(Math.random() * finalPool.length)];
   }, [difficultyLevel, usedChallenges, generateChallengePool]);
 
+  // Helper functions for metrics analysis
+  const isMirrorConfusion = useCallback(
+    (expected: string, chosen: string): boolean => {
+      const mirrorPairs = [
+        ["b", "d"],
+        ["p", "q"],
+        ["n", "u"],
+        ["6", "9"],
+        ["R", "Я"],
+        ["N", "И"],
+        ["E", "Ǝ"],
+        ["F", "ᖴ"],
+        ["G", "Ɔ"],
+        ["J", "ſ"],
+        ["L", "⅃"],
+        ["S", "Ƨ"],
+      ];
+
+      return mirrorPairs.some(
+        ([a, b]) =>
+          (expected === a && chosen === b) || (expected === b && chosen === a)
+      );
+    },
+    []
+  );
+
+  const isRotationConfusion = useCallback(
+    (expected: string, chosen: string): boolean => {
+      const rotationPairs = [
+        ["6", "9"],
+        ["p", "b"],
+        ["d", "q"],
+        ["n", "u"],
+      ];
+
+      return rotationPairs.some(
+        ([a, b]) =>
+          (expected === a && chosen === b) || (expected === b && chosen === a)
+      );
+    },
+    []
+  );
+
+  const getProblemLetterPair = useCallback(
+    (expected: string, chosen: string): string | null => {
+      const problemPairs = [
+        ["b", "d"],
+        ["p", "q"],
+        ["n", "u"],
+        ["6", "9"],
+      ];
+
+      for (const [a, b] of problemPairs) {
+        if (
+          (expected === a && chosen === b) ||
+          (expected === b && chosen === a)
+        ) {
+          return `${a}/${b}`;
+        }
+      }
+      return null;
+    },
+    []
+  );
+
+  // Comprehensive metrics calculation function
+  const calculateLetterReversalMetrics =
+    useCallback((): LetterReversalMetrics => {
+      const gameDuration = GAME_DURATION * 1000; // Convert to milliseconds
+      const totalEvents = allEvents.length;
+
+      if (totalEvents === 0) {
+        return {
+          correct_identification: 0,
+          mirror_confusion: 0,
+          rotation_confusion: 0,
+          comparison_time: 0,
+          double_checking: 0,
+          systematic_checking: 0,
+          problem_letters: [],
+          consistency: 0,
+          all_events: [],
+          game_duration: gameDuration,
+          total_challenges: 0,
+          difficulty_progression: [],
+        };
+      }
+
+      // Accuracy Metrics
+      const correctEvents = allEvents.filter((event) => event.isCorrect);
+      const correctIdentification = correctEvents.length / totalEvents;
+
+      const mirrorConfusions = allEvents.filter(
+        (event) =>
+          !event.isCorrect &&
+          isMirrorConfusion(event.correctAnswer, event.selectedAnswer)
+      ).length;
+
+      const rotationConfusions = allEvents.filter(
+        (event) =>
+          !event.isCorrect &&
+          isRotationConfusion(event.correctAnswer, event.selectedAnswer)
+      ).length;
+
+      // Processing Metrics
+      const avgComparisonTime =
+        allEvents.reduce((sum, event) => sum + event.totalComparisonTime, 0) /
+        totalEvents;
+
+      const doubleCheckingRatio =
+        allEvents.filter((event) => event.doubleCheckCount > 0).length /
+        totalEvents;
+
+      const systematicCheckingRatio =
+        allEvents.filter((event) => event.systematicCheck).length / totalEvents;
+
+      // Problem Letters Analysis
+      const problemLetterStats: {
+        [key: string]: { errors: number; total: number };
+      } = {};
+      const problemPairs = ["b/d", "p/q", "n/u", "6/9"];
+
+      // Initialize problem letter stats
+      problemPairs.forEach((pair) => {
+        problemLetterStats[pair] = { errors: 0, total: 0 };
+      });
+
+      allEvents.forEach((event) => {
+        const pair = getProblemLetterPair(
+          event.correctAnswer,
+          event.selectedAnswer
+        );
+        if (pair && problemLetterStats[pair]) {
+          problemLetterStats[pair].total++;
+          if (!event.isCorrect) {
+            problemLetterStats[pair].errors++;
+          }
+        }
+      });
+
+      const problemLetters = problemPairs
+        .map((pair) => ({
+          pair,
+          error_count: problemLetterStats[pair].errors,
+          accuracy:
+            problemLetterStats[pair].total > 0
+              ? 1 -
+                problemLetterStats[pair].errors / problemLetterStats[pair].total
+              : 1,
+        }))
+        .filter((item) => item.error_count > 0);
+
+      // Consistency Analysis - repeated errors
+      const errorPatterns: { [key: string]: number } = {};
+      allEvents
+        .filter((event) => !event.isCorrect)
+        .forEach((event) => {
+          const pattern = `${event.correctAnswer}->${event.selectedAnswer}`;
+          errorPatterns[pattern] = (errorPatterns[pattern] || 0) + 1;
+        });
+
+      const repeatedErrors = Object.values(errorPatterns).filter(
+        (count) => count > 1
+      ).length;
+      const totalErrorTypes = Object.keys(errorPatterns).length;
+      const consistency =
+        totalErrorTypes > 0 ? repeatedErrors / totalErrorTypes : 0;
+
+      return {
+        correct_identification: correctIdentification,
+        mirror_confusion: mirrorConfusions,
+        rotation_confusion: rotationConfusions,
+        comparison_time: avgComparisonTime,
+        double_checking: doubleCheckingRatio,
+        systematic_checking: systematicCheckingRatio,
+        problem_letters: problemLetters,
+        consistency,
+        all_events: allEvents,
+        game_duration: gameDuration,
+        total_challenges: totalEvents,
+        difficulty_progression: difficultyProgression,
+      };
+    }, [
+      allEvents,
+      difficultyProgression,
+      isMirrorConfusion,
+      isRotationConfusion,
+      getProblemLetterPair,
+    ]);
+
+  // Metrics calculation using current ref values
+  const calculateLetterReversalMetricsFromRefs =
+    useCallback((): LetterReversalMetrics => {
+      const { allEvents, difficultyProgression } = metricsDataRef.current;
+
+      const gameDuration = GAME_DURATION * 1000;
+      const totalEvents = allEvents.length;
+
+      if (totalEvents === 0) {
+        return {
+          correct_identification: 0,
+          mirror_confusion: 0,
+          rotation_confusion: 0,
+          comparison_time: 0,
+          double_checking: 0,
+          systematic_checking: 0,
+          problem_letters: [],
+          consistency: 0,
+          all_events: [],
+          game_duration: gameDuration,
+          total_challenges: 0,
+          difficulty_progression: [],
+        };
+      }
+
+      // Accuracy Metrics
+      const correctEvents = allEvents.filter((event) => event.isCorrect);
+      const correctIdentification = correctEvents.length / totalEvents;
+
+      const mirrorConfusions = allEvents.filter(
+        (event) =>
+          !event.isCorrect &&
+          isMirrorConfusion(event.correctAnswer, event.selectedAnswer)
+      ).length;
+
+      const rotationConfusions = allEvents.filter(
+        (event) =>
+          !event.isCorrect &&
+          isRotationConfusion(event.correctAnswer, event.selectedAnswer)
+      ).length;
+
+      // Processing Metrics
+      const avgComparisonTime =
+        allEvents.reduce((sum, event) => sum + event.totalComparisonTime, 0) /
+        totalEvents;
+
+      const doubleCheckingRatio =
+        allEvents.filter((event) => event.doubleCheckCount > 0).length /
+        totalEvents;
+
+      const systematicCheckingRatio =
+        allEvents.filter((event) => event.systematicCheck).length / totalEvents;
+
+      // Problem Letters Analysis
+      const problemLetterStats: {
+        [key: string]: { errors: number; total: number };
+      } = {};
+      const problemPairs = ["b/d", "p/q", "n/u", "6/9"];
+
+      problemPairs.forEach((pair) => {
+        problemLetterStats[pair] = { errors: 0, total: 0 };
+      });
+
+      allEvents.forEach((event) => {
+        const pair = getProblemLetterPair(
+          event.correctAnswer,
+          event.selectedAnswer
+        );
+        if (pair && problemLetterStats[pair]) {
+          problemLetterStats[pair].total++;
+          if (!event.isCorrect) {
+            problemLetterStats[pair].errors++;
+          }
+        }
+      });
+
+      const problemLetters = problemPairs
+        .map((pair) => ({
+          pair,
+          error_count: problemLetterStats[pair].errors,
+          accuracy:
+            problemLetterStats[pair].total > 0
+              ? 1 -
+                problemLetterStats[pair].errors / problemLetterStats[pair].total
+              : 1,
+        }))
+        .filter((item) => item.error_count > 0);
+
+      // Consistency Analysis
+      const errorPatterns: { [key: string]: number } = {};
+      allEvents
+        .filter((event) => !event.isCorrect)
+        .forEach((event) => {
+          const pattern = `${event.correctAnswer}->${event.selectedAnswer}`;
+          errorPatterns[pattern] = (errorPatterns[pattern] || 0) + 1;
+        });
+
+      const repeatedErrors = Object.values(errorPatterns).filter(
+        (count) => count > 1
+      ).length;
+      const totalErrorTypes = Object.keys(errorPatterns).length;
+      const consistency =
+        totalErrorTypes > 0 ? repeatedErrors / totalErrorTypes : 0;
+
+      return {
+        correct_identification: correctIdentification,
+        mirror_confusion: mirrorConfusions,
+        rotation_confusion: rotationConfusions,
+        comparison_time: avgComparisonTime,
+        double_checking: doubleCheckingRatio,
+        systematic_checking: systematicCheckingRatio,
+        problem_letters: problemLetters,
+        consistency,
+        all_events: allEvents,
+        game_duration: gameDuration,
+        total_challenges: totalEvents,
+        difficulty_progression: difficultyProgression,
+      };
+    }, [isMirrorConfusion, isRotationConfusion, getProblemLetterPair]);
+
   // Update difficulty based on time elapsed
   const updateDifficulty = useCallback((timeElapsed: number) => {
     if (timeElapsed < 15) {
@@ -255,6 +655,8 @@ export const LetterReversalSpotter: React.FC = () => {
     // Reset all selection states first
     setSelectedAnswer(null);
     setIsCorrect(null);
+    setOptionInteractions({});
+    setDoubleCheckCount(0);
 
     // Clear current challenge temporarily to prevent flickering
     setCurrentChallenge(null);
@@ -267,6 +669,7 @@ export const LetterReversalSpotter: React.FC = () => {
         new Set(prev).add(`${challenge.prompt}-${challenge.correctAnswer}`)
       );
       setTotalChallenges((prev) => prev + 1);
+      setChallengeStartTime(Date.now());
 
       // Speak the challenge after a short delay
       setTimeout(() => {
@@ -283,9 +686,63 @@ export const LetterReversalSpotter: React.FC = () => {
       // Stop any ongoing speech
       window.speechSynthesis.cancel();
 
+      const now = Date.now();
+      const responseTime = now - challengeStartTime;
+      const gameTime = now - gameStartTime;
+
       setSelectedAnswer(answer);
       const correct = answer === currentChallenge.correctAnswer;
       setIsCorrect(correct);
+
+      // Calculate metrics for this challenge
+      const totalComparisonTime = Object.values(optionInteractions).reduce(
+        (sum, time) => sum + time,
+        0
+      );
+      const systematicCheck =
+        currentChallenge.options.length <=
+        Object.keys(optionInteractions).length;
+
+      // Create challenge event for metrics
+      const challengeEvent: LetterReversalEvent = {
+        timestamp: now,
+        challengeId: `${currentChallenge.prompt}-${currentChallenge.correctAnswer}`,
+        challengeType: currentChallenge.type,
+        prompt: currentChallenge.prompt,
+        correctAnswer: currentChallenge.correctAnswer,
+        selectedAnswer: answer,
+        isCorrect: correct,
+        responseTime,
+        gameTime,
+        difficultyLevel,
+        optionViewTimes: currentChallenge.options.map(
+          (option) => optionInteractions[option] || 0
+        ),
+        totalComparisonTime,
+        doubleCheckCount,
+        systematicCheck,
+      };
+
+      setAllEvents((prev) => [...prev, challengeEvent]);
+
+      // Track difficulty progression
+      if (totalChallenges > 0 && totalChallenges % 5 === 0) {
+        const recentEvents = allEvents.slice(-5);
+        const recentPerformance =
+          recentEvents.length > 0
+            ? recentEvents.filter((e) => e.isCorrect).length /
+              recentEvents.length
+            : 0;
+
+        setDifficultyProgression((prev) => [
+          ...prev,
+          {
+            time: gameTime,
+            level: difficultyLevel,
+            performance: recentPerformance,
+          },
+        ]);
+      }
 
       if (correct) {
         const points = currentChallenge.difficulty * 10; // More points for harder challenges
@@ -317,7 +774,19 @@ export const LetterReversalSpotter: React.FC = () => {
         }
       }, FEEDBACK_DURATION);
     },
-    [selectedAnswer, currentChallenge, timeLeft, startNewChallenge, speakText]
+    [
+      selectedAnswer,
+      currentChallenge,
+      timeLeft,
+      startNewChallenge,
+      challengeStartTime,
+      gameStartTime,
+      optionInteractions,
+      doubleCheckCount,
+      difficultyLevel,
+      totalChallenges,
+      allEvents,
+    ]
   );
 
   // Timer effect
@@ -335,13 +804,23 @@ export const LetterReversalSpotter: React.FC = () => {
         if (newTime <= 0) {
           setGameState("finished");
           window.speechSynthesis.cancel();
-          // Create game session with hardcoded data only if session is active
+
+          // Calculate comprehensive metrics and send to session API
           if (gameSession.isSessionActive) {
-            gameSession
-              .endSessionWithHardcodedData("letter-reversal-spotter")
-              .catch((error) => {
-                console.error("Failed to save game session:", error);
-              });
+            try {
+              const letterReversalMetrics =
+                calculateLetterReversalMetricsFromRefs();
+              const currentScore = scoreRef.current;
+              const success = currentScore > 50; // Consider success if score > 50
+
+              gameSession.endSession(
+                success,
+                currentScore,
+                letterReversalMetrics
+              );
+            } catch (error) {
+              console.error("Failed to save game session:", error);
+            }
           }
           return 0;
         }
@@ -350,7 +829,12 @@ export const LetterReversalSpotter: React.FC = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [gameState, updateDifficulty, gameSession]);
+  }, [
+    gameState,
+    updateDifficulty,
+    gameSession,
+    calculateLetterReversalMetricsFromRefs,
+  ]);
 
   // Start game
   const startGame = useCallback(() => {
@@ -364,6 +848,16 @@ export const LetterReversalSpotter: React.FC = () => {
     setSelectedAnswer(null);
     setIsCorrect(null);
     setCurrentChallenge(null);
+
+    // Initialize metrics tracking
+    setAllEvents([]);
+    const startTime = Date.now();
+    setGameStartTime(startTime);
+    setChallengeStartTime(0);
+    setOptionInteractions({});
+    setDoubleCheckCount(0);
+    setDifficultyProgression([]);
+
     gameSession.startSession(); // Start tracking the game session
     startNewChallenge();
   }, [startNewChallenge, gameSession]);
@@ -381,6 +875,14 @@ export const LetterReversalSpotter: React.FC = () => {
     setTotalChallenges(0);
     setUsedChallenges(new Set());
     setDifficultyLevel(1);
+
+    // Reset metrics tracking state
+    setAllEvents([]);
+    setGameStartTime(0);
+    setChallengeStartTime(0);
+    setOptionInteractions({});
+    setDoubleCheckCount(0);
+    setDifficultyProgression([]);
   }, []);
 
   // Cleanup speech on unmount
