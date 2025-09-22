@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { WinglooIllustration } from './WinglooIllustration';
 import { useParticipants } from '@livekit/components-react';
 import { Room } from 'livekit-client';
+import { useNavigate } from 'react-router-dom';
 import wiglooImage from '@/assets/images/wigloo-image.png';
 
 interface VoiceChatUIProps {
@@ -24,7 +25,7 @@ interface VoiceChatUIProps {
   onSendTextMessage: (message: string) => void;
 }
 
-export function VoiceChatUI({
+export function FollowupChatUI({
   isAISpeaking,
   isListening,
   aiTranscript,
@@ -46,6 +47,7 @@ export function VoiceChatUI({
   const [currentView, setCurrentView] = useState<'thinking' | 'speaking' | 'listening'>('thinking');
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isSlideTransition, setIsSlideTransition] = useState(false);
+  const navigate = useNavigate();
 
   const handleChatToggle = () => {
     setIsSlideTransition(true);
@@ -54,6 +56,10 @@ export function VoiceChatUI({
       onToggleChat();
       setIsSlideTransition(false);
     }, 150);
+  };
+
+  const handleBackClick = () => {
+    navigate(-1); // Go back to previous page
   };
 
   // Handle smooth transitions between UI states
@@ -110,6 +116,9 @@ export function VoiceChatUI({
         {/* Decorative Background Elements */}
         <BackgroundEffects isBlankBg={isListening || !isConnected} />
          
+        {/* Back Button - Only show on main page, not in chat mode */}
+        {!isTextChatMode && <BackButton onClick={handleBackClick} />}
+        
         {/* Main Content Container */}
         <div className="flex-1 flex flex-col p-4 safe-area-inset relative z-10">
           {/* Main Content Area - Moved to top */}
@@ -653,5 +662,32 @@ function ChatBottomSheet({
         </div>
       </div>
     </div>
+  );
+}
+
+// Back Button Component - Beautiful rounded bubble design
+function BackButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="absolute top-4 left-4 z-50 flex items-center justify-center w-12 h-12 bg-white/90 backdrop-blur-sm border border-white/40 rounded-full shadow-lg hover:bg-white/95 hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95"
+      style={{ margin: '16px' }}
+    >
+      <svg 
+        width="20" 
+        height="20" 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        className="text-[#393738]"
+      >
+        <path 
+          d="M19 12H5M12 19L5 12L12 5" 
+          stroke="currentColor" 
+          strokeWidth="2" 
+          strokeLinecap="round" 
+          strokeLinejoin="round"
+        />
+      </svg>
+    </button>
   );
 }

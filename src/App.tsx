@@ -20,6 +20,7 @@ import ParentCompanionAI from "./pages/ParentCompanionAI";
 import VoiceChat from "./pages/VoiceChat";
 import NotFound from "./pages/NotFound";
 import { Homepage } from "./pages/Homepage";
+import FollowupChatPage from "./pages/FollowupChat";
 
 const queryClient = new QueryClient();
 
@@ -112,7 +113,7 @@ const App = () => (
               path="/parent-companion"
               element={
                 <ProtectedRoute>
-                  <ParentCompanionAI />
+                  <FollowupChatPage />
                 </ProtectedRoute>
               }
             />
