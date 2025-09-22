@@ -607,14 +607,6 @@ export const SymbolSpotter = () => {
     const { allClicks, symbolsInZone, totalSymbolsSpawned, clickTimes } =
       metricsDataRef.current;
 
-    // Debug: Log metrics calculation data
-    console.log("Calculating metrics from refs:", {
-      allClicksCount: allClicks.length,
-      symbolsInZoneCount: symbolsInZone.length,
-      totalSymbolsSpawned,
-      clickTimesCount: clickTimes.length,
-    });
-
     const totalClicks = allClicks.length;
     const correctClicks = allClicks.filter((click) => click.isCorrect).length;
     const clicksInZone = allClicks.filter((click) => click.isInZone).length;
@@ -743,15 +735,6 @@ export const SymbolSpotter = () => {
         const metrics = calculateMetricsFromRefs();
         const currentScore = scoreRef.current;
         const success = currentScore > 0; // Game is successful if score is positive
-
-        console.log("Game ending with metrics:", {
-          score: currentScore,
-          success,
-          totalClicks: metricsDataRef.current.allClicks.length,
-          totalSymbolsSpawned: metricsDataRef.current.totalSymbolsSpawned,
-          symbolsInZone: metricsDataRef.current.symbolsInZone.length,
-          metrics,
-        });
 
         await gameSession.endSession(success, currentScore, metrics);
       } catch (error) {
