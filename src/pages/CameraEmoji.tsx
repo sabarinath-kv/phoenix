@@ -7,6 +7,7 @@ import { ProgressStepper } from "@/components/ProgressStepper";
 import { GameSuccessModal } from "@/components/GameSuccessModal";
 import { Button } from "@/components/ui/button";
 import { useGameRedirect } from "@/hooks/useGameRedirect";
+import { useGameSession } from "@/hooks/useGameSession";
 
 type GameState = "instructions" | "playing" | "completed";
 
@@ -15,6 +16,7 @@ const EMOJIS = ["😐", "😠", "😢", "😊", "😁"]; // neutral, angry, sad,
 export const CameraEmoji = () => {
   const navigate = useNavigate();
   const gameRedirect = useGameRedirect("emotion-detector");
+  const gameSession = useGameSession(1); // gameId 1 for emotion-detector
   const [gameState, setGameState] = useState<GameState>("instructions");
   const [currentEmojiIndex, setCurrentEmojiIndex] = useState(0);
   const [completedEmojis, setCompletedEmojis] = useState<number[]>([]);
@@ -48,6 +50,7 @@ export const CameraEmoji = () => {
     setIsRecognitionActive(false);
     setShowSuccessModal(false);
     setGameState("playing");
+    gameSession.startSession(); // Start tracking the game session
 
     // Start recognition after 2 seconds
     recognitionTimeoutRef.current = setTimeout(() => {
@@ -83,6 +86,14 @@ export const CameraEmoji = () => {
         console.log("🏆 GAME FULLY COMPLETED: All emojis detected!");
         setGameState("completed");
         setShowSuccessModal(true);
+        // Create game session with hardcoded data only if session is active
+        if (gameSession.isSessionActive) {
+          gameSession
+            .endSessionWithHardcodedData("emotion-detector")
+            .catch((error) => {
+              console.error("Failed to save game session:", error);
+            });
+        }
       } else {
         // Move to next emoji
         const nextIndex = currentEmojiIndex + 1;

@@ -7,6 +7,7 @@ export const API_ENDPOINTS = {
   AUTH_SIGNUP: "/auth/signup",
   AUTH_LOGIN: "/auth/token",
   LIVEKIT_TOKEN: "/livekit/rooms",
+  CREATE_GAME_SESSION: "/sessions",
 } as const;
 
 export const DEFAULT_TIMEOUT = 10000;

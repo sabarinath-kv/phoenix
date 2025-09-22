@@ -5,8 +5,8 @@ import { FaceDetectionTest } from "@/components/FaceDetectionTest";
 import { Chip } from "@/components/ui/chip";
 import { Mic, MessageCircle, LogOut, Heart } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import ParentCompanionAI from './ParentCompanionAI';
 import { motion } from "framer-motion";
+import ParentCompanionAI from "./ParentCompanionAI";
 
 interface GameCard {
   id: string;
@@ -17,11 +17,13 @@ interface GameCard {
   icon: string;
   isImplemented: boolean;
   route?: string;
+  gameId?: number;
 }
 
 const games: GameCard[] = [
   {
     id: "emotion-detector",
+    gameId: 1,
     name: "Emotion Detector",
     description: "Copy the emoji faces!",
     color: "text-game-info",
@@ -32,6 +34,7 @@ const games: GameCard[] = [
   },
   {
     id: "letter-sound",
+    gameId: 2,
     name: "Letter-Sound Matching",
     description: "Match letters with sounds!",
     color: "text-game-secondary",
@@ -42,6 +45,7 @@ const games: GameCard[] = [
   },
   {
     id: "symbol-spotter",
+    gameId: 3,
     name: "Symbol Spotter",
     description: "Find the hidden symbols!",
     color: "text-game-warning",
@@ -52,6 +56,7 @@ const games: GameCard[] = [
   },
   {
     id: "bubble-popping",
+    gameId: 4,
     name: "Bubble Popping",
     description: "Pop colorful bubbles for points!",
     color: "text-game-info",
@@ -62,8 +67,10 @@ const games: GameCard[] = [
   },
   {
     id: "freeze-cat",
+    gameId: 5,
     name: "Freeze Cat",
-    description: "Tap the animals! But do not tap the cat. Stay frozen when you see a cat.",
+    description:
+      "Tap the animals! But do not tap the cat. Stay frozen when you see a cat.",
     color: "text-game-primary",
     bgGradient: "bg-gradient-playful",
     icon: "🐱",
@@ -72,6 +79,7 @@ const games: GameCard[] = [
   },
   {
     id: "temple-run",
+    gameId: 6,
     name: "Crossroad Racer",
     description: "Race through traffic! Avoid cars and navigate crossroads.",
     color: "text-game-warning",
@@ -82,8 +90,10 @@ const games: GameCard[] = [
   },
   {
     id: "letter-reversal-spotter",
+    gameId: 7,
     name: "Letter Reversal Spotter",
-    description: "Help Panda find the right letters! Spot confusing letters and words.",
+    description:
+      "Help Panda find the right letters! Spot confusing letters and words.",
     color: "text-game-primary",
     bgGradient: "bg-gradient-primary",
     icon: "🐼",
@@ -92,6 +102,7 @@ const games: GameCard[] = [
   },
   {
     id: "emotion-adventure",
+    gameId: 8,
     name: "Emotion Adventure",
     description: "Go on an emotion journey!",
     color: "text-game-primary",
@@ -113,7 +124,7 @@ export const GameSelection = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate("/login");
   };
 
   return (
@@ -134,14 +145,15 @@ export const GameSelection = () => {
                 <LogOut className="w-5 h-5" />
               </Button>
             </div>
-            
+
             {/* Header Content */}
             <div className="text-center">
               <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3">
                 Fun Learning Games
               </h1>
               <p className="text-white/90 text-lg max-w-2xl mx-auto">
-                Choose a game to play and learn together in a safe, engaging environment
+                Choose a game to play and learn together in a safe, engaging
+                environment
               </p>
             </div>
           </div>
@@ -157,20 +169,22 @@ export const GameSelection = () => {
               Welcome to Learning Time
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto mb-8">
-              Pick a game and let's have fun learning together. Each game is designed to help children develop important skills while having fun.
+              Pick a game and let's have fun learning together. Each game is
+              designed to help children develop important skills while having
+              fun.
             </p>
-            
+
             {/* Voice Chat Feature Button */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
               <Button
-                onClick={() => navigate('/voice-chat')}
+                onClick={() => navigate("/voice-chat")}
                 size="lg"
                 className="bg-gradient-primary hover:opacity-90 text-white px-8 py-4 text-lg font-semibold shadow-hover group"
               >
                 <Mic className="w-6 h-6 mr-3 group-hover:animate-pulse" />
                 Start Voice Chat
               </Button>
-              
+
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <MessageCircle className="w-4 h-4" />
                 <span>Talk with our AI companion!</span>
@@ -190,7 +204,9 @@ export const GameSelection = () => {
               >
                 <div className="p-8 text-center h-full flex flex-col justify-between min-h-[280px]">
                   {/* Game Icon */}
-                  <div className="text-7xl sm:text-8xl mb-6 group-hover:scale-110 transition-transform duration-300">{game.icon}</div>
+                  <div className="text-7xl sm:text-8xl mb-6 group-hover:scale-110 transition-transform duration-300">
+                    {game.icon}
+                  </div>
 
                   {/* Game Info */}
                   <div className="space-y-4 flex-1 flex flex-col justify-center">
