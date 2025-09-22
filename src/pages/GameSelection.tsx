@@ -3,10 +3,16 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FaceDetectionTest } from "@/components/FaceDetectionTest";
 import { Chip } from "@/components/ui/chip";
-import { Mic, MessageCircle, LogOut, Heart } from "lucide-react";
+import { Mic, MessageCircle, LogOut, Heart, Clock, Check, Circle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
 import ParentCompanionAI from "./ParentCompanionAI";
+
+// Import game images
+import game1Image from "@/assets/images/game1.png";
+import game2Image from "@/assets/images/game2.png";
+import game3Image from "@/assets/images/game3.png";
+import checkLine from "@/assets/images/check-line.png";
 
 interface GameCard {
   id: string;
@@ -18,34 +24,61 @@ interface GameCard {
   isImplemented: boolean;
   route?: string;
   gameId?: number;
+  duration: string;
+  status: 'completed' | 'in-progress' | 'pending';
+  illustration: string;
+  imageUrl: string;
 }
 
 const games: GameCard[] = [
   {
-    id: "emotion-detector",
+    id: "space-focus",
     gameId: 1,
-    name: "Emotion Detector",
-    description: "Copy the emoji faces!",
-    color: "text-game-info",
-    bgGradient: "bg-gradient-secondary",
-    icon: "😊",
+    name: "Space Focus",
+    description: "Tap moving rockets in sequence",
+    color: "text-blue-600",
+    bgGradient: "bg-gradient-to-br from-blue-500 to-purple-600",
+    icon: "🚀",
     isImplemented: true,
     route: "/emotion-detector",
+    duration: "2 min",
+    status: 'completed',
+    illustration: "🚀✨",
+    imageUrl: game1Image
   },
   {
-    id: "letter-sound",
+    id: "freeze-cat",
     gameId: 2,
-    name: "Letter-Sound Matching",
-    description: "Match letters with sounds!",
-    color: "text-game-secondary",
-    bgGradient: "bg-gradient-secondary",
-    icon: "🔤",
+    name: "Freeze-Cat",
+    description: "Whack-a-mole but \"freeze\" on a cat",
+    color: "text-orange-600",
+    bgGradient: "bg-gradient-to-br from-yellow-400 to-orange-500",
+    icon: "🐱",
     isImplemented: true,
+    route: "/games/freeze-cat",
+    duration: "2 min",
+    status: 'in-progress',
+    illustration: "🐱☁️",
+    imageUrl: game2Image
+  },
+  {
+    id: "space-focus-2",
+    gameId: 3,
+    name: "Space Focus",
+    description: "Tap moving rockets in sequence",
+    color: "text-orange-600",
+    bgGradient: "bg-gradient-to-br from-yellow-400 to-orange-500",
+    icon: "😊",
+    isImplemented: false,
     route: "/games/letter-sound-matcher",
+    duration: "2 min",
+    status: 'pending',
+    illustration: "😊🎵",
+    imageUrl: game3Image
   },
   {
     id: "symbol-spotter",
-    gameId: 3,
+    gameId: 4,
     name: "Symbol Spotter",
     description: "Find the hidden symbols!",
     color: "text-game-warning",
@@ -53,10 +86,14 @@ const games: GameCard[] = [
     icon: "🔍",
     isImplemented: true,
     route: "/symbol-spotter",
+    duration: "3 min",
+    status: 'pending',
+    illustration: "🔍✨",
+    imageUrl: game1Image
   },
   {
     id: "bubble-popping",
-    gameId: 4,
+    gameId: 5,
     name: "Bubble Popping",
     description: "Pop colorful bubbles for points!",
     color: "text-game-info",
@@ -64,18 +101,10 @@ const games: GameCard[] = [
     icon: "🫧",
     isImplemented: true,
     route: "/bubble-popping",
-  },
-  {
-    id: "freeze-cat",
-    gameId: 5,
-    name: "Freeze Cat",
-    description:
-      "Tap the animals! But do not tap the cat. Stay frozen when you see a cat.",
-    color: "text-game-primary",
-    bgGradient: "bg-gradient-playful",
-    icon: "🐱",
-    isImplemented: true,
-    route: "/games/freeze-cat",
+    duration: "2 min",
+    status: 'pending',
+    illustration: "🫧💫",
+    imageUrl: game2Image
   },
   {
     id: "temple-run",
@@ -87,18 +116,25 @@ const games: GameCard[] = [
     icon: "🚗",
     isImplemented: true,
     route: "/games/temple-run",
+    duration: "4 min",
+    status: 'pending',
+    illustration: "🚗🏁",
+    imageUrl: game3Image
   },
   {
     id: "letter-reversal-spotter",
     gameId: 7,
     name: "Letter Reversal Spotter",
-    description:
-      "Help Panda find the right letters! Spot confusing letters and words.",
+    description: "Help Panda find the right letters! Spot confusing letters and words.",
     color: "text-game-primary",
     bgGradient: "bg-gradient-primary",
     icon: "🐼",
     isImplemented: true,
     route: "/games/letter-reversal-spotter",
+    duration: "3 min",
+    status: 'pending',
+    illustration: "🐼📝",
+    imageUrl: game1Image
   },
   {
     id: "emotion-adventure",
@@ -109,6 +145,10 @@ const games: GameCard[] = [
     bgGradient: "bg-gradient-playful",
     icon: "🌈",
     isImplemented: false,
+    duration: "5 min",
+    status: 'pending',
+    illustration: "🌈✨",
+    imageUrl: game2Image
   },
 ];
 
@@ -128,18 +168,19 @@ export const GameSelection = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-gradient-primary shadow-soft border-b border-border">
-        <div className="container mx-auto px-6 py-8">
-          <div className="relative">
+    <div className="min-h-screen bg-gray-50">
+      {/* Header with Yellow Background and Curved Bottom */}
+      <div className="relative">
+        {/* Yellow Header Background */}
+        <div className="bg-yellow-400 relative">
+          <div className="container mx-auto px-6 py-8 relative">
             {/* Logout Button */}
-            <div className="absolute top-0 right-0">
+            <div className="absolute top-4 right-4">
               <Button
                 onClick={handleLogout}
                 variant="ghost"
                 size="icon"
-                className="text-white hover:bg-white/20 hover:text-white transition-colors"
+                className="text-gray-700 hover:bg-black/10 hover:text-gray-800 transition-all duration-300"
                 title="Logout"
               >
                 <LogOut className="w-5 h-5" />
@@ -147,128 +188,146 @@ export const GameSelection = () => {
             </div>
 
             {/* Header Content */}
-            <div className="text-center">
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3">
-                Fun Learning Games
-              </h1>
-              <p className="text-white/90 text-lg max-w-2xl mx-auto">
-                Choose a game to play and learn together in a safe, engaging
-                environment
+            <div className="pt-8 pb-16">
+              <p className="text-gray-700 text-lg font-medium mb-2">
+                Hello, Arjun
               </p>
+              <h1 className="text-4xl sm:text-5xl font-bold text-gray-800 leading-tight">
+                Start with<br />
+                your games!
+              </h1>
             </div>
+          </div>
+          
+          {/* Smooth Inward Curve using SVG */}
+          <div className="absolute bottom-0 left-0 w-full overflow-hidden" style={{ height: '60px' }}>
+            <svg 
+              viewBox="0 0 1440 60" 
+              fill="none" 
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-full h-full"
+              preserveAspectRatio="none"
+            >
+              <path 
+                d="M0,60 C360,0 1080,0 1440,60 L1440,60 L0,60 Z" 
+                fill="#f9fafb"
+              />
+            </svg>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-12">
-        <div className="max-w-7xl mx-auto">
-          {/* Welcome Message */}
-          <div className="text-center mb-12">
-            <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-4">
-              Welcome to Learning Time
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto mb-8">
-              Pick a game and let's have fun learning together. Each game is
-              designed to help children develop important skills while having
-              fun.
-            </p>
+      <main className="relative container mx-auto px-6 pt-4 pb-16">
+        <div className="max-w-4xl mx-auto">
+          {/* Voice Chat Feature Button */}
+          {/* <div className="flex justify-center mb-12">
+            <Button
+              onClick={() => navigate("/voice-chat")}
+              size="lg"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              <Mic className="w-5 h-5 mr-3" />
+              Start Voice Chat
+            </Button>
+          </div> */}
 
-            {/* Voice Chat Feature Button */}
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
-              <Button
-                onClick={() => navigate("/voice-chat")}
-                size="lg"
-                className="bg-gradient-primary hover:opacity-90 text-white px-8 py-4 text-lg font-semibold shadow-hover group"
-              >
-                <Mic className="w-6 h-6 mr-3 group-hover:animate-pulse" />
-                Start Voice Chat
-              </Button>
+          {/* Games Layout with Progress Line */}
+          <div className="relative pl-12">
+            {/* Vertical Progress Line - Background */}
+            <div className="absolute left-6 top-24 bottom-8 w-1.5">
+              <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                <line
+                  x1="50%"
+                  y1="0"
+                  x2="50%"
+                  y2="100%"
+                  stroke="#E2E8F0"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  strokeDasharray="7,10"
+                />
+              </svg>
+            </div>
+            
+            {/* Game Cards with Integrated Progress Dots */}
+            <div className="space-y-6">
+              {games.map((game, index) => (
+                <motion.div
+                  key={game.id}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                  className="cursor-pointer relative"
+                  onClick={() => handleGameClick(game)}
+                >
+                  {/* Progress Dot positioned at center-left of card */}
+                  <div className="absolute left-[-2.3rem] top-1/2 transform -translate-y-1/2 z-20">
+                    <div className={`w-7 h-7 rounded-full mr-20 border-3 shadow-sm transition-all duration-300
+                      `}>
+                      {game.status === 'completed' && (
+                        <img src={checkLine} className="w-6 h-6 text-white m-1" alt="check" />
+                      )}
+                      {game.status === 'in-progress' && (
+                        <div className="w-6 h-6 rounded-full bg-[#FDD201] m-1 border-[3px] border-[#A9A6A2]" />
+                      )}
+                        {game.status === 'pending' && (
+                        <div className="w-6 h-6 rounded-full bg-white m-1 border-[3px] border-[#A9A6A2]" />
+                      )}
+                    </div>
+                  </div>
 
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <MessageCircle className="w-4 h-4" />
-                <span>Talk with our AI companion!</span>
-              </div>
+                  {/* Game Card */}
+                  <Card className=" bg-[#FAF6F3] rounded-3xl overflow-hidden hover:shadow-lg hover:border-gray-200 transition-all duration-300 hover:-translate-y-1" style={{boxShadow: '0px 8px 0px 0px #D4D1D2', border: '1px solid #D4D1D2'}}>
+                    <div className="flex items-stretch">
+                      {/* Game Content */}
+                      <div className="flex-1 p-6">
+                        <h3 className="text-2xl font-bold text-gray-900 mb-2 leading-tight">
+                          {game.name}
+                        </h3>
+                        <p className="text-gray-600 text-base mb-4 leading-relaxed">
+                          {game.description}
+                        </p>
+                        <div className="flex items-center text-gray-500 text-sm font-medium">
+                          <Clock className="w-4 h-4 mr-2" />
+                          {game.duration}
+                        </div>
+                      </div>
+
+                      {/* Game Illustration - With padding and rounded corners like reference */}
+                      <div className="w-[134px] py-2 pr-2">
+                        <img 
+                          src={game.imageUrl} 
+                          alt={game.name}
+                          className="w-full h-full object-contain rounded-2xl"
+                        />
+                      </div>
+                    </div>
+                  </Card>
+                </motion.div>
+              ))}
             </div>
           </div>
 
-          {/* Game Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {games.map((game) => (
-              <Card
-                key={game.id}
-                className={`group relative overflow-hidden card-hover cursor-pointer ${
-                  game.isImplemented ? "" : "opacity-75"
-                }`}
-                onClick={() => handleGameClick(game)}
-              >
-                <div className="p-8 text-center h-full flex flex-col justify-between min-h-[280px]">
-                  {/* Game Icon */}
-                  <div className="text-7xl sm:text-8xl mb-6 group-hover:scale-110 transition-transform duration-300">
-                    {game.icon}
-                  </div>
-
-                  {/* Game Info */}
-                  <div className="space-y-4 flex-1 flex flex-col justify-center">
-                    <h3 className="text-xl sm:text-2xl font-bold text-foreground group-hover:text-primary transition-colors">
-                      {game.name}
-                    </h3>
-                    <p className="text-muted-foreground leading-relaxed text-base">
-                      {game.description}
-                    </p>
-                  </div>
-
-                  {/* Status Badge */}
-                  <div className="mt-6">
-                    {game.isImplemented ? (
-                      <Chip variant="success" className="gap-2">
-                        <div className="w-2 h-2 bg-game-success rounded-full" />
-                        Ready to Play
-                      </Chip>
-                    ) : (
-                      <Chip variant="default" className="gap-2">
-                        <div className="w-2 h-2 bg-muted-foreground rounded-full" />
-                        Coming Soon
-                      </Chip>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-
-          {/* Face Detection Test */}
-          <div className="mt-16 bg-card rounded-lg shadow-card p-8 border border-border">
-            <FaceDetectionTest />
-          </div>
         </div>
       </main>
 
       {/* Parent Companion AI Floating Button */}
-      <motion.button
-        key="floating-button"
-        className={`fixed bottom-6 right-6 w-16 h-16 rounded-full shadow-hover backdrop-blur-sm border border-primary/20 bg-primary/90 hover:bg-primary`}
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        onClick={() => navigate('/parent-companion')}
+      <motion.div
+        className="fixed bottom-6 right-6 z-50"
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
-        transition={{ delay: 0.5, type: "spring" }}
+        transition={{ delay: 1.5, type: "spring", stiffness: 200 }}
       >
-        <Heart className="w-8 h-8 text-white mx-auto" />
-        <motion.div
-          className="absolute inset-0 rounded-full border-2 border-primary/40"
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.7, 0, 0.7]
-          }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-      </motion.button>
+        <motion.button
+          className="w-16 h-16 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 text-white transition-all duration-300"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => navigate('/parent-companion')}
+        >
+          <Heart className="w-8 h-8 mx-auto" />
+        </motion.button>
+      </motion.div>
     </div>
   );
 };
