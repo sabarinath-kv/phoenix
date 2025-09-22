@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useGameRedirect } from "@/hooks/useGameRedirect";
+import { useGameSession } from "@/hooks/useGameSession";
 
 type GameState = "instructions" | "countdown" | "playing" | "completed";
 
@@ -45,7 +46,8 @@ const SPAWN_RATE_MAX = 800; // maximum ms between spawns
 
 export const SymbolSpotter = () => {
   const navigate = useNavigate();
-  const gameRedirect = useGameRedirect('symbol-spotter');
+  const gameRedirect = useGameRedirect("symbol-spotter");
+  const gameSession = useGameSession(3); // gameId 3 for symbol-spotter
   const [gameState, setGameState] = useState<GameState>("instructions");
   const [targetEmoji, setTargetEmoji] = useState("");
   const [flyingEmojis, setFlyingEmojis] = useState<FlyingEmoji[]>([]);
@@ -290,6 +292,7 @@ export const SymbolSpotter = () => {
           // Use setTimeout to avoid dependency issues
           setTimeout(() => {
             setGameState("playing");
+            gameSession.startSession(); // Start tracking the game session
           }, 100);
           return 0;
         }
@@ -298,9 +301,12 @@ export const SymbolSpotter = () => {
     }, 1000);
 
     countdownTimerRef.current = countdownInterval;
-  }, []);
+  }, [gameSession]);
 
-  const endGame = useCallback(() => {
+  const endGame = useCallback(async () => {
+    // Prevent multiple calls
+    if (gameState === "completed") return;
+
     setGameState("completed");
 
     // Clear all timers and intervals
@@ -313,7 +319,16 @@ export const SymbolSpotter = () => {
     if (gameTimerRef.current) {
       clearInterval(gameTimerRef.current);
     }
-  }, []);
+
+    // Create game session with hardcoded data only if session is active
+    if (gameSession.isSessionActive) {
+      try {
+        await gameSession.endSessionWithHardcodedData("symbol-spotter");
+      } catch (error) {
+        console.error("Failed to save game session:", error);
+      }
+    }
+  }, [gameState, gameSession]);
 
   const resetGame = useCallback(() => {
     setGameState("instructions");
@@ -362,7 +377,7 @@ export const SymbolSpotter = () => {
 
       gameTimerRef.current = gameTimer;
     }
-  }, [gameState, getRandomEmoji, spawnEmoji, updateEmojiPositions, endGame]);
+  }, [gameState]); // Removed problematic dependencies
 
   // Cleanup on unmount
   useEffect(() => {
@@ -652,7 +667,9 @@ export const SymbolSpotter = () => {
                       size="lg"
                       className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl w-full"
                     >
-                      {gameRedirect.isLastGame ? 'Finish All Games' : 'Go to Next Game'}
+                      {gameRedirect.isLastGame
+                        ? "Finish All Games"
+                        : "Go to Next Game"}
                     </Button>
                     <Button
                       onClick={resetGame}

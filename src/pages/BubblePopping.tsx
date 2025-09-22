@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useGameRedirect } from "@/hooks/useGameRedirect";
+import { useGameSession } from "@/hooks/useGameSession";
 
 type GameState = "instructions" | "countdown" | "playing" | "completed";
 
@@ -57,7 +58,8 @@ const MAX_BUBBLE_SIZE = 80;
 
 export const BubblePopping = () => {
   const navigate = useNavigate();
-  const gameRedirect = useGameRedirect('bubble-popping');
+  const gameRedirect = useGameRedirect("bubble-popping");
+  const gameSession = useGameSession(4); // gameId 4 for bubble-popping
   const [gameState, setGameState] = useState<GameState>("instructions");
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
   const [countdown, setCountdown] = useState(COUNTDOWN_DURATION);
@@ -300,7 +302,7 @@ export const BubblePopping = () => {
   const handlePointerDown = useCallback(
     (e: React.PointerEvent | React.MouseEvent | React.TouchEvent) => {
       if (gameState !== "playing") return;
-      e.preventDefault();
+      // Removed e.preventDefault() as it was causing passive event listener errors
 
       setCurrentTap({ startTime: Date.now() });
       setMetrics((prev) => ({ ...prev, totalTaps: prev.totalTaps + 1 }));
@@ -311,7 +313,7 @@ export const BubblePopping = () => {
   const handlePointerUp = useCallback(
     (e: React.PointerEvent | React.MouseEvent | React.TouchEvent) => {
       if (gameState !== "playing" || !currentTap) return;
-      e.preventDefault();
+      // Removed e.preventDefault() as it was causing passive event listener errors
 
       const rect = gameAreaRef.current?.getBoundingClientRect();
       if (!rect) return;
@@ -381,6 +383,7 @@ export const BubblePopping = () => {
           clearInterval(countdownInterval);
           setTimeout(() => {
             setGameState("playing");
+            gameSession.startSession();
           }, 100);
           return 0;
         }
@@ -389,9 +392,12 @@ export const BubblePopping = () => {
     }, 1000);
 
     countdownTimerRef.current = countdownInterval;
-  }, []);
+  }, [gameSession]);
 
-  const endGame = useCallback(() => {
+  const endGame = useCallback(async () => {
+    // Prevent multiple calls
+    if (gameState === "completed") return;
+
     setGameState("completed");
 
     // Clear all timers and intervals
@@ -399,7 +405,50 @@ export const BubblePopping = () => {
     if (animationFrameRef.current)
       cancelAnimationFrame(animationFrameRef.current);
     if (gameTimerRef.current) clearInterval(gameTimerRef.current);
-  }, []);
+
+    // Create game session with real metrics only if session is active
+    if (gameSession.isSessionActive) {
+      try {
+        const avgReactionTime =
+          metrics.totalTaps > 0
+            ? metrics.totalReactionTime / metrics.totalTaps
+            : 0;
+        const avgTapDuration =
+          metrics.totalTaps > 0
+            ? metrics.totalTapDuration / metrics.totalTaps
+            : 0;
+        const accuracy =
+          metrics.totalTaps > 0
+            ? (metrics.successfulPops / metrics.totalTaps) * 100
+            : 0;
+        const avgAccuracyDistance =
+          metrics.accuracyDistances.length > 0
+            ? metrics.accuracyDistances.reduce((a, b) => a + b, 0) /
+              metrics.accuracyDistances.length
+            : 0;
+
+        const success = metrics.score > 100; // Consider success if score > 100
+
+        const rawData = {
+          totalTaps: metrics.totalTaps,
+          successfulPops: metrics.successfulPops,
+          missedTaps: metrics.missedTaps,
+          accuracy: Math.round(accuracy * 100) / 100, // Round to 2 decimal places
+          averageReactionTime: Math.round(avgReactionTime),
+          averageTapDuration: Math.round(avgTapDuration),
+          maxConsecutivePops: metrics.maxConsecutivePops,
+          averageAccuracyDistance: Math.round(avgAccuracyDistance * 100) / 100,
+          finalScore: metrics.score,
+          gameDuration: GAME_DURATION / 1000, // Convert to seconds
+        };
+
+        await gameSession.endSession(success, metrics.score, rawData);
+      } catch (error) {
+        console.error("Failed to save game session:", error);
+        // Game continues even if session saving fails
+      }
+    }
+  }, [gameState, metrics, gameSession]); // Restored gameSession dependency
 
   const resetGame = useCallback(() => {
     setGameState("instructions");
@@ -454,7 +503,7 @@ export const BubblePopping = () => {
 
       gameTimerRef.current = gameTimer;
     }
-  }, [gameState, spawnBubble, updateBubbles, endGame]);
+  }, [gameState]); // Removed problematic dependencies
 
   // Cleanup on unmount
   useEffect(() => {
@@ -656,6 +705,11 @@ export const BubblePopping = () => {
                 height: bubble.size,
                 backgroundColor: bubble.color,
                 opacity: bubble.opacity,
+                borderRadius: "50%",
+                border: "2px solid rgba(255, 255, 255, 0.3)",
+                boxShadow:
+                  "0 4px 8px rgba(0, 0, 0, 0.1), inset 0 0 20px rgba(255, 255, 255, 0.2)",
+                cursor: "pointer",
                 zIndex: 20,
               }}
             />
@@ -716,7 +770,9 @@ export const BubblePopping = () => {
                         size="lg"
                         className="w-full bg-gradient-to-r from-blue-400 to-cyan-400 hover:from-blue-500 hover:to-cyan-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl"
                       >
-                        {gameRedirect.isLastGame ? 'Finish All Games' : 'Go to Next Game'}
+                        {gameRedirect.isLastGame
+                          ? "Finish All Games"
+                          : "Go to Next Game"}
                       </Button>
                       <Button
                         onClick={resetGame}
@@ -798,7 +854,9 @@ export const BubblePopping = () => {
                         size="lg"
                         className="w-full bg-gradient-to-r from-blue-400 to-cyan-400 hover:from-blue-500 hover:to-cyan-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl"
                       >
-                        {gameRedirect.isLastGame ? 'Finish All Games' : 'Go to Next Game'}
+                        {gameRedirect.isLastGame
+                          ? "Finish All Games"
+                          : "Go to Next Game"}
                       </Button>
                       <Button
                         onClick={resetGame}

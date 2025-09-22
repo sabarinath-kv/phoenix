@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useGameRedirect } from "@/hooks/useGameRedirect";
+import { useGameSession } from "@/hooks/useGameSession";
 import { LETTER_SOUND, LETTER_SOUND_ITEMS } from "@/constants/game";
 
 type GameState = "instructions" | "countdown" | "playing" | "completed";
@@ -22,6 +23,7 @@ interface GameStats {
 export const LetterSoundMatcher = () => {
   const navigate = useNavigate();
   const gameRedirect = useGameRedirect("letter-sound");
+  const gameSession = useGameSession(2); // gameId 2 for letter-sound
   const [gameState, setGameState] = useState<GameState>("instructions");
   const [countdown, setCountdown] = useState<number>(
     LETTER_SOUND.COUNTDOWN_DURATION
@@ -156,6 +158,14 @@ export const LetterSoundMatcher = () => {
           if (nextRound >= LETTER_SOUND.TOTAL_ROUNDS) {
             // Game completed
             setGameState("completed");
+            // Create game session with hardcoded data only if session is active
+            if (gameSession.isSessionActive) {
+              gameSession
+                .endSessionWithHardcodedData("letter-sound")
+                .catch((error) => {
+                  console.error("Failed to save game session:", error);
+                });
+            }
           } else {
             // Next round
             const nextItem = LETTER_SOUND_ITEMS[nextRound];
@@ -188,7 +198,6 @@ export const LetterSoundMatcher = () => {
 
   // Start countdown
   const startCountdown = useCallback(() => {
-    console.log("Starting countdown..."); // Debug log
     setGameState("countdown");
 
     // Simple countdown: 3, 2, 1, then start
@@ -203,20 +212,19 @@ export const LetterSoundMatcher = () => {
 
     const countdownInterval = setInterval(() => {
       currentCount--;
-      console.log("Countdown tick:", currentCount); // Debug log
 
       if (currentCount <= 0) {
-        console.log("Countdown finished, starting game"); // Debug log
         clearInterval(countdownInterval);
         countdownTimerRef.current = undefined;
         setGameState("playing");
+        gameSession.startSession(); // Start tracking the game session
       } else {
         setCountdown(currentCount);
       }
     }, 1000);
 
     countdownTimerRef.current = countdownInterval;
-  }, []);
+  }, [gameSession]);
 
   // Reset game
   const resetGame = useCallback(() => {
