@@ -276,7 +276,7 @@ export const GameSelection = () => {
                     <div className={`w-7 h-7 rounded-full mr-20 border-3 shadow-sm transition-all duration-300
                       `}>
                       {game.status === 'completed' && (
-                        <PreloadedImage src={checkLine} className="w-6 h-6 text-white m-1" alt="check" />
+                        <img src={checkLine} className="w-6 h-6 text-white m-1" alt="check" />
                       )}
                       {game.status === 'in-progress' && (
                         <div className="w-6 h-6 rounded-full bg-[#FDD201] m-1 border-[3px] border-[#A9A6A2]" />
