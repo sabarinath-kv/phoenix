@@ -57,10 +57,6 @@ export default function VoiceChatPage() {
           await room.connect(livekitTokenResponse?.url, livekitTokenResponse?.access_token, { autoSubscribe: true,  });
           console.log('✅ [LiveKit] Successfully connected to room');
           setConnected(true);
-
-          // start mic disabled; enable after agent finishes speaking
-          await room.localParticipant.setMicrophoneEnabled(false);
-          console.log('🎤 [LiveKit] Microphone initially disabled');
         } catch (error) {
           console.error('❌ [LiveKit] Connection failed:', error);
           setConnected(false);
@@ -166,13 +162,6 @@ export default function VoiceChatPage() {
             timestamp: new Date()
           }]);
           setUserTranscript('');
-        }
-        
-        // Disable microphone when agent starts speaking
-        if (micEnabled) {
-          console.log('🎤 [LiveKit] Disabling microphone - agent is speaking');
-          setMicEnabled(false);
-          room.localParticipant.setMicrophoneEnabled(false);
         }
         
         // Set agent speaking state and switch UI
@@ -529,18 +518,9 @@ export default function VoiceChatPage() {
     setIsTextChatMode(!isTextChatMode);
     
     if (!isTextChatMode) {
-      // Entering text chat mode - pause voice chat
-      if (micEnabled) {
-        setMicEnabled(false);
-        room.localParticipant.setMicrophoneEnabled(false);
-      }
-      console.log('🗨️ [VoiceChat] Entered text chat mode - voice disabled');
+      console.log('🗨️ [VoiceChat] Entered text chat mode');
     } else {
-      // Exiting text chat mode - resume voice chat
-      if (agentConnected && !agentSpeaking && autoMicEnabled) {
-        handleAutoMicEnable();
-      }
-      console.log('🗨️ [VoiceChat] Exited text chat mode - voice resumed');
+      console.log('🗨️ [VoiceChat] Exited text chat mode');
     }
   };
 
@@ -548,12 +528,6 @@ export default function VoiceChatPage() {
     const newAutoMicState = !autoMicEnabled;
     setAutoMicEnabled(newAutoMicState);
     console.log(`🎤 [Auto-Mic] Auto-mic ${newAutoMicState ? 'enabled' : 'disabled'}`);
-    
-    // If disabling auto-mic and currently listening, disable mic
-    if (!newAutoMicState && micEnabled && isListening) {
-      setMicEnabled(false);
-      room.localParticipant.setMicrophoneEnabled(false);
-    }
   };
 
   const handleSendTextMessage = async (message: string) => {
