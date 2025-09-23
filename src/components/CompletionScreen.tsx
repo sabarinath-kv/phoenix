@@ -1,37 +1,40 @@
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 interface CompletionScreenProps {
   onStartAgain: () => void;
   className?: string;
 }
 
-export const CompletionScreen = ({ onStartAgain, className = "" }: CompletionScreenProps) => {
+export const CompletionScreen = ({
+  onStartAgain,
+  className = "",
+}: CompletionScreenProps) => {
   return (
-    <Card className={`bg-gradient-secondary shadow-hover border-0 ${className}`}>
-      <div className="p-8 text-center">
-        <div className="text-6xl sm:text-7xl mb-6">
-          🎉
+    <div
+      className={`fixed inset-0 z-50 flex items-center justify-center ${className}`}
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-orange-200/80 via-yellow-200/80 to-red-200/80 backdrop-blur-sm" />
+
+      <div className="relative bg-white/90 backdrop-blur-sm rounded-3xl p-6 sm:p-8 shadow-2xl border-2 border-white/50 mx-4 max-w-lg w-full">
+        <div className="text-center mb-6">
+          <div className="text-6xl mb-4">🎉</div>
+          <h2 className="text-2xl font-bold text-black-700 mb-2">Completed!</h2>
+          <p className="text-black-600 text-lg">
+            Great job mimicking that expression! Ready for more?
+          </p>
         </div>
-        
-        <h2 className="text-3xl sm:text-4xl font-bold text-primary mb-4">
-          Completed
-        </h2>
-        
-        <p className="text-lg text-muted-foreground mb-8">
-          Great job mimicking that expression
-          <br />
-          <span className="text-sm">Ready to try another one?</span>
-        </p>
-        
-        <Button 
-          onClick={onStartAgain}
-          size="lg"
-          className="bg-gradient-primary hover:shadow-hover text-white border-0 px-8 py-3 text-lg font-semibold rounded-full transition-all duration-300"
-        >
-          Start Again
-        </Button>
+
+        <div className="text-center">
+          <Button
+            onClick={onStartAgain}
+            size="lg"
+            className="bg-gradient-to-r from-orange-400 to-red-400 hover:from-orange-500 hover:to-red-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl w-full"
+          >
+            Try Another Expression
+          </Button>
+        </div>
       </div>
-    </Card>
+    </div>
   );
 };
