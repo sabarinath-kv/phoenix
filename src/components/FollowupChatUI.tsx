@@ -4,6 +4,8 @@ import { useParticipants } from '@livekit/components-react';
 import { Room } from 'livekit-client';
 import { useNavigate } from 'react-router-dom';
 import wiglooImage from '@/assets/images/wigloo-image.png';
+import aibgImage from '@/assets/images/aibg.png';
+
 
 interface VoiceChatUIProps {
   isAISpeaking: boolean;
@@ -242,85 +244,14 @@ function BottomLeftControls({
   );
 }
 
-// Background Effects Component - Exact Figma layering and positioning
 function BackgroundEffects({ isBlankBg }: { isBlankBg: boolean }) {
   return (
     <div className="absolute inset-0 overflow-hidden m-4 rounded-[24px] border border-[#E0D0BB80] transition-all duration-500 ease-in-out">
       {isBlankBg ? (
         <div className="absolute inset-0 bg-[#F0F0F0] rounded-[24px] transition-all duration-500 ease-in-out" />
       ) : (
-        <div className="relative w-full h-full bg-[#F0F0F0] rounded-[24px] overflow-hidden transition-all duration-500 ease-in-out">
-          {/* Exact Figma layering order (bottom to top as they appear in children array) */}
-          
-          {/* Layer 1: Ellipse 35 - Bright yellow center-right */}
-          <div 
-            className="absolute rounded-full transition-all duration-700 ease-in-out"
-            style={{
-              width: '372px',
-              height: '362px',
-              left: '111px',
-              top: '451px',
-              backgroundColor: '#F7E06D',
-              filter: 'blur(207.4px)',
-              zIndex: 1
-            }}
-          />
-          
-          {/* Layer 2: Ellipse 36 - Orange bottom-left */}
-          <div 
-            className="absolute rounded-full transition-all duration-700 ease-in-out"
-            style={{
-              width: '303px',
-              height: '224px',
-              left: '-66px',
-              top: '678px',
-              backgroundColor: '#EEBF9B',
-              filter: 'blur(207.4px)',
-              zIndex: 2
-            }}
-          />
-          
-          {/* Layer 3: Ellipse 37 - Light yellow top-left */}
-          <div 
-            className="absolute rounded-full transition-all duration-700 ease-in-out"
-            style={{
-              width: '372px',
-              height: '246px',
-              left: '0px',
-              top: '-166px',
-              backgroundColor: '#F9E99B',
-              filter: 'blur(207.4px)',
-              zIndex: 3
-            }}
-          />
-          
-          {/* Layer 4: Ellipse 39 - WHITE central character area (IMAGE-SVG in Figma) */}
-          <div 
-            className="absolute rounded-full transition-all duration-700 ease-in-out"
-            style={{
-              width: '447.76px',
-              height: '477.57px',
-              left: '-55.65px',
-              top: '124.46px',
-              backgroundColor: '#FFFFFF',
-              filter: 'blur(100px)',
-              zIndex: 4
-            }}
-          />
-          
-          {/* Layer 5: Ellipse 38 - Purple top-right (topmost layer) */}
-          <div 
-            className="absolute rounded-full transition-all duration-700 ease-in-out"
-            style={{
-              width: '303px',
-              height: '224px',
-              left: '167px',
-              top: '-112px',
-              backgroundColor: '#E391F5',
-              filter: 'blur(207.4px)',
-              zIndex: 5
-            }}
-          />
+        <div className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-500 ease-in-out" style={{ backgroundImage: `url(${aibgImage})` }}>
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/30 backdrop-blur-[2px]" />
         </div>
       )}
     </div>

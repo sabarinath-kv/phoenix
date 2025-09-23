@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -29,7 +29,7 @@ export const Login: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -41,16 +41,25 @@ export const Login: React.FC = () => {
     resolver: zodResolver(loginSchema),
   });
 
+  useEffect(() => {
+    if (!user) return;
+    if (user.metadata["isOnboarded"]) {
+      navigate("/game-selection");
+    } else {
+      navigate("/voice-chat");
+    }
+  }, [user])
+
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     setError(null);
 
     try {
       await login(data.email, data.password);
-
-      // Redirect to the page user was trying to access, or home page
-      const from = location.state?.from?.pathname || "/";
-      navigate(from, { replace: true });
+      
+      // // Redirect to the page user was trying to access, or home page
+      // const from = location.state?.from?.pathname || "/";
+      // navigate(from, { replace: true });
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "An error occurred during login"

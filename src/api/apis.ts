@@ -43,6 +43,25 @@ export type CreateGameSessionRequest = {
   };
 };
 
+export interface UpdateUserRequest {
+  password_hash?: string;
+  full_name?: string;
+  phone?: string;
+  is_active?: boolean;
+  metadata?: Record<string, any>;
+}
+
+export interface User {
+  email: string;
+  full_name: string;
+  phone: string;
+  is_active: boolean;
+  metadata: Record<string, any>;
+  id: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export const createRoomAndToken = async (
   token: string
 ): Promise<LivekitTokenResponse> => {
@@ -80,6 +99,24 @@ export const createGameSession = async (
       throw new Error(
         error.response?.data?.message || "Create game session failed"
       );
+    }
+    throw new Error("Network error occurred");
+  }
+};
+
+export const updateUser = async (
+  userId: number,
+  data: UpdateUserRequest
+): Promise<User> => {
+  try {
+    const response = await apiHelpers.patch<User>(
+      `${API_ENDPOINTS.UPDATE_USER}/${userId}`,
+      data
+    );
+    return response.data as User;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data?.message || "Update user failed");
     }
     throw new Error("Network error occurred");
   }

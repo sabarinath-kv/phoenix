@@ -9,6 +9,8 @@ import {
   import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { VoiceChatUI } from '@/components/VoiceChatUI';
+import { updateUser } from '@/api/apis';
+import { useNavigate } from 'react-router-dom';
   
 export default function VoiceChatPage() {
   const [room] = useState(
@@ -18,6 +20,7 @@ export default function VoiceChatPage() {
         dynacast: false,
       })
   );
+  
   const [connected, setConnected] = useState(false);
   const [micEnabled, setMicEnabled] = useState(true); // Default enabled
   const [agentSpeaking, setAgentSpeaking] = useState(true);
@@ -35,8 +38,9 @@ export default function VoiceChatPage() {
   const [isTextChatMode, setIsTextChatMode] = useState(false);
   const [textMessages, setTextMessages] = useState<Array<{ role: 'ai' | 'user'; message: string; timestamp: Date }>>([]);
   const lastCallTime = useRef(0);
-  const { user, getLivekitTokenResponse, livekitTokenResponse, refreshLivekitTokenResponse } = useAuth();
+  const { user, getLivekitTokenResponse, livekitTokenResponse, refreshLivekitTokenResponse, setUser } = useAuth();
   const agentId = useRef('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     getLivekitTokenResponse();
@@ -90,6 +94,15 @@ export default function VoiceChatPage() {
       }, 1000);
     };
 
+    const patchUser = async () => {
+     const data = await updateUser(user.id, {
+        metadata: {
+          isOnboarded: true
+        }
+      });
+      setUser(data);
+    };
+
 
     const handleDisconnected = (reason?: any) => {
       console.log('🔴 [LiveKit] Room disconnected:', reason);
@@ -139,6 +152,7 @@ export default function VoiceChatPage() {
         setAgentConnected(false);
         setAgentSpeaking(false);
         setIsListening(false);
+        patchUser()
         console.log('🤖 [Agent] Agent disconnected');
       }
     };
