@@ -153,6 +153,12 @@ export default function VoiceChatPage() {
         setAgentSpeaking(false);
         setIsListening(false);
         patchUser()
+        navigate("/game-redirect", {
+            state: {
+              gameClass: "ADHD",
+              completedGames: [],
+            }
+          });
         console.log('🤖 [Agent] Agent disconnected');
       }
     };
@@ -333,8 +339,6 @@ export default function VoiceChatPage() {
         canPlayback: room.canPlaybackAudio
       });
     };
-
-    console.log('hereeee')
 
     // Register all event listeners
     room.on(RoomEvent.Connected, handleConnected);

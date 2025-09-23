@@ -18,6 +18,7 @@ import speedIcon from "@/assets/icons/speed-icon.svg";
 import musicIcon from "@/assets/icons/music-icon.svg";
 import arrowDownIcon from "@/assets/icons/arrow-down-icon.svg";
 import bounceBackIcon from "@/assets/icons/bounce-back-icon.svg";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface SuperPower {
   id: string;
@@ -41,6 +42,7 @@ export const UserProfile = () => {
 
   const [expandedInsights, setExpandedInsights] = useState<string[]>([]);
   const [superPowersExpanded, setSuperPowersExpanded] = useState(false);
+  const {logout} = useAuth();
 
   const superPowers: SuperPower[] = [
     {
@@ -108,6 +110,8 @@ export const UserProfile = () => {
 
   return (
     <div className="min-h-screen bg-[#F0F0F0]">
+          <button onClick={logout}>logout</button>
+
       {/* Main Container */}
       <div className="px-4 py-4">
         <div className="max-w-md mx-auto bg-[#FAF6F3] rounded-3xl border border-[rgba(224,208,187,0.5)] relative overflow-hidden">
@@ -119,7 +123,6 @@ export const UserProfile = () => {
           {/* Background Circles */}
           <div className="absolute top-[167px] left-[-300px] w-[1002px] h-[964px] rounded-full bg-[#F4EDD0] z-0"></div>
           <div className="absolute top-[398px] left-[-300px] w-[1002px] h-[964px] rounded-full bg-white z-0"></div>
-
           {/* Profile Avatar */}
           <div className="absolute top-[123px] left-1/2 transform -translate-x-1/2 z-10">
             <div className="w-[83px] h-[83px] rounded-full border-[6px] border-white overflow-hidden bg-[#FFA10A]">

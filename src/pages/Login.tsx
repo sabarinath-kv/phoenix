@@ -37,7 +37,12 @@ export const Login: React.FC = () => {
   useEffect(() => {
     if (!user) return;
     if (user.metadata["isOnboarded"]) {
-      navigate("/game-selection");
+      navigate("/game-redirect", {
+        state: {
+          gameClass: "ADHD",
+          completedGames: [],
+        }
+      });
     } else {
       navigate("/voice-chat");
     }
