@@ -20,6 +20,49 @@ interface FlyingEmoji {
   angle: number;
   clickAnimation?: "correct" | "wrong" | null;
   animationStartTime?: number;
+  enteredZoneTime?: number; // Track when emoji enters the center zone
+  isInZone: boolean; // Track if emoji is currently in zone
+}
+
+// Metrics tracking interfaces
+interface ClickEvent {
+  timestamp: number;
+  emojiId: number;
+  emoji: string;
+  isCorrect: boolean;
+  isInZone: boolean;
+  reactionTime?: number; // Time from entering zone to click
+  gameTime: number; // Time elapsed in game
+}
+
+interface SymbolSpotterMetrics {
+  // Precision Metrics
+  click_accuracy: number;
+  false_positives: number;
+  missed_opportunities: number;
+  reaction_time: number;
+
+  // Attention Metrics
+  attention_span: number[];
+  distractor_resistance: number;
+
+  // Impulsivity Metrics
+  premature_clicks: number;
+  click_restraint: number;
+  click_pattern: "rapid_fire" | "calculated";
+
+  // Raw data for detailed analysis
+  all_clicks: ClickEvent[];
+  symbols_in_zone: Array<{
+    emojiId: number;
+    emoji: string;
+    enteredTime: number;
+    exitedTime?: number;
+    wasClicked: boolean;
+    isCorrect?: boolean;
+  }>;
+  game_duration: number;
+  total_symbols_spawned: number;
 }
 
 // Object emojis for the game
@@ -41,7 +84,7 @@ const OBJECT_EMOJIS = [
   "🎺",
 ];
 
-const GAME_DURATION = 100000; // 100 seconds
+const GAME_DURATION = 30000; // 30 seconds for better gameplay
 const COUNTDOWN_DURATION = 3; // 3 second countdown
 const CENTER_BOX_SIZE = 350; // pixels
 const SPAWN_RATE_MIN = 300; // minimum ms between spawns
@@ -58,12 +101,47 @@ export const SymbolSpotter = () => {
   const [countdown, setCountdown] = useState(COUNTDOWN_DURATION);
   const [gameTimeLeft, setGameTimeLeft] = useState(GAME_DURATION);
 
+  // Metrics tracking state
+  const [allClicks, setAllClicks] = useState<ClickEvent[]>([]);
+  const [symbolsInZone, setSymbolsInZone] = useState<
+    Array<{
+      emojiId: number;
+      emoji: string;
+      enteredTime: number;
+      exitedTime?: number;
+      wasClicked: boolean;
+      isCorrect?: boolean;
+    }>
+  >([]);
+  const [totalSymbolsSpawned, setTotalSymbolsSpawned] = useState(0);
+  const [gameStartTime, setGameStartTime] = useState<number>(0);
+  const [lastClickTime, setLastClickTime] = useState<number>(0);
+  const [clickTimes, setClickTimes] = useState<number[]>([]);
+
   const gameAreaRef = useRef<HTMLDivElement>(null);
   const animationFrameRef = useRef<number>();
   const spawnIntervalRef = useRef<NodeJS.Timeout>();
   const gameTimerRef = useRef<NodeJS.Timeout>();
   const countdownTimerRef = useRef<NodeJS.Timeout>();
   const emojiIdCounter = useRef(0);
+
+  // Refs to store current metrics data for accurate calculation
+  const metricsDataRef = useRef({
+    allClicks: [] as ClickEvent[],
+    symbolsInZone: [] as Array<{
+      emojiId: number;
+      emoji: string;
+      enteredTime: number;
+      exitedTime?: number;
+      wasClicked: boolean;
+      isCorrect?: boolean;
+    }>,
+    totalSymbolsSpawned: 0,
+    clickTimes: [] as number[],
+  });
+
+  // Ref to store current score for accurate session data
+  const scoreRef = useRef(0);
 
   // Audio feedback
   const playCorrectSound = useCallback(() => {
@@ -115,7 +193,9 @@ export const SymbolSpotter = () => {
   }, []);
 
   const createFlyingEmoji = useCallback(() => {
-    if (!gameAreaRef.current) return null;
+    if (!gameAreaRef.current) {
+      return null;
+    }
 
     // Use offsetWidth/offsetHeight instead of getBoundingClientRect
     const width = gameAreaRef.current.offsetWidth;
@@ -158,12 +238,16 @@ export const SymbolSpotter = () => {
       targetY: centerY + (Math.random() - 0.5) * CENTER_BOX_SIZE,
       speed: Math.random() * 0.8 + 0.5, // Random speed between 0.5-1.3 (slower)
       angle: 0,
+      isInZone: false, // Initialize as not in zone
     };
 
     // Calculate angle for straight line movement
     const dx = emoji.targetX - emoji.x;
     const dy = emoji.targetY - emoji.y;
     emoji.angle = Math.atan2(dy, dx);
+
+    // Increment total symbols spawned for metrics
+    setTotalSymbolsSpawned((prev) => prev + 1);
 
     return emoji;
   }, [getRandomEmoji]);
@@ -183,6 +267,17 @@ export const SymbolSpotter = () => {
   }, [createFlyingEmoji, gameState]);
 
   const updateEmojiPositions = useCallback(() => {
+    if (!gameAreaRef.current) return;
+
+    const width = gameAreaRef.current.offsetWidth;
+    const height = gameAreaRef.current.offsetHeight;
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const boxLeft = centerX - CENTER_BOX_SIZE / 2;
+    const boxRight = centerX + CENTER_BOX_SIZE / 2;
+    const boxTop = centerY - CENTER_BOX_SIZE / 2;
+    const boxBottom = centerY + CENTER_BOX_SIZE / 2;
+
     setFlyingEmojis((prev) =>
       prev
         .map((emoji) => {
@@ -191,11 +286,51 @@ export const SymbolSpotter = () => {
             return emoji;
           }
 
-          return {
+          const newX = emoji.x + Math.cos(emoji.angle) * emoji.speed;
+          const newY = emoji.y + Math.sin(emoji.angle) * emoji.speed;
+
+          // Check if emoji is now in the center zone
+          const wasInZone = emoji.isInZone;
+          const isNowInZone =
+            newX >= boxLeft &&
+            newX <= boxRight &&
+            newY >= boxTop &&
+            newY <= boxBottom;
+
+          let updatedEmoji = {
             ...emoji,
-            x: emoji.x + Math.cos(emoji.angle) * emoji.speed,
-            y: emoji.y + Math.sin(emoji.angle) * emoji.speed,
+            x: newX,
+            y: newY,
+            isInZone: isNowInZone,
           };
+
+          // Track zone entry for metrics
+          if (!wasInZone && isNowInZone) {
+            updatedEmoji.enteredZoneTime = Date.now();
+            // Add to symbols in zone tracking
+            setSymbolsInZone((prevSymbols) => [
+              ...prevSymbols,
+              {
+                emojiId: emoji.id,
+                emoji: emoji.emoji,
+                enteredTime: Date.now(),
+                wasClicked: false,
+              },
+            ]);
+          }
+
+          // Track zone exit for metrics
+          if (wasInZone && !isNowInZone && emoji.enteredZoneTime) {
+            setSymbolsInZone((prevSymbols) =>
+              prevSymbols.map((symbol) =>
+                symbol.emojiId === emoji.id && !symbol.exitedTime
+                  ? { ...symbol, exitedTime: Date.now() }
+                  : symbol
+              )
+            );
+          }
+
+          return updatedEmoji;
         })
         .filter((emoji) => {
           // Remove emojis with expired animations
@@ -243,8 +378,43 @@ export const SymbolSpotter = () => {
     (clickedEmoji: FlyingEmoji) => {
       if (gameState !== "playing") return;
 
-      if (isEmojiInCenterBox(clickedEmoji)) {
-        const isCorrect = clickedEmoji.emoji === targetEmoji;
+      const currentTime = Date.now();
+      const gameTime = currentTime - gameStartTime;
+      const isInZone = isEmojiInCenterBox(clickedEmoji);
+      const isCorrect = clickedEmoji.emoji === targetEmoji && isInZone;
+
+      // Calculate reaction time if emoji was in zone
+      let reactionTime: number | undefined;
+      if (clickedEmoji.enteredZoneTime && isInZone) {
+        reactionTime = currentTime - clickedEmoji.enteredZoneTime;
+      }
+
+      // Record click event for metrics
+      const clickEvent: ClickEvent = {
+        timestamp: currentTime,
+        emojiId: clickedEmoji.id,
+        emoji: clickedEmoji.emoji,
+        isCorrect,
+        isInZone,
+        reactionTime,
+        gameTime,
+      };
+
+      setAllClicks((prev) => [...prev, clickEvent]);
+
+      // Track click timing for click pattern analysis
+      setClickTimes((prev) => [...prev, currentTime]);
+      setLastClickTime(currentTime);
+
+      // Update symbols in zone tracking
+      if (isInZone) {
+        setSymbolsInZone((prevSymbols) =>
+          prevSymbols.map((symbol) =>
+            symbol.emojiId === clickedEmoji.id
+              ? { ...symbol, wasClicked: true, isCorrect }
+              : symbol
+          )
+        );
 
         if (isCorrect) {
           setScore((prev) => prev + 1);
@@ -261,7 +431,7 @@ export const SymbolSpotter = () => {
               ? {
                   ...emoji,
                   clickAnimation: isCorrect ? "correct" : "wrong",
-                  animationStartTime: Date.now(),
+                  animationStartTime: currentTime,
                 }
               : emoji
           )
@@ -281,8 +451,138 @@ export const SymbolSpotter = () => {
       isEmojiInCenterBox,
       playCorrectSound,
       playWrongSound,
+      gameStartTime,
     ]
   );
+
+  // Metrics calculation function
+  const calculateMetrics = useCallback((): SymbolSpotterMetrics => {
+    const totalClicks = allClicks.length;
+    const correctClicks = allClicks.filter((click) => click.isCorrect).length;
+    const clicksInZone = allClicks.filter((click) => click.isInZone).length;
+    const clicksOutsideZone = totalClicks - clicksInZone;
+
+    // Precision Metrics
+    const clickAccuracy = totalClicks > 0 ? correctClicks / totalClicks : 0;
+    const falsePositives = allClicks.filter(
+      (click) => click.isInZone && !click.isCorrect
+    ).length;
+    const correctSymbolsInZone = symbolsInZone.filter(
+      (symbol) => symbol.emoji === targetEmoji
+    );
+    const missedOpportunities = correctSymbolsInZone.filter(
+      (symbol) => !symbol.wasClicked
+    ).length;
+
+    // Calculate average reaction time
+    const reactionTimes = allClicks
+      .filter((click) => click.reactionTime !== undefined)
+      .map((click) => click.reactionTime!);
+    const avgReactionTime =
+      reactionTimes.length > 0
+        ? reactionTimes.reduce((sum, time) => sum + time, 0) /
+          reactionTimes.length
+        : 0;
+
+    // Attention Metrics - accuracy over time segments
+    const gameDuration = GAME_DURATION;
+    const segmentDuration = gameDuration / 4; // 7.5 seconds each
+    const attentionSpan: number[] = [];
+
+    for (let i = 0; i < 4; i++) {
+      const segmentStart = i * segmentDuration;
+      const segmentEnd = (i + 1) * segmentDuration;
+      const segmentClicks = allClicks.filter(
+        (click) => click.gameTime >= segmentStart && click.gameTime < segmentEnd
+      );
+      const segmentCorrect = segmentClicks.filter(
+        (click) => click.isCorrect
+      ).length;
+      const segmentAccuracy =
+        segmentClicks.length > 0 ? segmentCorrect / segmentClicks.length : 0;
+      attentionSpan.push(segmentAccuracy);
+    }
+
+    // Distractor resistance - accuracy when multiple symbols are present
+    // This is approximated by looking at accuracy during high-activity periods
+    const highActivityPeriods = allClicks.filter((click, index) => {
+      const timeWindow = 2000; // 2 second window
+      const nearbyClicks = allClicks.filter(
+        (otherClick) =>
+          Math.abs(otherClick.timestamp - click.timestamp) <= timeWindow
+      );
+      return nearbyClicks.length >= 3; // 3+ clicks in 2 seconds = high activity
+    });
+    const distractorResistance =
+      highActivityPeriods.length > 0
+        ? highActivityPeriods.filter((click) => click.isCorrect).length /
+          highActivityPeriods.length
+        : clickAccuracy;
+
+    // Impulsivity Metrics
+    const prematureClicks = clicksOutsideZone; // Clicks outside the zone are premature
+    const clickRestraint =
+      symbolsInZone.length > 0
+        ? (symbolsInZone.length -
+            symbolsInZone.filter(
+              (symbol) => symbol.wasClicked && !symbol.isCorrect
+            ).length) /
+          symbolsInZone.length
+        : 1;
+
+    // Click pattern analysis
+    let clickPattern: "rapid_fire" | "calculated" = "calculated";
+    if (clickTimes.length >= 3) {
+      const intervals = [];
+      for (let i = 1; i < clickTimes.length; i++) {
+        intervals.push(clickTimes[i] - clickTimes[i - 1]);
+      }
+      const avgInterval =
+        intervals.reduce((sum, interval) => sum + interval, 0) /
+        intervals.length;
+      const rapidFireThreshold = 800; // Less than 800ms between clicks on average = rapid fire
+      if (avgInterval < rapidFireThreshold) {
+        clickPattern = "rapid_fire";
+      }
+    }
+
+    return {
+      click_accuracy: clickAccuracy,
+      false_positives: falsePositives,
+      missed_opportunities: missedOpportunities,
+      reaction_time: avgReactionTime,
+      attention_span: attentionSpan,
+      distractor_resistance: distractorResistance,
+      premature_clicks: prematureClicks,
+      click_restraint: clickRestraint,
+      click_pattern: clickPattern,
+      all_clicks: allClicks,
+      symbols_in_zone: symbolsInZone,
+      game_duration: gameDuration,
+      total_symbols_spawned: totalSymbolsSpawned,
+    };
+  }, [allClicks, symbolsInZone, targetEmoji, totalSymbolsSpawned, clickTimes]);
+
+  // Keep refs in sync with state for accurate metrics calculation
+  useEffect(() => {
+    metricsDataRef.current.allClicks = allClicks;
+  }, [allClicks]);
+
+  useEffect(() => {
+    metricsDataRef.current.symbolsInZone = symbolsInZone;
+  }, [symbolsInZone]);
+
+  useEffect(() => {
+    metricsDataRef.current.totalSymbolsSpawned = totalSymbolsSpawned;
+  }, [totalSymbolsSpawned]);
+
+  useEffect(() => {
+    metricsDataRef.current.clickTimes = clickTimes;
+  }, [clickTimes]);
+
+  useEffect(() => {
+    scoreRef.current = score;
+  }, [score]);
 
   const startCountdown = useCallback(() => {
     setGameState("countdown");
@@ -306,6 +606,115 @@ export const SymbolSpotter = () => {
     countdownTimerRef.current = countdownInterval;
   }, [gameSession]);
 
+  const calculateMetricsFromRefs = useCallback((): SymbolSpotterMetrics => {
+    const { allClicks, symbolsInZone, totalSymbolsSpawned, clickTimes } =
+      metricsDataRef.current;
+
+    const totalClicks = allClicks.length;
+    const correctClicks = allClicks.filter((click) => click.isCorrect).length;
+    const clicksInZone = allClicks.filter((click) => click.isInZone).length;
+    const clicksOutsideZone = totalClicks - clicksInZone;
+
+    // Precision Metrics
+    const clickAccuracy = totalClicks > 0 ? correctClicks / totalClicks : 0;
+    const falsePositives = allClicks.filter(
+      (click) => click.isInZone && !click.isCorrect
+    ).length;
+    const correctSymbolsInZone = symbolsInZone.filter(
+      (symbol) => symbol.emoji === targetEmoji
+    );
+    const missedOpportunities = correctSymbolsInZone.filter(
+      (symbol) => !symbol.wasClicked
+    ).length;
+
+    // Calculate average reaction time
+    const reactionTimes = allClicks
+      .filter((click) => click.reactionTime !== undefined)
+      .map((click) => click.reactionTime!);
+    const avgReactionTime =
+      reactionTimes.length > 0
+        ? reactionTimes.reduce((sum, time) => sum + time, 0) /
+          reactionTimes.length
+        : 0;
+
+    // Attention Metrics - accuracy over time segments
+    const gameDuration = GAME_DURATION;
+    const segmentDuration = gameDuration / 4; // 7.5 seconds each
+    const attentionSpan: number[] = [];
+
+    for (let i = 0; i < 4; i++) {
+      const segmentStart = i * segmentDuration;
+      const segmentEnd = (i + 1) * segmentDuration;
+      const segmentClicks = allClicks.filter(
+        (click) => click.gameTime >= segmentStart && click.gameTime < segmentEnd
+      );
+      const segmentCorrect = segmentClicks.filter(
+        (click) => click.isCorrect
+      ).length;
+      const segmentAccuracy =
+        segmentClicks.length > 0 ? segmentCorrect / segmentClicks.length : 0;
+      attentionSpan.push(segmentAccuracy);
+    }
+
+    // Distractor resistance - accuracy when multiple symbols are present
+    const highActivityPeriods = allClicks.filter((click, index) => {
+      const timeWindow = 2000; // 2 second window
+      const nearbyClicks = allClicks.filter(
+        (otherClick) =>
+          Math.abs(otherClick.timestamp - click.timestamp) <= timeWindow
+      );
+      return nearbyClicks.length >= 3; // 3+ clicks in 2 seconds = high activity
+    });
+    const distractorResistance =
+      highActivityPeriods.length > 0
+        ? highActivityPeriods.filter((click) => click.isCorrect).length /
+          highActivityPeriods.length
+        : clickAccuracy;
+
+    // Impulsivity Metrics
+    const prematureClicks = clicksOutsideZone; // Clicks outside the zone are premature
+    const clickRestraint =
+      symbolsInZone.length > 0
+        ? (symbolsInZone.length -
+            symbolsInZone.filter(
+              (symbol) => symbol.wasClicked && !symbol.isCorrect
+            ).length) /
+          symbolsInZone.length
+        : 1;
+
+    // Click pattern analysis
+    let clickPattern: "rapid_fire" | "calculated" = "calculated";
+    if (clickTimes.length >= 3) {
+      const intervals = [];
+      for (let i = 1; i < clickTimes.length; i++) {
+        intervals.push(clickTimes[i] - clickTimes[i - 1]);
+      }
+      const avgInterval =
+        intervals.reduce((sum, interval) => sum + interval, 0) /
+        intervals.length;
+      const rapidFireThreshold = 800; // Less than 800ms between clicks on average = rapid fire
+      if (avgInterval < rapidFireThreshold) {
+        clickPattern = "rapid_fire";
+      }
+    }
+
+    return {
+      click_accuracy: clickAccuracy,
+      false_positives: falsePositives,
+      missed_opportunities: missedOpportunities,
+      reaction_time: avgReactionTime,
+      attention_span: attentionSpan,
+      distractor_resistance: distractorResistance,
+      premature_clicks: prematureClicks,
+      click_restraint: clickRestraint,
+      click_pattern: clickPattern,
+      all_clicks: allClicks,
+      symbols_in_zone: symbolsInZone,
+      game_duration: gameDuration,
+      total_symbols_spawned: totalSymbolsSpawned,
+    };
+  }, [targetEmoji]);
+
   const endGame = useCallback(async () => {
     // Prevent multiple calls
     if (gameState === "completed") return;
@@ -323,21 +732,33 @@ export const SymbolSpotter = () => {
       clearInterval(gameTimerRef.current);
     }
 
-    // Create game session with hardcoded data only if session is active
+    // Calculate comprehensive metrics using current ref values
     if (gameSession.isSessionActive) {
       try {
-        await gameSession.endSessionWithHardcodedData("symbol-spotter");
+        const metrics = calculateMetricsFromRefs();
+        const currentScore = scoreRef.current;
+        const success = currentScore > 0; // Game is successful if score is positive
+
+        await gameSession.endSession(success, currentScore, metrics);
       } catch (error) {
         console.error("Failed to save game session:", error);
       }
     }
-  }, [gameState, gameSession]);
+  }, [gameState, gameSession, calculateMetricsFromRefs]);
 
   const resetGame = useCallback(() => {
     setGameState("instructions");
     setScore(0);
     setFlyingEmojis([]);
     setGameTimeLeft(GAME_DURATION);
+
+    // Reset metrics tracking state
+    setAllClicks([]);
+    setSymbolsInZone([]);
+    setTotalSymbolsSpawned(0);
+    setGameStartTime(0);
+    setLastClickTime(0);
+    setClickTimes([]);
 
     // Clear all timers
     if (spawnIntervalRef.current) clearTimeout(spawnIntervalRef.current);
@@ -356,6 +777,14 @@ export const SymbolSpotter = () => {
       setFlyingEmojis([]);
       setGameTimeLeft(GAME_DURATION);
 
+      // Initialize metrics tracking
+      setAllClicks([]);
+      setSymbolsInZone([]);
+      setTotalSymbolsSpawned(0);
+      setClickTimes([]);
+      const startTime = Date.now();
+      setGameStartTime(startTime);
+
       // Small delay to ensure DOM is ready
       setTimeout(() => {
         // Start spawning emojis
@@ -366,7 +795,6 @@ export const SymbolSpotter = () => {
       }, 100);
 
       // Start game timer
-      const startTime = Date.now();
       const gameTimer = setInterval(() => {
         const elapsed = Date.now() - startTime;
         const remaining = Math.max(0, GAME_DURATION - elapsed);
@@ -380,7 +808,7 @@ export const SymbolSpotter = () => {
 
       gameTimerRef.current = gameTimer;
     }
-  }, [gameState]); // Removed problematic dependencies
+  }, [gameState]); // Keep minimal dependencies to avoid infinite re-renders
 
   // Cleanup on unmount
   useEffect(() => {
@@ -431,23 +859,23 @@ export const SymbolSpotter = () => {
           {
             icon: "👀",
             text: "Watch!",
-            subtext: "Look for the target symbol at the top"
+            subtext: "Look for the target symbol at the top",
           },
           {
             icon: "🎯",
             text: "Click!",
-            subtext: "Click the target symbol when it's in the center box"
+            subtext: "Click the target symbol when it's in the center box",
           },
           {
             icon: "⏱️",
             text: "Quick!",
-            subtext: "You have 5 seconds to score as much as possible"
+            subtext: "You have 30 seconds to score as much as possible",
           },
           {
             icon: "📊",
             text: "Score!",
-            subtext: "+1 for correct, -1 for wrong clicks"
-          }
+            subtext: "+1 for correct, -1 for wrong clicks",
+          },
         ]}
         onStartGame={startCountdown}
         buttonText="LET'S START"
@@ -467,7 +895,10 @@ export const SymbolSpotter = () => {
 
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-red-50 relative overflow-hidden">
         {/* Header */}
-        <header className="bg-white/90 backdrop-blur-sm border border-white/40 relative z-30" style={{ height: '100px' }}>
+        <header
+          className="bg-white/90 backdrop-blur-sm border border-white/40 relative z-30"
+          style={{ height: "100px" }}
+        >
           <div className="container mx-auto px-4 py-6">
             <div className="flex items-center justify-center">
               <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">
@@ -570,9 +1001,9 @@ export const SymbolSpotter = () => {
         {/* Results Screen */}
         {gameState === "completed" && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-gradient-to-br from-green-200/80 via-blue-200/80 to-purple-200/80 backdrop-blur-sm" />
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-200/80 via-yellow-200/80 to-red-200/80 backdrop-blur-sm" />
 
-            <div className="relative bg-white/90 backdrop-blur-sm rounded-3xl p-6 sm:p-8 shadow-2xl border-2 border-white/50 mx-4 max-w-md w-full">
+            <div className="relative bg-white/90 backdrop-blur-sm rounded-3xl p-6 sm:p-8 shadow-2xl border-2 border-white/50 mx-4 max-w-lg w-full">
               <div className="text-center mb-6">
                 <div className="text-6xl mb-4">
                   {score >= 5
@@ -583,26 +1014,27 @@ export const SymbolSpotter = () => {
                     ? "👍"
                     : "😅"}
                 </div>
-                <h2 className="text-2xl font-bold text-green-700 mb-2">
+                <h2 className="text-2xl font-bold text-black-700 mb-2">
                   Game Complete!
                 </h2>
-                <p className="text-green-600 text-lg">
+                <p className="text-black-600 text-lg">
                   {score >= 5
-                    ? "Amazing!"
+                    ? "Amazing! You're a symbol master!"
                     : score >= 3
-                    ? "Great job!"
+                    ? "Great job! You spotted those symbols!"
                     : score >= 0
-                    ? "Good try!"
-                    : "Keep practicing!"}
+                    ? "Good try! Keep practicing your aim!"
+                    : "Keep practicing to improve your timing!"}
                 </p>
               </div>
 
-              <div className="bg-gradient-to-r from-green-100 to-blue-100 rounded-2xl p-6 mb-6">
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-green-700 mb-2">
-                    {score}
+              <div className="space-y-4 mb-8">
+                <div className="flex items-center gap-4 bg-black-50/60 rounded-2xl p-4 border border-black-200">
+                  <div className="text-3xl">🏆</div>
+                  <div>
+                    <p className="font-bold text-black-700">Final Score</p>
+                    <p className="text-2xl font-bold text-black-800">{score}</p>
                   </div>
-                  <p className="text-green-600 font-semibold">Final Score</p>
                 </div>
               </div>
 
@@ -612,16 +1044,14 @@ export const SymbolSpotter = () => {
                     <Button
                       onClick={gameRedirect.handleGoToNextGame}
                       size="lg"
-                      className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl w-full"
+                      className="bg-gradient-to-r from-orange-400 to-red-400 hover:from-orange-500 hover:to-red-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl w-full"
                     >
-                      {gameRedirect.isLastGame
-                        ? "Finish All Games"
-                        : "Go to Next Game"}
+                      {gameRedirect.isLastGame ? "Finish" : "Go to Next Game"}
                     </Button>
                     <Button
                       onClick={resetGame}
                       variant="outline"
-                      className="text-gray-600 hover:text-gray-800 w-full"
+                      className="text-gray-600 hover:text-gray-800 w-full rounded-full"
                     >
                       Play Again
                     </Button>
@@ -631,14 +1061,14 @@ export const SymbolSpotter = () => {
                     <Button
                       onClick={resetGame}
                       size="lg"
-                      className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl"
+                      className="bg-gradient-to-r from-orange-400 to-red-400 hover:from-orange-500 hover:to-red-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl w-full"
                     >
                       Play Again
                     </Button>
                     <Button
                       onClick={() => navigate("/")}
                       variant="ghost"
-                      className="text-gray-600 hover:text-gray-800"
+                      className="text-gray-600 hover:text-gray-800 rounded-full"
                     >
                       Back to Games
                     </Button>

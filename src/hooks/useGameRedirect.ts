@@ -1,5 +1,5 @@
-import { useLocation, useNavigate } from 'react-router-dom';
-import { useCallback } from 'react';
+import { useLocation, useNavigate } from "react-router-dom";
+import { useCallback } from "react";
 
 interface GameRedirectState {
   fromGameRedirect?: boolean;
@@ -29,11 +29,11 @@ export const useGameRedirect = (currentGameId: string) => {
       }
 
       // Navigate back to game redirect with updated progress
-      navigate('/game-redirect', {
+      navigate("/game-redirect", {
         state: {
           gameClass,
-          completedGames: updatedCompletedGames
-        }
+          completedGames: updatedCompletedGames,
+        },
       });
     }
   }, [isInRedirectFlow, completedGames, currentGameId, gameClass, navigate]);
@@ -41,7 +41,7 @@ export const useGameRedirect = (currentGameId: string) => {
   const handleGoToNextGame = useCallback(() => {
     if (isInRedirectFlow) {
       const nextIndex = currentGameIndex + 1;
-      
+
       // Add current game to completed games
       const updatedCompletedGames = [...completedGames];
       if (!updatedCompletedGames.includes(currentGameId)) {
@@ -50,18 +50,26 @@ export const useGameRedirect = (currentGameId: string) => {
 
       if (nextIndex < gameSequence.length) {
         // Navigate back to redirect page with updated progress
-        navigate('/game-redirect', {
+        navigate("/game-redirect", {
           state: {
             gameClass,
-            completedGames: updatedCompletedGames
-          }
+            completedGames: updatedCompletedGames,
+          },
         });
       } else {
         // All games completed, go to homepage
-        navigate('/homepage');
+        navigate("/profile");
       }
     }
-  }, [isInRedirectFlow, currentGameIndex, gameSequence.length, completedGames, currentGameId, gameClass, navigate]);
+  }, [
+    isInRedirectFlow,
+    currentGameIndex,
+    gameSequence.length,
+    completedGames,
+    currentGameId,
+    gameClass,
+    navigate,
+  ]);
 
   const getNextGameName = useCallback(() => {
     if (isInRedirectFlow && currentGameIndex + 1 < gameSequence.length) {
@@ -72,7 +80,8 @@ export const useGameRedirect = (currentGameId: string) => {
     return null;
   }, [isInRedirectFlow, currentGameIndex, gameSequence]);
 
-  const isLastGame = isInRedirectFlow && currentGameIndex + 1 >= gameSequence.length;
+  const isLastGame =
+    isInRedirectFlow && currentGameIndex + 1 >= gameSequence.length;
 
   return {
     isInRedirectFlow,
@@ -83,6 +92,6 @@ export const useGameRedirect = (currentGameId: string) => {
     isLastGame,
     handleGameComplete,
     handleGoToNextGame,
-    getNextGameName
+    getNextGameName,
   };
-}; 
+};

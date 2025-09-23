@@ -1,13 +1,13 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap");
 @font-face {
-  font-family: 'Replay Pro';
-  src: url('/fonts/ReplayPro-Regular.woff2') format('woff2'),
-       url('/fonts/ReplayPro-Regular.woff') format('woff');
+  font-family: "Replay Pro";
+  src: url("/fonts/ReplayPro-Regular.woff2") format("woff2"),
+    url("/fonts/ReplayPro-Regular.woff") format("woff");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
 }
-
 
 @tailwind base;
 @tailwind components;
@@ -58,16 +58,32 @@ All colors MUST be HSL.
     --radius: 1.25rem;
 
     /* Practo-inspired design tokens */
-    --gradient-primary: linear-gradient(135deg, hsl(200 85% 60%) 0%, hsl(210 80% 70%) 100%);
-    --gradient-secondary: linear-gradient(135deg, hsl(180 60% 85%) 0%, hsl(200 50% 90%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(210 20% 98%) 100%);
-    --gradient-playful: linear-gradient(135deg, hsl(300 70% 85%) 0%, hsl(200 70% 85%) 100%);
-    
+    --gradient-primary: linear-gradient(
+      135deg,
+      hsl(200 85% 60%) 0%,
+      hsl(210 80% 70%) 100%
+    );
+    --gradient-secondary: linear-gradient(
+      135deg,
+      hsl(180 60% 85%) 0%,
+      hsl(200 50% 90%) 100%
+    );
+    --gradient-card: linear-gradient(
+      145deg,
+      hsl(0 0% 100%) 0%,
+      hsl(210 20% 98%) 100%
+    );
+    --gradient-playful: linear-gradient(
+      135deg,
+      hsl(300 70% 85%) 0%,
+      hsl(200 70% 85%) 100%
+    );
+
     /* Gentle shadows for depth */
     --shadow-card: 0 4px 16px -4px hsl(200 20% 20% / 0.08);
     --shadow-hover: 0 8px 24px -6px hsl(200 30% 30% / 0.12);
     --shadow-soft: 0 2px 8px -2px hsl(200 20% 20% / 0.06);
-    
+
     /* Smooth animations */
     --animation-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
     --animation-smooth: cubic-bezier(0.4, 0, 0.2, 1);
@@ -121,10 +137,22 @@ All colors MUST be HSL.
     --ring: 200 80% 65%;
 
     /* Dark mode gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(200 80% 65%) 0%, hsl(210 70% 60%) 100%);
-    --gradient-secondary: linear-gradient(135deg, hsl(180 50% 25%) 0%, hsl(200 40% 30%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(215 25% 12%) 0%, hsl(215 20% 15%) 100%);
-    
+    --gradient-primary: linear-gradient(
+      135deg,
+      hsl(200 80% 65%) 0%,
+      hsl(210 70% 60%) 100%
+    );
+    --gradient-secondary: linear-gradient(
+      135deg,
+      hsl(180 50% 25%) 0%,
+      hsl(200 40% 30%) 100%
+    );
+    --gradient-card: linear-gradient(
+      145deg,
+      hsl(215 25% 12%) 0%,
+      hsl(215 20% 15%) 100%
+    );
+
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -143,7 +171,7 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-feature-settings: 'rlig' 1, 'calt' 1;
+    font-feature-settings: "rlig" 1, "calt" 1;
     font-size: 16px; /* Base body size */
   }
 
@@ -151,33 +179,37 @@ All colors MUST be HSL.
   h1 {
     @apply font-heading font-semibold text-h1 tracking-tight text-foreground;
   }
-  
+
   h2 {
     @apply font-heading font-semibold text-h2 tracking-tight text-foreground;
   }
-  
-  h3, h4, h5, h6 {
+
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-heading font-semibold leading-tight text-foreground;
   }
-  
-  p, body {
+
+  p,
+  body {
     @apply font-sans font-regular text-body text-foreground;
   }
-  
+
   .caption {
     @apply font-sans font-regular text-caption text-muted-foreground;
   }
-  
+
   .caption-lg {
     @apply font-sans font-regular text-caption-lg text-muted-foreground;
   }
-  
+
   /* Night mode captions - minimum 15px */
   .dark .caption,
   .dark .caption-lg {
     @apply text-caption-night;
   }
-  
+
   /* UI elements - numbers, chips, metrics */
   .ui-text {
     @apply font-sans font-medium;
@@ -200,7 +232,7 @@ All colors MUST be HSL.
   [role="button"]:focus-visible {
     @apply outline-none ring-0;
   }
-  
+
   /* Light mode focus */
   :not(.dark) button:focus-visible,
   :not(.dark) input:focus-visible,
@@ -208,15 +240,14 @@ All colors MUST be HSL.
   :not(.dark) [role="button"]:focus-visible {
     @apply ring-2 ring-ring ring-offset-2 ring-offset-background;
   }
-  
+
   /* Dark mode focus with subtle inner glow */
   .dark button:focus-visible,
   .dark input:focus-visible,
   .dark textarea:focus-visible,
   .dark [role="button"]:focus-visible {
     animation: focus-glow 200ms ease-out forwards;
-    box-shadow: 
-      0 0 0 2px hsl(var(--primary) / 0.3),
+    box-shadow: 0 0 0 2px hsl(var(--primary) / 0.3),
       inset 0 0 0 1px hsl(var(--primary) / 0.2);
   }
 }
@@ -227,84 +258,84 @@ All colors MUST be HSL.
   .voice-pulse-ring {
     @apply animate-voice-pulse rounded-full;
   }
-  
+
   .voice-waveform-bar {
     @apply animate-voice-waveform bg-primary rounded-sm;
     animation-delay: var(--delay, 0ms);
   }
-  
+
   /* Micro-interaction utilities */
   .micro-bounce {
     @apply transition-transform duration-micro ease-micro hover:animate-micro-bounce;
   }
-  
+
   .micro-scale {
     @apply transition-transform duration-micro ease-micro hover:scale-[1.02];
   }
-  
+
   /* Progress components */
   .progress-bar {
     @apply bg-primary/20 rounded-pill overflow-hidden;
   }
-  
+
   .progress-fill {
     @apply bg-primary h-full animate-progress-fill rounded-pill;
   }
-  
+
   /* Card system with proper radii and shadows */
   .card-base {
     @apply bg-card border border-border shadow-card rounded-card;
   }
-  
+
   .card-lg {
     @apply bg-card border border-border shadow-card rounded-card-lg;
   }
-  
+
   .card-hover {
     @apply transition-all duration-micro-lg ease-micro hover:shadow-hover hover:scale-[1.01];
   }
-  
+
   /* Button system */
   .btn-base {
     @apply inline-flex items-center justify-center gap-2 font-medium transition-all duration-micro-lg ease-micro;
     @apply focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50;
     @apply min-h-[44px] min-w-[44px]; /* Accessibility: minimum touch target */
   }
-  
+
   .btn-pill {
     @apply rounded-pill;
   }
-  
+
   .btn-rounded {
     @apply rounded-button;
   }
-  
+
   /* Drawer system */
   .drawer-content {
     @apply bg-card border border-border shadow-hover rounded-t-drawer;
   }
-  
+
   /* Chip/Badge system */
   .chip-base {
     @apply inline-flex items-center gap-1 px-3 py-1 ui-text text-sm rounded-pill;
     @apply bg-secondary text-secondary-foreground border border-border;
   }
-  
+
   /* Metric display */
   .metric-display {
     @apply ui-text text-lg font-medium tabular-nums;
   }
-  
+
   /* Typography utilities */
   .heading-tight {
     letter-spacing: -0.02em; /* Tight tracking for large sizes */
   }
-  
+
   /* Accessibility helpers */
   .touch-target {
     @apply min-h-[44px] min-w-[44px];
   }
-  
+
   .night-text {
     @apply text-caption-night; /* Ensures 15px minimum in night flows */
   }
@@ -358,8 +389,18 @@ All colors MUST be HSL.
 }
 
 /* Waveform animation with staggered delays */
-.waveform-container .voice-waveform-bar:nth-child(1) { --delay: 0ms; }
-.waveform-container .voice-waveform-bar:nth-child(2) { --delay: 100ms; }
-.waveform-container .voice-waveform-bar:nth-child(3) { --delay: 200ms; }
-.waveform-container .voice-waveform-bar:nth-child(4) { --delay: 300ms; }
-.waveform-container .voice-waveform-bar:nth-child(5) { --delay: 400ms; }
+.waveform-container .voice-waveform-bar:nth-child(1) {
+  --delay: 0ms;
+}
+.waveform-container .voice-waveform-bar:nth-child(2) {
+  --delay: 100ms;
+}
+.waveform-container .voice-waveform-bar:nth-child(3) {
+  --delay: 200ms;
+}
+.waveform-container .voice-waveform-bar:nth-child(4) {
+  --delay: 300ms;
+}
+.waveform-container .voice-waveform-bar:nth-child(5) {
+  --delay: 400ms;
+}

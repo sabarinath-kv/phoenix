@@ -60,163 +60,135 @@ export const ResultScreen: React.FC<ResultScreenProps> = ({
 
   return (
     <motion.div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
+      <div className="absolute inset-0 bg-gradient-to-br from-orange-200/80 via-yellow-200/80 to-red-200/80 backdrop-blur-sm" />
+
       <motion.div
         initial={{ scale: 0.8, y: 50 }}
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.8, y: 50 }}
         transition={{ type: "spring", damping: 20, stiffness: 300 }}
+        className="relative bg-white/90 backdrop-blur-sm rounded-3xl p-6 sm:p-8 shadow-2xl border-2 border-white/50 mx-4 max-w-lg w-full"
       >
-        <Card className="bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 border-4 border-purple-300 shadow-2xl max-w-md w-full">
-          <div className="p-8 text-center space-y-6">
-            {/* Character and Title */}
-            <motion.div
-              animate={{
-                rotate: [0, 10, -10, 0],
-                scale: [1, 1.1, 1],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                repeatType: "reverse",
-              }}
-              className="text-8xl mb-4"
-            >
-              {character}
-            </motion.div>
+        <div className="text-center mb-6">
+          <motion.div
+            animate={{
+              rotate: [0, 10, -10, 0],
+              scale: [1, 1.1, 1],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              repeatType: "reverse",
+            }}
+            className="text-6xl mb-4"
+          >
+            {character}
+          </motion.div>
 
-            <motion.h2
-              className="text-3xl font-bold text-purple-700"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              {title}
-            </motion.h2>
+          <motion.h2
+            className="text-2xl font-bold text-black-700 mb-2"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            {title}
+          </motion.h2>
 
-            <motion.p
-              className="text-lg text-purple-600"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              {message}
-            </motion.p>
+          <motion.p
+            className="text-black-600 text-lg"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
+            {accuracy >= 90
+              ? "Amazing! You're a letter detective!"
+              : accuracy >= 75
+              ? "Excellent work! You mastered those tricky letters!"
+              : accuracy >= 60
+              ? "Good job! Keep practicing those reversals!"
+              : "Keep practicing! You're getting better at spotting letters!"}
+          </motion.p>
+        </div>
 
-            {/* Stats */}
-            <motion.div
-              className="bg-white/80 rounded-xl p-4 space-y-3"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.4 }}
-            >
-              <div className="grid grid-cols-2 gap-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">
-                    {correctAnswers}
-                  </div>
-                  <div className="text-sm text-gray-600">Correct</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-red-500">
-                    {mistakes.length}
-                  </div>
-                  <div className="text-sm text-gray-600">Mistakes</div>
-                </div>
-              </div>
-
-              <div className="text-center pt-2 border-t border-gray-200">
-                <div className={`text-3xl font-bold ${getPerformanceColor()}`}>
-                  {accuracy}%
-                </div>
-                <div className="text-sm text-gray-600">Accuracy</div>
-              </div>
-
-              <motion.p
-                className={`text-center font-semibold ${getPerformanceColor()}`}
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.6, type: "spring" }}
-              >
-                {getPerformanceMessage()}
-              </motion.p>
-            </motion.div>
-
-            {/* Mistakes Summary (if any) */}
-            {mistakes.length > 0 && (
-              <motion.div
-                className="bg-orange-50 rounded-xl p-4 text-left"
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.5 }}
-              >
-                <h4 className="font-bold text-orange-700 mb-2">
-                  💡 Learning Points:
-                </h4>
-                <div className="space-y-1 text-sm">
-                  {mistakes.slice(0, 3).map((mistake, index) => (
-                    <div key={index} className="text-orange-600">
-                      • {mistake.challengeType}: Expected "{mistake.expected}",
-                      chose "{mistake.chosen}"
-                    </div>
-                  ))}
-                  {mistakes.length > 3 && (
-                    <div className="text-orange-500 text-xs">
-                      ...and {mistakes.length - 3} more
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            )}
-
-            {/* Action Buttons */}
-            <motion.div
-              className="space-y-3"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.6 }}
-            >
-              {isInRedirectFlow && onGoToNextGame ? (
-                <>
-                  <Button
-                    onClick={onGoToNextGame}
-                    className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-3 text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
-                  >
-                    {isLastGame ? "🏁 Finish All Games" : "➡️ Go to Next Game"}
-                  </Button>
-                  <Button
-                    onClick={onRestart}
-                    variant="outline"
-                    className="w-full border-2 border-purple-300 text-purple-700 hover:bg-purple-50 font-semibold py-3 rounded-xl"
-                  >
-                    🎮 Play Again
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button
-                    onClick={onRestart}
-                    className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold py-3 text-lg rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all"
-                  >
-                    🎮 Play Again
-                  </Button>
-
-                  <Button
-                    onClick={onBackToMenu}
-                    variant="outline"
-                    className="w-full border-2 border-purple-300 text-purple-700 hover:bg-purple-50 font-semibold py-3 rounded-xl"
-                  >
-                    🏠 Back to Games
-                  </Button>
-                </>
-              )}
-            </motion.div>
+        <motion.div
+          className="space-y-4 mb-8"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.4 }}
+        >
+          <div className="flex items-center gap-4 bg-black-50/60 rounded-2xl p-4 border border-black-200">
+            <div className="text-3xl">🏆</div>
+            <div>
+              <p className="font-bold text-black-700">Final Score</p>
+              <p className="text-2xl font-bold text-black-800">{score}</p>
+            </div>
           </div>
-        </Card>
+
+          {mistakes.length > 0 && (
+            <div className="flex items-center gap-4 bg-yellow-50/60 rounded-2xl p-4 border border-yellow-200">
+              <div className="text-3xl">💡</div>
+              <div>
+                <p className="font-bold text-yellow-700">Learning Tips</p>
+                <p className="text-sm text-yellow-600">
+                  {mistakes.length === 1
+                    ? "Just 1 mistake - you're doing great!"
+                    : mistakes.length <= 3
+                    ? `${mistakes.length} mistakes - keep practicing!`
+                    : "Practice makes perfect - try again!"}
+                </p>
+              </div>
+            </div>
+          )}
+        </motion.div>
+
+        {/* Action Buttons */}
+        <motion.div
+          className="text-center space-y-3"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.6 }}
+        >
+          {isInRedirectFlow && onGoToNextGame ? (
+            <>
+              <Button
+                onClick={onGoToNextGame}
+                size="lg"
+                className="bg-gradient-to-r from-orange-400 to-red-400 hover:from-orange-500 hover:to-red-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl w-full"
+              >
+                {isLastGame ? "Finish" : "Go to Next Game"}
+              </Button>
+              <Button
+                onClick={onRestart}
+                variant="outline"
+                className="text-gray-600 hover:text-gray-800 w-full rounded-full"
+              >
+                Play Again
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                onClick={onRestart}
+                size="lg"
+                className="bg-gradient-to-r from-orange-400 to-red-400 hover:from-orange-500 hover:to-red-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl w-full"
+              >
+                Play Again
+              </Button>
+              <Button
+                onClick={onBackToMenu}
+                variant="ghost"
+                className="text-gray-600 hover:text-gray-800 rounded-full"
+              >
+                Back to Games
+              </Button>
+            </>
+          )}
+        </motion.div>
       </motion.div>
     </motion.div>
   );
