@@ -1172,18 +1172,18 @@ export const BubblePopping = () => {
           {
             icon: "👆",
             text: "Tap!",
-            subtext: "Click on bubbles to pop them"
+            subtext: "Click on bubbles to pop them",
           },
           {
             icon: "🎯",
             text: "Accuracy!",
-            subtext: "Hit the center for bonus points"
+            subtext: "Hit the center for bonus points",
           },
           {
             icon: "⏱️",
             text: "Speed!",
-            subtext: "You have 60 seconds"
-          }
+            subtext: "You have 60 seconds",
+          },
         ]}
         onStartGame={startCountdown}
         buttonText="LET'S START"
@@ -1203,7 +1203,10 @@ export const BubblePopping = () => {
 
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-red-50 relative overflow-hidden">
         {/* Header */}
-        <header className="bg-white/90 backdrop-blur-sm border border-white/40 relative z-30" style={{ height: '100px' }}>
+        <header
+          className="bg-white/90 backdrop-blur-sm border border-white/40 relative z-30"
+          style={{ height: "100px" }}
+        >
           <div className="container mx-auto px-4 py-6">
             <div className="flex items-center justify-center">
               <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">
@@ -1258,9 +1261,9 @@ export const BubblePopping = () => {
         {/* Results Screen */}
         {gameState === "completed" && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-gradient-to-br from-green-200/80 via-blue-200/80 to-purple-200/80 backdrop-blur-sm" />
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-200/80 via-yellow-200/80 to-red-200/80 backdrop-blur-sm" />
 
-            <div className="relative bg-white/90 backdrop-blur-sm rounded-3xl p-6 sm:p-8 shadow-2xl border-2 border-white/50 mx-4 max-w-md w-full">
+            <div className="relative bg-white/90 backdrop-blur-sm rounded-3xl p-6 sm:p-8 shadow-2xl border-2 border-white/50 mx-4 max-w-lg w-full">
               <div className="text-center mb-6">
                 <div className="text-6xl mb-4">
                   {metrics.score >= 500
@@ -1271,160 +1274,69 @@ export const BubblePopping = () => {
                     ? "👍"
                     : "🫧"}
                 </div>
-                <h2 className="text-2xl font-bold text-blue-700 mb-2">
+                <h2 className="text-2xl font-bold text-black-700 mb-2">
                   Game Complete!
                 </h2>
-                <p className="text-blue-600 text-lg">
+                <p className="text-black-600 text-lg">
                   {metrics.score >= 500
-                    ? "Amazing!"
+                    ? "Amazing! You're a bubble master!"
                     : metrics.score >= 300
-                    ? "Great job!"
+                    ? "Great job! You popped those bubbles!"
                     : metrics.score >= 100
-                    ? "Good work!"
-                    : "Keep practicing!"}
+                    ? "Good work! Keep practicing your aim!"
+                    : "Keep practicing to improve your popping skills!"}
                 </p>
               </div>
 
-              <div className="bg-gradient-to-r from-blue-100 to-cyan-100 rounded-2xl p-6 mb-6">
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-blue-700 mb-2">
-                    {metrics.score}
+              <div className="space-y-4 mb-8">
+                <div className="flex items-center gap-4 bg-black-50/60 rounded-2xl p-4 border border-black-200">
+                  <div className="text-3xl">🏆</div>
+                  <div>
+                    <p className="font-bold text-black-700">Final Score</p>
+                    <p className="text-2xl font-bold text-black-800">
+                      {metrics.score}
+                    </p>
                   </div>
-                  <p className="text-blue-600 font-semibold">Final Score</p>
                 </div>
               </div>
 
-              {!showDetailedMetrics ? (
-                <div className="space-y-4">
-                  <Button
-                    onClick={() => setShowDetailedMetrics(true)}
-                    className="w-full bg-blue-500 hover:bg-blue-600 text-white"
-                  >
-                    View Detailed Metrics
-                  </Button>
-                  {gameRedirect.isInRedirectFlow ? (
-                    <>
-                      <Button
-                        onClick={gameRedirect.handleGoToNextGame}
-                        size="lg"
-                        className="w-full bg-gradient-to-r from-blue-400 to-cyan-400 hover:from-blue-500 hover:to-cyan-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl"
-                      >
-                        {gameRedirect.isLastGame
-                          ? "Finish All Games"
-                          : "Go to Next Game"}
-                      </Button>
-                      <Button
-                        onClick={resetGame}
-                        variant="outline"
-                        className="w-full text-gray-600 hover:text-gray-800"
-                      >
-                        Play Again
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button
-                        onClick={resetGame}
-                        size="lg"
-                        className="w-full bg-gradient-to-r from-blue-400 to-cyan-400 hover:from-blue-500 hover:to-cyan-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl"
-                      >
-                        Play Again
-                      </Button>
-                      <Button
-                        onClick={() => navigate("/")}
-                        variant="ghost"
-                        className="w-full text-gray-600 hover:text-gray-800"
-                      >
-                        Back to Games
-                      </Button>
-                    </>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="bg-white/50 rounded-2xl p-4 space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>Bubbles Popped:</span>
-                      <span className="font-semibold">
-                        {metrics.successfulPops}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Pops/Minute:</span>
-                      <span className="font-semibold">
-                        {popsPerMinute.toFixed(1)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Miss Rate:</span>
-                      <span className="font-semibold">
-                        {missRate.toFixed(1)}%
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Avg Reaction Time:</span>
-                      <span className="font-semibold">
-                        {avgReactionTime.toFixed(0)}ms
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Avg Tap Duration:</span>
-                      <span className="font-semibold">
-                        {avgTapDuration.toFixed(0)}ms
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Best Streak:</span>
-                      <span className="font-semibold">
-                        {metrics.maxConsecutivePops}
-                      </span>
-                    </div>
-                  </div>
-                  <Button
-                    onClick={() => setShowDetailedMetrics(false)}
-                    className="w-full bg-gray-500 hover:bg-gray-600 text-white"
-                  >
-                    Back to Score
-                  </Button>
-                  {gameRedirect.isInRedirectFlow ? (
-                    <>
-                      <Button
-                        onClick={gameRedirect.handleGoToNextGame}
-                        size="lg"
-                        className="w-full bg-gradient-to-r from-blue-400 to-cyan-400 hover:from-blue-500 hover:to-cyan-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl"
-                      >
-                        {gameRedirect.isLastGame
-                          ? "Finish All Games"
-                          : "Go to Next Game"}
-                      </Button>
-                      <Button
-                        onClick={resetGame}
-                        variant="outline"
-                        className="w-full text-gray-600 hover:text-gray-800"
-                      >
-                        Play Again
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button
-                        onClick={resetGame}
-                        size="lg"
-                        className="w-full bg-gradient-to-r from-blue-400 to-cyan-400 hover:from-blue-500 hover:to-cyan-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl"
-                      >
-                        Play Again
-                      </Button>
-                      <Button
-                        onClick={() => navigate("/")}
-                        variant="ghost"
-                        className="w-full text-gray-600 hover:text-gray-800"
-                      >
-                        Back to Games
-                      </Button>
-                    </>
-                  )}
-                </div>
-              )}
+              <div className="text-center space-y-3">
+                {gameRedirect.isInRedirectFlow ? (
+                  <>
+                    <Button
+                      onClick={gameRedirect.handleGoToNextGame}
+                      size="lg"
+                      className="bg-gradient-to-r from-orange-400 to-red-400 hover:from-orange-500 hover:to-red-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl w-full"
+                    >
+                      {gameRedirect.isLastGame ? "Finish" : "Go to Next Game"}
+                    </Button>
+                    <Button
+                      onClick={resetGame}
+                      variant="outline"
+                      className="text-gray-600 hover:text-gray-800 w-full rounded-full"
+                    >
+                      Play Again
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      onClick={resetGame}
+                      size="lg"
+                      className="bg-gradient-to-r from-orange-400 to-red-400 hover:from-orange-500 hover:to-red-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl w-full"
+                    >
+                      Play Again
+                    </Button>
+                    <Button
+                      onClick={() => navigate("/")}
+                      variant="ghost"
+                      className="text-gray-600 hover:text-gray-800 rounded-full"
+                    >
+                      Back to Games
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         )}

@@ -35,7 +35,7 @@ export const CameraEmoji = () => {
   const startCountdown = () => {
     setGameState("countdown");
     setCountdown(3);
-    
+
     const countdownInterval = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
@@ -234,7 +234,10 @@ export const CameraEmoji = () => {
         </div>
 
         {/* Header */}
-        <header className="bg-white/90 backdrop-blur-sm border border-white/40 relative" style={{ height: '100px' }}>
+        <header
+          className="bg-white/90 backdrop-blur-sm border border-white/40 relative"
+          style={{ height: "100px" }}
+        >
           <div className="container mx-auto px-4 py-6">
             <div className="flex items-center justify-center">
               <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">
@@ -281,7 +284,6 @@ export const CameraEmoji = () => {
 
             {/* Desktop Layout: Side by side */}
             <div className="hidden lg:block">
-
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
                 {/* Camera Section - Desktop */}
                 <div className="space-y-6 order-2 lg:order-1">

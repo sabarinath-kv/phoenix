@@ -312,18 +312,18 @@ export const LetterSoundMatcher = () => {
           {
             icon: "👂",
             text: "Listen!",
-            subtext: "Hear the letter sound and see the word"
+            subtext: "Hear the letter sound and see the word",
           },
           {
             icon: "👆",
             text: "Tap!",
-            subtext: "Tap the picture that starts with that sound"
+            subtext: "Tap the picture that starts with that sound",
           },
           {
             icon: "🎯",
             text: "Learn!",
-            subtext: "Practice letters A through G - works on any device!"
-          }
+            subtext: "Practice letters A through G - works on any device!",
+          },
         ]}
         onStartGame={startCountdown}
         buttonText="LET'S START"
@@ -343,7 +343,10 @@ export const LetterSoundMatcher = () => {
 
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-red-50">
         {/* Header */}
-        <header className="bg-white/90 backdrop-blur-sm border border-white/40 relative z-30" style={{ height: '100px' }}>
+        <header
+          className="bg-white/90 backdrop-blur-sm border border-white/40 relative z-30"
+          style={{ height: "100px" }}
+        >
           <div className="container mx-auto px-4 py-6">
             <div className="flex items-center justify-center">
               <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">
@@ -357,10 +360,10 @@ export const LetterSoundMatcher = () => {
 
         {/* Game Controls */}
         {(gameState === "playing" || gameState === "completed") && (
-          <GameControls 
-            score={stats.score} 
-            currentRound={stats.currentRound} 
-            totalRounds={stats.totalRounds} 
+          <GameControls
+            score={stats.score}
+            currentRound={stats.currentRound}
+            totalRounds={stats.totalRounds}
           />
         )}
 
@@ -457,9 +460,9 @@ export const LetterSoundMatcher = () => {
         {/* Results Screen */}
         {gameState === "completed" && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-gradient-to-br from-green-200/80 via-blue-200/80 to-yellow-200/80 backdrop-blur-sm" />
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-200/80 via-yellow-200/80 to-red-200/80 backdrop-blur-sm" />
 
-            <div className="relative bg-white/90 backdrop-blur-sm rounded-3xl p-6 sm:p-8 shadow-2xl border-2 border-white/50 mx-4 max-w-md w-full">
+            <div className="relative bg-white/90 backdrop-blur-sm rounded-3xl p-6 sm:p-8 shadow-2xl border-2 border-white/50 mx-4 max-w-lg w-full">
               <div className="text-center mb-6">
                 <div className="text-6xl mb-4">
                   {stats.score === stats.totalRounds
@@ -468,24 +471,27 @@ export const LetterSoundMatcher = () => {
                     ? "🎉"
                     : "👍"}
                 </div>
-                <h2 className="text-2xl font-bold text-green-700 mb-2">
+                <h2 className="text-2xl font-bold text-black-700 mb-2">
                   Great Job!
                 </h2>
-                <p className="text-green-600 text-lg">
+                <p className="text-black-600 text-lg">
                   {stats.score === stats.totalRounds
-                    ? "Perfect score!"
+                    ? "Perfect! You matched all the letter sounds!"
                     : stats.score >= 5
-                    ? "Well done!"
-                    : "Keep practicing!"}
+                    ? "Well done! You're learning your letters!"
+                    : "Keep practicing those letter sounds!"}
                 </p>
               </div>
 
-              <div className="bg-gradient-to-r from-green-100 to-blue-100 rounded-2xl p-6 mb-6">
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-green-700 mb-2">
-                    {stats.score}/{stats.totalRounds}
+              <div className="space-y-4 mb-8">
+                <div className="flex items-center gap-4 bg-black-50/60 rounded-2xl p-4 border border-black-200">
+                  <div className="text-3xl">🏆</div>
+                  <div>
+                    <p className="font-bold text-black-700">Final Score</p>
+                    <p className="text-2xl font-bold text-black-800">
+                      {stats.score}/{stats.totalRounds}
+                    </p>
                   </div>
-                  <p className="text-green-600 font-semibold">Final Score</p>
                 </div>
               </div>
 
@@ -495,16 +501,14 @@ export const LetterSoundMatcher = () => {
                     <Button
                       onClick={gameRedirect.handleGoToNextGame}
                       size="lg"
-                      className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl w-full"
+                      className="bg-gradient-to-r from-orange-400 to-red-400 hover:from-orange-500 hover:to-red-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl w-full"
                     >
-                      {gameRedirect.isLastGame
-                        ? "Finish All Games"
-                        : "Go to Next Game"}
+                      {gameRedirect.isLastGame ? "Finish" : "Go to Next Game"}
                     </Button>
                     <Button
                       onClick={resetGame}
                       variant="outline"
-                      className="text-gray-600 hover:text-gray-800 w-full"
+                      className="text-gray-600 hover:text-gray-800 w-full rounded-full"
                     >
                       Play Again
                     </Button>
@@ -514,14 +518,14 @@ export const LetterSoundMatcher = () => {
                     <Button
                       onClick={resetGame}
                       size="lg"
-                      className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl w-full"
+                      className="bg-gradient-to-r from-orange-400 to-red-400 hover:from-orange-500 hover:to-red-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl w-full"
                     >
                       Play Again
                     </Button>
                     <Button
                       onClick={() => navigate("/")}
                       variant="ghost"
-                      className="text-gray-600 hover:text-gray-800"
+                      className="text-gray-600 hover:text-gray-800 rounded-full"
                     >
                       Back to Games
                     </Button>

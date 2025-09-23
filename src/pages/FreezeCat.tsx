@@ -793,18 +793,19 @@ export const FreezeCat = () => {
           {
             icon: "🐶",
             text: "Tap Animals!",
-            subtext: "Tap dogs, rabbits, and other animals for points"
+            subtext: "Tap dogs, rabbits, and other animals for points",
           },
           {
             icon: "🐱",
             text: "Stay Frozen!",
-            subtext: "Don't tap the cats or you'll lose points - there are many!"
+            subtext:
+              "Don't tap the cats or you'll lose points - there are many!",
           },
           {
             icon: "⏱️",
             text: "Quick Thinking!",
-            subtext: "You have 20 seconds to score as much as possible"
-          }
+            subtext: "You have 20 seconds to score as much as possible",
+          },
         ]}
         onStartGame={startCountdown}
         buttonText="LET'S START"
@@ -825,7 +826,10 @@ export const FreezeCat = () => {
 
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-red-50 relative overflow-hidden">
         {/* Header */}
-        <header className="bg-white/90 backdrop-blur-sm border border-white/40 relative z-30" style={{ height: '100px' }}>
+        <header
+          className="bg-white/90 backdrop-blur-sm border border-white/40 relative z-30"
+          style={{ height: "100px" }}
+        >
           <div className="container mx-auto px-4 py-6">
             <div className="flex items-center justify-center">
               <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">
@@ -876,9 +880,9 @@ export const FreezeCat = () => {
         {/* Results Screen */}
         {gameState === "completed" && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-gradient-to-br from-green-200/80 via-blue-200/80 to-purple-200/80 backdrop-blur-sm" />
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-200/80 via-yellow-200/80 to-red-200/80 backdrop-blur-sm" />
 
-            <div className="relative bg-white/90 backdrop-blur-sm rounded-3xl p-6 sm:p-8 shadow-2xl border-2 border-white/50 mx-4 max-w-md w-full">
+            <div className="relative bg-white/90 backdrop-blur-sm rounded-3xl p-6 sm:p-8 shadow-2xl border-2 border-white/50 mx-4 max-w-lg w-full">
               <div className="text-center mb-6">
                 <div className="text-6xl mb-4">
                   {stats.score >= 100
@@ -889,48 +893,28 @@ export const FreezeCat = () => {
                     ? "👍"
                     : "😅"}
                 </div>
-                <h2 className="text-2xl font-bold text-green-700 mb-2">
+                <h2 className="text-2xl font-bold text-black-700 mb-2">
                   Game Complete!
                 </h2>
-                <p className="text-green-600 text-lg">
+                <p className="text-black-600 text-lg">
                   {stats.score >= 100
-                    ? "Amazing!"
+                    ? "Amazing! You're a freeze master!"
                     : stats.score >= 50
-                    ? "Great job!"
+                    ? "Great job! You avoided the cats!"
                     : stats.score >= 20
-                    ? "Good try!"
-                    : "Keep practicing!"}
+                    ? "Good try! Keep practicing!"
+                    : "Keep practicing to avoid those cats!"}
                 </p>
               </div>
 
-              <div className="space-y-4 mb-6">
-                <div className="bg-gradient-to-r from-green-100 to-blue-100 rounded-2xl p-4">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-green-700 mb-1">
+              <div className="space-y-4 mb-8">
+                <div className="flex items-center gap-4 bg-black-50/60 rounded-2xl p-4 border border-black-200">
+                  <div className="text-3xl">🏆</div>
+                  <div>
+                    <p className="font-bold text-black-700">Final Score</p>
+                    <p className="text-2xl font-bold text-black-800">
                       {stats.score}
-                    </div>
-                    <p className="text-green-600 font-semibold">Final Score</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2 text-center text-sm">
-                  <div className="bg-blue-50 rounded-lg p-3">
-                    <div className="font-bold text-blue-700">
-                      {stats.correctTaps}
-                    </div>
-                    <div className="text-blue-600">Correct</div>
-                  </div>
-                  <div className="bg-red-50 rounded-lg p-3">
-                    <div className="font-bold text-red-700">
-                      {stats.incorrectTaps}
-                    </div>
-                    <div className="text-red-600">Wrong</div>
-                  </div>
-                  <div className="bg-purple-50 rounded-lg p-3">
-                    <div className="font-bold text-purple-700">
-                      {stats.totalTaps}
-                    </div>
-                    <div className="text-purple-600">Total</div>
+                    </p>
                   </div>
                 </div>
               </div>
@@ -941,16 +925,16 @@ export const FreezeCat = () => {
                     <Button
                       onClick={gameRedirect.handleGoToNextGame}
                       size="lg"
-                      className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl w-full"
+                      className="bg-gradient-to-r from-orange-400 to-red-400 hover:from-orange-500 hover:to-red-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl w-full"
                     >
                       {gameRedirect.isLastGame
-                        ? "Finish All Games"
+                        ? "Finish"
                         : "Go to Next Game"}
                     </Button>
                     <Button
                       onClick={resetGame}
                       variant="outline"
-                      className="text-gray-600 hover:text-gray-800 w-full"
+                      className="text-gray-600 hover:text-gray-800 w-full rounded-full"
                     >
                       Play Again
                     </Button>
@@ -960,14 +944,14 @@ export const FreezeCat = () => {
                     <Button
                       onClick={resetGame}
                       size="lg"
-                      className="bg-gradient-to-r from-green-400 to-blue-400 hover:from-green-500 hover:to-blue-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl w-full"
+                      className="bg-gradient-to-r from-orange-400 to-red-400 hover:from-orange-500 hover:to-red-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl w-full"
                     >
                       Play Again
                     </Button>
                     <Button
                       onClick={() => navigate("/")}
                       variant="ghost"
-                      className="text-gray-600 hover:text-gray-800"
+                      className="text-gray-600 hover:text-gray-800 rounded-full"
                     >
                       Back to Games
                     </Button>
