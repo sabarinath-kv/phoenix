@@ -4,6 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { preloadImagesWithPriority } from "@/utils/imagePreloader";
+import { useEffect } from "react";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Login } from "./pages/Login";
 import { Signup } from "./pages/Signup";
@@ -20,11 +22,21 @@ import ParentCompanionAI from "./pages/ParentCompanionAI";
 import VoiceChat from "./pages/VoiceChat";
 import NotFound from "./pages/NotFound";
 import { Homepage } from "./pages/Homepage";
+import FollowupChatPage from "./pages/FollowupChat";
+import { GameInsights } from "./pages/GameInsights";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
+const App = () => {
+  // Preload images when the app starts
+  useEffect(() => {
+    preloadImagesWithPriority().catch((error) => {
+      console.error('Error preloading images:', error);
+    });
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <TooltipProvider>
         <Toaster />
@@ -112,7 +124,7 @@ const App = () => (
               path="/parent-companion"
               element={
                 <ProtectedRoute>
-                  <ParentCompanionAI />
+                  <FollowupChatPage />
                 </ProtectedRoute>
               }
             />
@@ -132,6 +144,14 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/game-insights"
+              element={
+                <ProtectedRoute>
+                  <GameInsights />
+                </ProtectedRoute>
+              }
+            />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
@@ -140,6 +160,7 @@ const App = () => (
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
-);
+  );
+};
 
 export default App;

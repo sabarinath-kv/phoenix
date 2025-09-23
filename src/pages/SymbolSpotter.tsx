@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import BackButton from "@/components/ui/BackButton";
+import GameControls from "@/components/ui/GameControls";
+import { CommonInstructionsModal } from "@/components/CommonInstructionsModal";
 import { useGameRedirect } from "@/hooks/useGameRedirect";
 import { useGameSession } from "@/hooks/useGameSession";
 
@@ -889,7 +892,7 @@ export const SymbolSpotter = () => {
                 <div>
                   <p className="font-bold text-red-700">Quick!</p>
                   <p className="text-sm text-red-600">
-                    You have 30 seconds to score as much as possible
+                    You have 5 seconds to score as much as possible
                   </p>
                 </div>
               </div>
@@ -932,52 +935,36 @@ export const SymbolSpotter = () => {
 
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-red-50 relative overflow-hidden">
         {/* Header */}
-        <header className="bg-gradient-to-r from-orange-400 via-yellow-400 to-red-400 text-white shadow-xl relative z-30">
-          <div className="container mx-auto px-4 py-4 md:py-6">
-            <div className="flex items-center justify-between">
-              <Button
-                onClick={() => navigate("/")}
-                variant="ghost"
-                className="group flex items-center gap-2 text-white/90 hover:text-white hover:bg-white/20 px-4 py-2 rounded-full transition-all duration-300 hover:scale-105 backdrop-blur-sm border border-white/20 hover:border-white/40"
-              >
-                <svg
-                  className="w-4 h-4 transition-transform duration-300 group-hover:-translate-x-1"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
-                <span className="font-medium text-sm">Back to Games</span>
-              </Button>
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-center flex-1">
+        <header className="bg-white/90 backdrop-blur-sm border border-white/40 relative z-30" style={{ height: '100px' }}>
+          <div className="container mx-auto px-4 py-6">
+            <div className="flex items-center justify-center">
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">
                 Symbol Spotter
               </h1>
-              <div className="w-32"></div> {/* Spacer for centering */}
             </div>
-
-            {/* Target Emoji Display */}
-            {(gameState === "playing" || gameState === "completed") && (
-              <div className="flex items-center justify-center mt-4 gap-4">
-                <span className="text-lg font-semibold">Target:</span>
-                <div className="text-4xl bg-white/20 rounded-full px-4 py-2">
-                  {targetEmoji}
-                </div>
-                <div className="text-lg font-bold">Score: {score}</div>
-                {gameState === "playing" && (
-                  <div className="text-lg font-bold">
-                    Time: {Math.ceil(gameTimeLeft / 1000)}s
-                  </div>
-                )}
-              </div>
-            )}
           </div>
+          {/* Back Button */}
+          <BackButton onClick={() => navigate("/")} />
         </header>
+
+        {/* Target Emoji Display */}
+        {(gameState === "playing" || gameState === "completed") && (
+          <div className="fixed top-28 left-1/2 transform -translate-x-1/2 z-40">
+            <div className="bg-white/90 backdrop-blur-sm border border-white/40 rounded-2xl px-4 py-2 shadow-lg">
+              <div className="flex items-center gap-3">
+                <div className="text-sm text-gray-600 font-medium">
+                  Find this symbol:
+                </div>
+                <div className="text-2xl">{targetEmoji}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Game Controls */}
+        {(gameState === "playing" || gameState === "completed") && (
+          <GameControls score={score} timeLeft={gameTimeLeft} />
+        )}
 
         {/* Game Area */}
         <div
