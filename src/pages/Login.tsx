@@ -5,17 +5,10 @@ import { z } from "zod";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/contexts/AuthContext";
-import { Loader2, Eye, EyeOff } from "lucide-react";
+import { Loader2, Eye, EyeOff, Mail } from "lucide-react";
+import LoginBanner from "@/assets/images/login.svg";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -70,122 +63,139 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-semibold text-center">
-            Welcome Back
-          </CardTitle>
-          <CardDescription className="text-center">
-            Enter your credentials to access your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+    <>
+      {/* Custom styles to remove all focus outlines */}
+      <style>{`
+        input:focus,
+        input:focus-visible,
+        input:active {
+          outline: none !important;
+          box-shadow: none !important;
+          border: none !important;
+        }
+      `}</style>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="john@example.com"
-                {...register("email")}
-                className={errors.email ? "border-red-500" : ""}
-              />
-              {errors.email && (
-                <p className="text-sm text-red-500">{errors.email.message}</p>
-              )}
-            </div>
+      <div
+        className="min-h-screen relative overflow-hidden"
+        style={{ backgroundColor: "#FFD934" }}
+      >
+        {/* Login Banner */}
+        <div className="absolute top-[40px] left-[30px] scale-125 flex items-center justify-center">
+          <img
+            src={LoginBanner}
+            alt="Wingloo Login Banner"
+            className="w-full h-auto max-w-lg object-contain"
+          />
+        </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  {...register("password")}
-                  className={errors.password ? "border-red-500 pr-10" : "pr-10"}
-                />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-4 w-4 text-gray-400" />
-                  ) : (
-                    <Eye className="h-4 w-4 text-gray-400" />
-                  )}
-                </button>
-              </div>
-              {errors.password && (
-                <p className="text-sm text-red-500">
-                  {errors.password.message}
+        {/* Main Content */}
+        <div className="relative z-10 min-h-screen flex flex-col">
+          {/* Top decorative area */}
+          <div className="flex-1" />
+
+          {/* Login Form Container */}
+          <div className="absolute top-[398px] left-[-300px] w-[1002px] h-[964px] rounded-full bg-white z-0">
+            <div className="max-w-sm mx-auto pt-[80px] pl-[20px]">
+              {/* Header */}
+              <div className="text-center mb-8">
+                <h1 className="text-3xl font-bold text-gray-800 mb-3">
+                  Welcome to Wingloo!
+                </h1>
+                <p className="text-gray-600 text-lg">
+                  Helping every child thrive through play
                 </p>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <input
-                  id="remember"
-                  type="checkbox"
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <Label htmlFor="remember" className="text-sm text-gray-600">
-                  Remember me
-                </Label>
               </div>
-              <Link
-                to="/forgot-password"
-                className="text-sm text-blue-600 hover:text-blue-500"
-              >
-                Forgot password?
-              </Link>
-            </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Signing in...
-                </>
-              ) : (
-                "Sign In"
-              )}
-            </Button>
-          </form>
+              {/* Login Form */}
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
 
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or</span>
-              </div>
-            </div>
+                {/* Email Input */}
+                <div className="relative">
+                  <div className="bg-white border-2 border-gray-300 rounded-full px-6 py-4 shadow-lg hover:shadow-xl transition-all duration-200 focus-within:border-orange-400 focus-within:shadow-xl">
+                    <div className="flex items-center gap-4">
+                      <Input
+                        type="email"
+                        placeholder="Enter your email"
+                        {...register("email")}
+                        className="border-0 bg-transparent text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-lg font-medium p-0 flex-1"
+                      />
+                    </div>
+                  </div>
+                  {errors.email && (
+                    <p className="text-sm text-red-500 mt-2 ml-6">
+                      {errors.email.message}
+                    </p>
+                  )}
+                </div>
 
-            <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
-                Don't have an account?{" "}
-                <Link
-                  to="/signup"
-                  className="font-medium text-blue-600 hover:text-blue-500"
+                {/* Password Input */}
+                <div className="relative">
+                  <div className="bg-white border-2 border-gray-300 rounded-full px-6 py-4 shadow-lg hover:shadow-xl transition-all duration-200 focus-within:border-orange-400 focus-within:shadow-xl">
+                    <div className="flex items-center gap-4">
+                      <Input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="Enter your password"
+                        {...register("password")}
+                        className="border-0 bg-transparent text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 text-lg font-medium p-0 flex-1"
+                      />
+                      <button
+                        type="button"
+                        className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0 p-1"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-5 w-5" />
+                        ) : (
+                          <Eye className="h-5 w-5" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                  {errors.password && (
+                    <p className="text-sm text-red-500 mt-2 ml-6">
+                      {errors.password.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Submit Button */}
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full bg-gradient-to-r from-orange-400 to-red-400 hover:from-orange-500 hover:to-red-500 text-white border-0 py-4 text-lg font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl mt-6"
                 >
-                  Create one
-                </Link>
-              </p>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      SIGNING IN...
+                    </>
+                  ) : (
+                    "SIGN IN"
+                  )}
+                </Button>
+              </form>
+
+              {/* Footer */}
+              <div className="mt-8 text-center">
+                <p className="text-gray-600">
+                  Don't have an account?{" "}
+                  <Link
+                    to="/signup"
+                    className="font-bold text-orange-500 hover:text-orange-600 transition-colors"
+                  >
+                    Create one
+                  </Link>
+                </p>
+              </div>
             </div>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </div>
+    </>
   );
 };
