@@ -129,8 +129,8 @@ export const UploadPage: React.FC = () => {
 
   return (
     <div
-      className="min-h-screen relative overflow-hidden safe-area-inset"
-      style={{ backgroundColor: "#FFD934" }}
+      className="min-h-screen relative overflow-hidden safe-area-inset bg-gradient-to-br from-yellow-100 to-green-100"
+      // style={{ backgroundColor: "#FFD934" }}
     >
       {/* Main container */}
       <div className="min-h-screen p-6 relative z-10">
