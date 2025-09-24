@@ -97,7 +97,7 @@ export const Login: React.FC = () => {
                   color: "#303130",
                 }}
               >
-                Welcome to Wingloo!
+                  Welcome to Wigloo!
               </h1>
               <p
                 className="text-gray-600 text-sm md:text-lg"
@@ -113,7 +113,7 @@ export const Login: React.FC = () => {
             </div>
             <img
               src={LoginBanner}
-              alt="Wingloo Login Banner"
+              alt="Wigloo Login Banner"
               className="w-full h-auto object-contain"
             />
           </div>

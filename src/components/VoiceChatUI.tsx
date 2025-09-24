@@ -374,7 +374,7 @@ function ListeningView({ isListening, userTranscript, message }: { isListening: 
       </div>
       <div className="flex justify-center">
         <h1 className="text-[#393738] text-[28px] font-normal leading-[28px] font-['Replay_Pro'] text-center">
-          Wingloo is <span className="italic">{message}</span>
+          Wigloo is <span className="italic">{message}</span>
           <AnimatedDots />
         </h1>
       </div>
@@ -491,7 +491,7 @@ function ChatBottomSheet({
           {/* Header */}
           <div className="flex items-center justify-between mb-4 flex-shrink-0">
             <h2 className="text-[#454344] text-xl font-semibold font-['Replay_Pro']">
-              Chat with Wingloo
+              Chat with Wigloo
             </h2>
             <button 
               onClick={onClose}
@@ -511,7 +511,7 @@ function ChatBottomSheet({
                 {messages.length === 0 ? (
                   <div className="flex justify-center items-center h-32">
                     <p className="text-[#393738]/60 text-sm font-normal font-sans">
-                      Start a conversation with Wingloo!
+                      Start a conversation with Wigloo!
                     </p>
                   </div>
                 ) : (
@@ -526,7 +526,7 @@ function ChatBottomSheet({
                           <div className="flex-shrink-0 mt-1">
                             <img 
                               src={wiglooImage} 
-                              alt="Wingloo" 
+                              alt="Wigloo" 
                               className="w-8 h-8 rounded-full object-cover border shadow-sm"
                             />
                           </div>
