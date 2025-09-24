@@ -24,7 +24,6 @@ export const Login: React.FC = () => {
 
   const { login, user } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const {
     register,
@@ -87,7 +86,31 @@ export const Login: React.FC = () => {
         {/* Main Content */}
         <div className="h-screen h-[100dvh] flex flex-col relative z-10 overflow-hidden">
           {/* Login Banner - Responsive positioning */}
-          <div className="flex-shrink-0 md:px-12 ">
+          <div className="flex-shrink-0 md:px-12 relative z-0">
+            <div className="text-center md:text-left mb-4 md:mb-8 absolute top-[80%] left-[50%] transform -translate-x-1/2 -translate-y-1/2 z-20">
+              <h1
+                className="text-xl md:text-2xl font-bold text-gray-800 mb-2 md:mb-3 whitespace-nowrap"
+                style={{
+                  fontFamily: "Replay Pro",
+                  fontWeight: 400,
+                  fontSize: "38px",
+                  color: "#303130",
+                }}
+              >
+                Welcome to Wingloo!
+              </h1>
+              <p
+                className="text-gray-600 text-sm md:text-lg"
+                style={{
+                  marginTop: "15px",
+                  fontFamily: "DM Sans",
+                  fontWeight: 500,
+                  fontSize: "16px",
+                }}
+              >
+                Helping every child thrive through play
+              </p>
+            </div>
             <img
               src={LoginBanner}
               alt="Wingloo Login Banner"
@@ -113,16 +136,11 @@ export const Login: React.FC = () => {
 
               {/* Content wrapper */}
               <div className="relative z-10">
-                <div className="w-full max-w-sm mx-auto md:ml-20 lg:ml-32">
+                <div
+                  className="w-full max-w-sm mx-auto md:ml-20 lg:ml-32"
+                  style={{ paddingTop: "40px" }}
+                >
                   {/* Header */}
-                  <div className="text-center md:text-left mb-4 md:mb-8">
-                    <h1 className="text-xl md:text-3xl font-bold text-gray-800 mb-2 md:mb-3">
-                      Welcome to Wingloo!
-                    </h1>
-                    <p className="text-gray-600 text-sm md:text-lg">
-                      Helping every child thrive through play
-                    </p>
-                  </div>
 
                   {/* Login Form */}
                   <form
