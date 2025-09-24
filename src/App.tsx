@@ -25,6 +25,7 @@ import { Homepage } from "./pages/Homepage";
 import FollowupChatPage from "./pages/FollowupChat";
 import { GameInsights } from "./pages/GameInsights";
 import { UserProfile } from "./pages/UserProfile";
+import EndChat from "./pages/EndChat";
 
 const queryClient = new QueryClient();
 
@@ -158,6 +159,14 @@ const App = () => {
               element={
                 <ProtectedRoute>
                   <UserProfile />
+                </ProtectedRoute>
+              }
+            />
+          <Route  
+              path="/end-chat"
+              element={
+                <ProtectedRoute>
+                  <EndChat />
                 </ProtectedRoute>
               }
             />

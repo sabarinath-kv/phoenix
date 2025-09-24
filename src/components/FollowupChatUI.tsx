@@ -569,13 +569,13 @@ function ChatBottomSheet({
 
           {/* Message Input */}
           <div className="flex-shrink-0 mt-4">
-            <div className="flex items-center gap-3 p-2 bg-white/80 backdrop-blur-sm border-0 rounded-full shadow-sm">
+            <div className="flex items-center gap-3 p-2 bg-white/80 backdrop-blur-sm border-0 rounded-full shadow-sm focus:outline-0 focus:border-0 focus:ring-0 focus:shadow-none">
               <input
                 type="text"
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 placeholder="Type a message..."
-                className="flex-1 bg-transparent px-4 py-3 text-sm font-normal font-sans placeholder:text-[#393738]/50 border-0 outline-0 focus:outline-0 focus:border-0 focus:ring-0 focus:shadow-none"
+                className="flex-1 outline-none bg-transparent px-4 py-3 text-sm font-normal font-sans placeholder:text-[#393738]/50 border-none focus:outline-none focus:border-none focus:ring-0 focus:shadow-none focus:ring-offset-0"
                 onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
               />
               <button

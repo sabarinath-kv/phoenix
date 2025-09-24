@@ -8,7 +8,6 @@ import {
   import '@livekit/components-styles';
   import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { VoiceChatUI } from '@/components/VoiceChatUI';
 import { FollowupChatUI } from '@/components/FollowupChatUI';
   
 export default function FollowupChatPage() {
@@ -344,7 +343,7 @@ export default function FollowupChatPage() {
         }
         lastCallTime.current = now;
 
-        if(data.length > 0 && data[0].identity === agentId.current) {
+        if(data.length > 0 && data[0].isLocal == false) {
             setAgentSpeaking(true);
             setIsListening(false);
         } else {
