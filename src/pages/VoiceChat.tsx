@@ -153,12 +153,7 @@ export default function VoiceChatPage() {
         setAgentSpeaking(false);
         setIsListening(false);
         patchUser()
-        navigate("/game-redirect", {
-            state: {
-              gameClass: "ADHD",
-              completedGames: [],
-            }
-          });
+        navigate("/end-chat");
         console.log('🤖 [Agent] Agent disconnected');
       }
     };
@@ -361,8 +356,9 @@ export default function VoiceChatPage() {
         }
         lastCallTime.current = now;
 
-        if(data.length > 0 && data[0].identity === agentId.current) {
+        if(data.length > 0 && data[0].isLocal === false) {
             setAgentSpeaking(true);
+            console.log('🎤 [LiveKit] Agent speakingggg:', data);
             setIsListening(false);
         } else {
             setTimeout(() => {

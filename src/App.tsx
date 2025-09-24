@@ -24,6 +24,7 @@ import { Homepage } from "./pages/Homepage";
 import FollowupChatPage from "./pages/FollowupChat";
 import { GameInsights } from "./pages/GameInsights";
 import { UserProfile } from "./pages/UserProfile";
+import EndChat from "./pages/EndChat";
 import { UploadPage } from "./pages/UploadPage";
 
 const queryClient = new QueryClient();
@@ -161,6 +162,14 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
+          <Route  
+              path="/end-chat"
+              element={
+                <ProtectedRoute>
+                  <EndChat />
+                  </ProtectedRoute>
+              }
+              />
             <Route
               path="/upload"
               element={
