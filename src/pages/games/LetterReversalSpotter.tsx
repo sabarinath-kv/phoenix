@@ -27,6 +27,66 @@ interface Challenge {
   difficulty: number;
 }
 
+// Metrics tracking interfaces
+interface OptionViewEvent {
+  timestamp: number;
+  challengeId: string;
+  optionIndex: number;
+  option: string;
+  duration: number;
+  challengeType: string;
+}
+
+interface ClickEvent {
+  timestamp: number;
+  challengeId: string;
+  selectedOption: string;
+  correctAnswer: string;
+  isCorrect: boolean;
+  challengeType: string;
+  timeFromStart: number; // Time from challenge start to click
+  optionsViewed: number; // How many options were viewed before clicking
+}
+
+interface ChallengeMetrics {
+  challengeId: string;
+  challengeType: string;
+  correctAnswer: string;
+  selectedAnswer: string;
+  isCorrect: boolean;
+  comparisonTime: number; // Total time studying options
+  optionsViewed: OptionViewEvent[];
+  systematicChecking: boolean; // Checked all options before selecting
+  doubleChecking: boolean; // Looked back at original after viewing options
+}
+
+interface LetterReversalSpotterMetrics {
+  // Accuracy Metrics
+  correct_identification: number;
+  mirror_confusion: number; // Selected mirrored version
+  rotation_confusion: number; // Selected rotated version
+
+  // Processing Metrics
+  comparison_time: number; // Average time studying options
+  double_checking: number; // Times looked back at original
+  systematic_checking: number; // Times checked all options before selecting
+
+  // Specific Letter Issues
+  problem_letters: Array<{
+    pair: string;
+    errors: number;
+    total_attempts: number;
+  }>;
+  consistency: number; // Same error repeated
+
+  // Raw data for detailed analysis
+  all_clicks: ClickEvent[];
+  option_views: OptionViewEvent[];
+  challenge_metrics: ChallengeMetrics[];
+  game_duration: number;
+  total_challenges: number;
+}
+
 type GameState = "instructions" | "playing" | "feedback" | "finished";
 
 const GAME_DURATION = 60; // 60 seconds
@@ -51,6 +111,59 @@ export const LetterReversalSpotter: React.FC = () => {
   const [totalChallenges, setTotalChallenges] = useState(0);
   const [usedChallenges, setUsedChallenges] = useState<Set<string>>(new Set());
   const [difficultyLevel, setDifficultyLevel] = useState(1);
+
+  // Metrics tracking state
+  const [allClicks, setAllClicks] = useState<ClickEvent[]>([]);
+  const [optionViews, setOptionViews] = useState<OptionViewEvent[]>([]);
+  const [challengeMetrics, setChallengeMetrics] = useState<ChallengeMetrics[]>([]);
+  const [gameStartTime, setGameStartTime] = useState<number>(0);
+  const [challengeStartTime, setChallengeStartTime] = useState<number>(0);
+  const [currentChallengeId, setCurrentChallengeId] = useState<string>("");
+  const [viewedOptions, setViewedOptions] = useState<Set<number>>(new Set());
+  const [optionHoverTimes, setOptionHoverTimes] = useState<Map<number, number>>(new Map());
+
+  // Refs for metrics data
+  const metricsDataRef = useRef({
+    allClicks: [] as ClickEvent[],
+    optionViews: [] as OptionViewEvent[],
+    challengeMetrics: [] as ChallengeMetrics[],
+  });
+
+  // Helper functions for confusion detection
+  const isMirrorConfusion = useCallback((correct: string, selected: string): boolean => {
+    const mirrorPairs: Record<string, string> = {
+      'b': 'd', 'd': 'b', 'p': 'q', 'q': 'p',
+      'R': 'Я', 'Я': 'R', 'N': 'И', 'И': 'N',
+      'E': 'Ǝ', 'Ǝ': 'E', 'F': 'ᖴ', 'ᖴ': 'F',
+      'G': 'Ɔ', 'Ɔ': 'G', 'J': 'ſ', 'ſ': 'J',
+      'L': '⅃', '⅃': 'L', 'S': 'Ƨ', 'Ƨ': 'S'
+    };
+    return mirrorPairs[correct] === selected;
+  }, []);
+
+  const isRotationConfusion = useCallback((correct: string, selected: string): boolean => {
+    const rotationPairs: Record<string, string[]> = {
+      '6': ['9'], '9': ['6'],
+      'n': ['u'], 'u': ['n'],
+      'w': ['m'], 'm': ['w']
+    };
+    return rotationPairs[correct]?.includes(selected) || false;
+  }, []);
+
+  const getLetterPairKey = useCallback((correct: string, selected: string): string => {
+    const pairs = [
+      ['b', 'd'], ['p', 'q'], ['n', 'u'], ['6', '9'],
+      ['was', 'saw'], ['dog', 'god'], ['top', 'pot']
+    ];
+    
+    for (const pair of pairs) {
+      if ((pair[0] === correct && pair[1] === selected) || 
+          (pair[1] === correct && pair[0] === selected)) {
+        return pair.sort().join('/');
+      }
+    }
+    return `${correct}/${selected}`;
+  }, []);
 
   // Voice synthesis function with consistent settings
   const speakText = useCallback((text: string) => {
@@ -262,10 +375,19 @@ export const LetterReversalSpotter: React.FC = () => {
     // Clear current challenge temporarily to prevent flickering
     setCurrentChallenge(null);
 
+    // Reset metrics tracking for new challenge
+    setViewedOptions(new Set());
+    setOptionHoverTimes(new Map());
+
     // Small delay to ensure clean state transition
     setTimeout(() => {
       const challenge = generateChallenge();
+      const challengeId = `${challenge.prompt}-${challenge.correctAnswer}-${Date.now()}`;
+      
       setCurrentChallenge(challenge);
+      setCurrentChallengeId(challengeId);
+      setChallengeStartTime(Date.now());
+      
       setUsedChallenges((prev) =>
         new Set(prev).add(`${challenge.prompt}-${challenge.correctAnswer}`)
       );
@@ -286,8 +408,42 @@ export const LetterReversalSpotter: React.FC = () => {
       // Stop any ongoing speech
       window.speechSynthesis.cancel();
 
-      setSelectedAnswer(answer);
+      const currentTime = Date.now();
+      const timeFromStart = currentTime - challengeStartTime;
       const correct = answer === currentChallenge.correctAnswer;
+
+      // Track click event for metrics
+      const clickEvent: ClickEvent = {
+        timestamp: currentTime,
+        challengeId: currentChallengeId,
+        selectedOption: answer,
+        correctAnswer: currentChallenge.correctAnswer,
+        isCorrect: correct,
+        challengeType: currentChallenge.type,
+        timeFromStart,
+        optionsViewed: viewedOptions.size,
+      };
+      setAllClicks((prev) => [...prev, clickEvent]);
+
+      // Calculate challenge metrics
+      const comparisonTime = timeFromStart;
+      const systematicChecking = viewedOptions.size === currentChallenge.options.length;
+      const doubleChecking = viewedOptions.size > currentChallenge.options.length; // Viewed some options multiple times
+
+      const challengeMetric: ChallengeMetrics = {
+        challengeId: currentChallengeId,
+        challengeType: currentChallenge.type,
+        correctAnswer: currentChallenge.correctAnswer,
+        selectedAnswer: answer,
+        isCorrect: correct,
+        comparisonTime,
+        optionsViewed: optionViews.filter(view => view.challengeId === currentChallengeId),
+        systematicChecking,
+        doubleChecking,
+      };
+      setChallengeMetrics((prev) => [...prev, challengeMetric]);
+
+      setSelectedAnswer(answer);
       setIsCorrect(correct);
 
       if (correct) {
@@ -320,8 +476,99 @@ export const LetterReversalSpotter: React.FC = () => {
         }
       }, FEEDBACK_DURATION);
     },
-    [selectedAnswer, currentChallenge, timeLeft, startNewChallenge, speakText]
+    [
+      selectedAnswer,
+      currentChallenge,
+      timeLeft,
+      startNewChallenge,
+      challengeStartTime,
+      currentChallengeId,
+      viewedOptions,
+      optionViews,
+    ]
   );
+
+  // Calculate comprehensive metrics
+  const calculateMetricsFromRefs = useCallback((): LetterReversalSpotterMetrics => {
+    const { allClicks, optionViews, challengeMetrics } = metricsDataRef.current;
+
+    // Accuracy Metrics
+    const correctIdentification = allClicks.filter(click => click.isCorrect).length;
+    const mirrorConfusion = allClicks.filter(click => 
+      !click.isCorrect && isMirrorConfusion(click.correctAnswer, click.selectedOption)
+    ).length;
+    const rotationConfusion = allClicks.filter(click => 
+      !click.isCorrect && isRotationConfusion(click.correctAnswer, click.selectedOption)
+    ).length;
+
+    // Processing Metrics
+    const comparisonTimes = challengeMetrics.map(c => c.comparisonTime);
+    const avgComparisonTime = comparisonTimes.length > 0 
+      ? comparisonTimes.reduce((a, b) => a + b, 0) / comparisonTimes.length 
+      : 0;
+    
+    const doubleCheckingCount = challengeMetrics.filter(c => c.doubleChecking).length;
+    const systematicCheckingCount = challengeMetrics.filter(c => c.systematicChecking).length;
+
+    // Problem Letters Analysis
+    const letterPairErrors = new Map<string, { errors: number; total: number }>();
+    
+    allClicks.forEach(click => {
+      const pairKey = getLetterPairKey(click.correctAnswer, click.selectedOption);
+      const current = letterPairErrors.get(pairKey) || { errors: 0, total: 0 };
+      current.total++;
+      if (!click.isCorrect) {
+        current.errors++;
+      }
+      letterPairErrors.set(pairKey, current);
+    });
+
+    const problemLetters = Array.from(letterPairErrors.entries()).map(([pair, stats]) => ({
+      pair,
+      errors: stats.errors,
+      total_attempts: stats.total,
+    }));
+
+    // Consistency Analysis - same error repeated
+    const errorPatterns = new Map<string, number>();
+    allClicks.filter(click => !click.isCorrect).forEach(click => {
+      const pattern = `${click.correctAnswer}->${click.selectedOption}`;
+      errorPatterns.set(pattern, (errorPatterns.get(pattern) || 0) + 1);
+    });
+    
+    const consistencyErrors = Array.from(errorPatterns.values()).filter(count => count > 1).length;
+
+    const gameDuration = gameStartTime > 0 ? Date.now() - gameStartTime : 0;
+
+    return {
+      correct_identification: correctIdentification,
+      mirror_confusion: mirrorConfusion,
+      rotation_confusion: rotationConfusion,
+      comparison_time: avgComparisonTime,
+      double_checking: doubleCheckingCount,
+      systematic_checking: systematicCheckingCount,
+      problem_letters: problemLetters,
+      consistency: consistencyErrors,
+      all_clicks: allClicks,
+      option_views: optionViews,
+      challenge_metrics: challengeMetrics,
+      game_duration: gameDuration,
+      total_challenges: allClicks.length,
+    };
+  }, [isMirrorConfusion, isRotationConfusion, getLetterPairKey, gameStartTime]);
+
+  // Keep refs in sync with state for accurate metrics calculation
+  useEffect(() => {
+    metricsDataRef.current.allClicks = allClicks;
+  }, [allClicks]);
+
+  useEffect(() => {
+    metricsDataRef.current.optionViews = optionViews;
+  }, [optionViews]);
+
+  useEffect(() => {
+    metricsDataRef.current.challengeMetrics = challengeMetrics;
+  }, [challengeMetrics]);
 
   // Timer effect
   useEffect(() => {
@@ -338,10 +585,11 @@ export const LetterReversalSpotter: React.FC = () => {
         if (newTime <= 0) {
           setGameState("finished");
           window.speechSynthesis.cancel();
-          // Create game session with hardcoded data only if session is active
+          // Calculate and send metrics
           if (gameSession.isSessionActive) {
+            const metrics = calculateMetricsFromRefs();
             gameSession
-              .endSessionWithHardcodedData("letter-reversal-spotter")
+              .endSession(true, score, metrics)
               .catch((error) => {
                 console.error("Failed to save game session:", error);
               });
@@ -367,6 +615,17 @@ export const LetterReversalSpotter: React.FC = () => {
     setSelectedAnswer(null);
     setIsCorrect(null);
     setCurrentChallenge(null);
+
+    // Initialize metrics tracking
+    const startTime = Date.now();
+    setGameStartTime(startTime);
+    setAllClicks([]);
+    setOptionViews([]);
+    setChallengeMetrics([]);
+    setViewedOptions(new Set());
+    setOptionHoverTimes(new Map());
+    setCurrentChallengeId("");
+
     gameSession.startSession(); // Start tracking the game session
     startNewChallenge();
   }, [startNewChallenge, gameSession]);
@@ -384,6 +643,16 @@ export const LetterReversalSpotter: React.FC = () => {
     setTotalChallenges(0);
     setUsedChallenges(new Set());
     setDifficultyLevel(1);
+
+    // Reset metrics
+    setGameStartTime(0);
+    setAllClicks([]);
+    setOptionViews([]);
+    setChallengeMetrics([]);
+    setViewedOptions(new Set());
+    setOptionHoverTimes(new Map());
+    setCurrentChallengeId("");
+    setChallengeStartTime(0);
   }, []);
 
   // Cleanup speech on unmount
@@ -425,7 +694,10 @@ export const LetterReversalSpotter: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-red-50 p-4">
       {/* Header */}
-      <header className="bg-white/90 backdrop-blur-sm border border-white/40 relative mb-6" style={{ height: '100px' }}>
+      <header
+        className="bg-white/90 backdrop-blur-sm border border-white/40 relative mb-6"
+        style={{ height: "100px" }}
+      >
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-center">
             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">
@@ -462,23 +734,25 @@ export const LetterReversalSpotter: React.FC = () => {
           {
             icon: "🔊",
             text: "Listen!",
-            subtext: "Voice will tell you what to find (e.g., 'Tap the letter F')"
+            subtext:
+              "Voice will tell you what to find (e.g., 'Tap the letter F')",
           },
           {
             icon: "📈",
             text: "Difficulty!",
-            subtext: "Gets harder every 15 seconds - letters → words → mirrored letters"
+            subtext:
+              "Gets harder every 15 seconds - letters → words → mirrored letters",
           },
           {
             icon: "🎯",
             text: "Scoring!",
-            subtext: "Harder challenges give more points!"
+            subtext: "Harder challenges give more points!",
           },
           {
             icon: "⏰",
             text: "Time Limit!",
-            subtext: "60 seconds of non-stop challenges!"
-          }
+            subtext: "60 seconds of non-stop challenges!",
+          },
         ]}
         onStartGame={startGame}
         buttonText="LET'S START"
@@ -533,24 +807,55 @@ export const LetterReversalSpotter: React.FC = () => {
                       ease: "easeOut",
                     }}
                   >
-                    <GameCard
-                      content={option}
-                      onClick={() => handleAnswerSelect(option)}
-                      isCorrect={
-                        selectedAnswer === option
-                          ? option === currentChallenge.correctAnswer
-                          : null
-                      }
-                      isSelected={selectedAnswer === option}
-                      disabled={gameState === "feedback"}
-                      size={getCardSize(currentChallenge.type) as any}
-                      className="mx-auto"
-                    />
+                    <div
+                      onMouseEnter={() => {
+                        if (gameState === "playing" && challengeStartTime > 0) {
+                          setOptionHoverTimes(prev => new Map(prev).set(index, Date.now()));
+                          setViewedOptions(prev => new Set(prev).add(index));
+                        }
+                      }}
+                      onMouseLeave={() => {
+                        if (gameState === "playing" && challengeStartTime > 0) {
+                          const hoverStartTime = optionHoverTimes.get(index);
+                          if (hoverStartTime) {
+                            const currentTime = Date.now();
+                            const duration = currentTime - hoverStartTime;
+                            const viewEvent: OptionViewEvent = {
+                              timestamp: currentTime,
+                              challengeId: currentChallengeId,
+                              optionIndex: index,
+                              option: option,
+                              duration,
+                              challengeType: currentChallenge.type,
+                            };
+                            setOptionViews(prev => [...prev, viewEvent]);
+                            setOptionHoverTimes(prev => {
+                              const newMap = new Map(prev);
+                              newMap.delete(index);
+                              return newMap;
+                            });
+                          }
+                        }
+                      }}
+                    >
+                      <GameCard
+                        content={option}
+                        onClick={() => handleAnswerSelect(option)}
+                        isCorrect={
+                          selectedAnswer === option
+                            ? option === currentChallenge.correctAnswer
+                            : null
+                        }
+                        isSelected={selectedAnswer === option}
+                        disabled={gameState === "feedback"}
+                        size={getCardSize(currentChallenge.type) as any}
+                        className="mx-auto"
+                      />
+                    </div>
                   </motion.div>
                 ))}
               </AnimatePresence>
             </div>
-
           </motion.div>
         )}
 

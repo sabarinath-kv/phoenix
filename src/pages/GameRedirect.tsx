@@ -82,6 +82,50 @@ const GAME_INFO_MAP: Record<string, GameInfo> = {
   },
 };
 
+// Hardcoded additional games that appear after config games
+const HARDCODED_GAMES: GameInfo[] = [
+  {
+    id: "memory-match",
+    name: "Memory Match",
+    description: "Test your memory with colorful cards!",
+    route: "/memory-match",
+    duration: "4 min",
+    imageUrl: game1Image,
+  },
+  {
+    id: "pattern-puzzle",
+    name: "Pattern Puzzle",
+    description: "Complete the missing patterns!",
+    route: "/pattern-puzzle",
+    duration: "3 min",
+    imageUrl: game2Image,
+  },
+  {
+    id: "word-builder",
+    name: "Word Builder",
+    description: "Build words from letter blocks!",
+    route: "/word-builder",
+    duration: "5 min",
+    imageUrl: game3Image,
+  },
+  {
+    id: "shape-sorter",
+    name: "Shape Sorter",
+    description: "Sort shapes into the right places!",
+    route: "/shape-sorter",
+    duration: "2 min",
+    imageUrl: game1Image,
+  },
+  {
+    id: "number-adventure",
+    name: "Number Adventure",
+    description: "Go on a counting adventure!",
+    route: "/number-adventure",
+    duration: "4 min",
+    imageUrl: game2Image,
+  },
+];
+
 type GameClass = keyof typeof GAME_CLASS;
 
 interface LocationState {
@@ -101,6 +145,7 @@ export const GameRedirect: React.FC = () => {
   const [gameSequence, setGameSequence] = useState<GameInfo[]>([]);
   const [completedGames, setCompletedGames] = useState<string[]>([]);
   const [currentGameIndex, setCurrentGameIndex] = useState(0);
+  const [allGames, setAllGames] = useState<GameInfo[]>([]);
 
   useEffect(() => {
     // Get game class from route state
@@ -113,6 +158,10 @@ export const GameRedirect: React.FC = () => {
       const games = gameIds.map((id) => GAME_INFO_MAP[id]).filter(Boolean);
       setGameSequence(games);
 
+      // Combine config games with hardcoded games
+      const combinedGames = [...games, ...HARDCODED_GAMES];
+      setAllGames(combinedGames);
+
       // Find current game index based on completed games
       const completedCount = state.completedGames?.length || 0;
       setCurrentGameIndex(completedCount);
@@ -123,18 +172,25 @@ export const GameRedirect: React.FC = () => {
   }, [state, navigate]);
 
   const handleStartGame = (gameIndex: number) => {
-    if (gameIndex < gameSequence.length) {
-      const game = gameSequence[gameIndex];
-      // Navigate to game with state indicating we're in redirect flow
-      navigate(game.route, {
-        state: {
-          fromGameRedirect: true,
-          gameClass,
-          gameSequence: gameSequence.map((g) => g.id),
-          completedGames,
-          currentGameIndex: gameIndex,
-        },
-      });
+    if (gameIndex < allGames.length) {
+      const game = allGames[gameIndex];
+
+      // Only navigate if it's a config game (not hardcoded)
+      if (gameIndex < gameSequence.length) {
+        // Navigate to game with state indicating we're in redirect flow
+        navigate(game.route, {
+          state: {
+            fromGameRedirect: true,
+            gameClass,
+            gameSequence: gameSequence.map((g) => g.id),
+            completedGames,
+            currentGameIndex: gameIndex,
+          },
+        });
+      } else {
+        // For hardcoded games, just show a placeholder or coming soon message
+        console.log(`Coming soon: ${game.name}`);
+      }
     }
   };
 
@@ -167,7 +223,7 @@ export const GameRedirect: React.FC = () => {
     }
   };
 
-  if (!gameClass || gameSequence.length === 0) {
+  if (!gameClass || allGames.length === 0) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -250,11 +306,12 @@ export const GameRedirect: React.FC = () => {
 
             {/* Game Cards with Integrated Progress Dots */}
             <div className="space-y-6">
-              {gameSequence.map((game, index) => {
+              {allGames.map((game, index) => {
                 const isCompleted = completedGames.includes(game.id);
                 const isCurrent =
                   index === currentGameIndex && !allGamesCompleted;
                 const isLocked = index > currentGameIndex && !allGamesCompleted;
+                const isHardcodedGame = index >= gameSequence.length;
 
                 return (
                   <motion.div
@@ -262,7 +319,7 @@ export const GameRedirect: React.FC = () => {
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.4, delay: index * 0.1 }}
-                    className="cursor-pointer relative"
+                    className={`relative ${isHardcodedGame ? 'cursor-default' : 'cursor-pointer'}`}
                     onClick={() => !isLocked && handleStartGame(index)}
                   >
                     {/* Progress Dot positioned at center-left of card */}
@@ -271,17 +328,17 @@ export const GameRedirect: React.FC = () => {
                         className={`w-7 h-7 rounded-full mr-20 border-3 shadow-sm transition-all duration-300
                         `}
                       >
-                        {isCompleted && (
+                        {isCompleted && !isHardcodedGame && (
                           <img
                             src={checkLine}
                             className="w-6 h-6 text-white m-1"
                             alt="check"
                           />
                         )}
-                        {isCurrent && !isCompleted && (
+                        {isCurrent && !isCompleted && !isHardcodedGame && (
                           <div className="w-6 h-6 rounded-full bg-[#FDD201] m-1 border-[3px] border-[#A9A6A2]" />
                         )}
-                        {isLocked && (
+                        {(isLocked || isHardcodedGame) && (
                           <div className="w-6 h-6 rounded-full bg-white m-1 border-[3px] border-[#A9A6A2]" />
                         )}
                       </div>
@@ -291,11 +348,11 @@ export const GameRedirect: React.FC = () => {
                     <Card
                       className={`bg-[#FAF6F3] rounded-3xl overflow-hidden transition-all duration-300 
                       ${
-                        isLocked
-                          ? "opacity-50"
-                          : "hover:shadow-lg hover:border-gray-200 hover:-translate-y-1"
+                        !isLocked && !isHardcodedGame
+                          ? "hover:shadow-lg hover:border-gray-200 hover:-translate-y-1"
+                          : ""
                       }
-                      ${isCurrent ? "ring-2 ring-yellow-400" : ""}
+                      ${isCurrent && !isHardcodedGame ? "ring-2 ring-yellow-400" : ""}
                     `}
                       style={{
                         boxShadow: "0px 8px 0px 0px #D4D1D2",
@@ -318,6 +375,11 @@ export const GameRedirect: React.FC = () => {
                               <Clock className="w-4 h-4 mr-2" />
                               {game.duration}
                             </div>
+                            {isHardcodedGame && (
+                              <div className="text-xs text-gray-400 font-medium bg-gray-200 px-2 py-1 rounded-full">
+                                Coming Soon
+                              </div>
+                            )}
                           </div>
                         </div>
 

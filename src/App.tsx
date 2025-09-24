@@ -18,7 +18,6 @@ import { LetterSoundMatcher } from "./pages/LetterSoundMatcher";
 import { TempleRun } from "./pages/games/TempleRun";
 import { LetterReversalSpotter } from "./pages/games/LetterReversalSpotter";
 import { GameRedirect } from "./pages/GameRedirect";
-import ParentCompanionAI from "./pages/ParentCompanionAI";
 import VoiceChat from "./pages/VoiceChat";
 import NotFound from "./pages/NotFound";
 import { Homepage } from "./pages/Homepage";
@@ -26,6 +25,7 @@ import FollowupChatPage from "./pages/FollowupChat";
 import { GameInsights } from "./pages/GameInsights";
 import { UserProfile } from "./pages/UserProfile";
 import EndChat from "./pages/EndChat";
+import { UploadPage } from "./pages/UploadPage";
 
 const queryClient = new QueryClient();
 
@@ -146,15 +146,15 @@ const App = () => {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/game-insights"
+                element={
+                  <ProtectedRoute>
+                    <GameInsights />
+                  </ProtectedRoute>
+                }
+              />
                           <Route
-              path="/game-insights"
-              element={
-                <ProtectedRoute>
-                  <GameInsights />
-                </ProtectedRoute>
-              }
-            />
-            <Route
               path="/profile"
               element={
                 <ProtectedRoute>
@@ -167,6 +167,14 @@ const App = () => {
               element={
                 <ProtectedRoute>
                   <EndChat />
+                  </ProtectedRoute>
+              }
+              />
+            <Route
+              path="/upload"
+              element={
+                <ProtectedRoute>
+                  <UploadPage />
                 </ProtectedRoute>
               }
             />
