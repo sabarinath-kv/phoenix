@@ -27,7 +27,7 @@ const GAME_INFO_MAP: Record<string, GameInfo> = {
   "symbol-spotter": {
     id: "symbol-spotter",
     name: "Symbol Spotter",
-    description: "Find the hidden symbols!",
+    description: "Tap moving rockets in sequence!",
     route: "/symbol-spotter",
     duration: "3 min",
     imageUrl: game1Image,
@@ -283,9 +283,9 @@ export const GameRedirect: React.FC = () => {
       <main className="relative container mx-auto px-6 pt-4 pb-16">
         <div className="max-w-4xl mx-auto">
           {/* Games Layout with Progress Line */}
-          <div className="relative pl-12">
+          <div className="relative pl-6">
             {/* Vertical Progress Line - Background */}
-            <div className="absolute left-6 top-24 bottom-8 w-1.5">
+            <div className="absolute left-0 top-24 bottom-8 w-1.5">
               <svg
                 width="100%"
                 height="100%"
@@ -305,7 +305,7 @@ export const GameRedirect: React.FC = () => {
             </div>
 
             {/* Game Cards with Integrated Progress Dots */}
-            <div className="space-y-6">
+            <div className="space-y-8">
               {allGames.map((game, index) => {
                 const isCompleted = completedGames.includes(game.id);
                 const isCurrent =
@@ -345,7 +345,7 @@ export const GameRedirect: React.FC = () => {
                     </div>
 
                     {/* Game Card */}
-                    <Card
+                    <div
                       className={`bg-[#FAF6F3] rounded-3xl overflow-hidden transition-all duration-300 
                       ${
                         !isLocked && !isHardcodedGame
@@ -359,32 +359,27 @@ export const GameRedirect: React.FC = () => {
                         border: "1px solid #D4D1D2",
                       }}
                     >
-                      <div className="flex items-stretch">
+                      <div className="flex items-center">
                         {/* Game Content */}
-                        <div className="flex-1 p-6">
-                          <div className="flex items-center justify-between mb-2">
-                            <h3 className="text-2xl font-bold text-gray-900 leading-tight">
+                        <div className="flex-1 py-4 pr-2 pl-6">
+                          <div className="flex items-center justify-between mb-1">
+                            <h3 className="text-xl font-bold text-gray-900 leading-tight">
                               {game.name}
                             </h3>
                           </div>
-                          <p className="text-gray-600 text-base mb-4 leading-relaxed">
+                          <p className="text-gray-600 text-[14px] mb-2 leading-relaxed">
                             {game.description}
                           </p>
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center text-gray-500 text-sm font-medium">
+                            <div className="flex items-center text-[#383534] text-sm font-medium">
                               <Clock className="w-4 h-4 mr-2" />
                               {game.duration}
                             </div>
-                            {isHardcodedGame && (
-                              <div className="text-xs text-gray-400 font-medium bg-gray-200 px-2 py-1 rounded-full">
-                                Coming Soon
-                              </div>
-                            )}
                           </div>
                         </div>
 
                         {/* Game Illustration */}
-                        <div className="w-[134px] py-2 pr-2">
+                        <div className="w-[132px] h-[132px] py-2 pr-2">
                           <img
                             src={game.imageUrl}
                             alt={game.name}
@@ -392,7 +387,7 @@ export const GameRedirect: React.FC = () => {
                           />
                         </div>
                       </div>
-                    </Card>
+                    </div>
                   </motion.div>
                 );
               })}
@@ -430,7 +425,7 @@ export const GameRedirect: React.FC = () => {
           )}
 
           {/* Back Button */}
-          <div className="text-center mt-8">
+          {/* <div className="text-center mt-8">
             <Button
               onClick={() => navigate("/homepage")}
               variant="ghost"
@@ -438,7 +433,7 @@ export const GameRedirect: React.FC = () => {
             >
               ← Back to Homepage
             </Button>
-          </div>
+          </div> */}
         </div>
       </main>
     </div>
