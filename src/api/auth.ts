@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from "axios";
 import { API_BASE_URL, API_ENDPOINTS } from "@/constants/api";
 

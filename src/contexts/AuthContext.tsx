@@ -10,7 +10,7 @@ import {
   type User as ApiUser,
   type SignupRequest,
 } from "@/api/auth";
-import { createRoomAndToken, LivekitTokenResponse } from "@/api/apis";
+import { createRoomAndToken, LivekitTokenResponse, ProfileSummary } from "@/api/apis";
 
 type User = ApiUser;
 
@@ -25,6 +25,8 @@ interface AuthContextType {
   signup: (userData: SignupData) => Promise<void>;
   logout: () => void;
   setUser: (user: User | null) => void;
+  insights: ProfileSummary[] | null;
+  setInsights: (insights: ProfileSummary[]) => void;
 }
 
 type SignupData = SignupRequest;
@@ -47,6 +49,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [livekitTokenResponse, setLivekitTokenResponse] = useState<LivekitTokenResponse | null>(null);
+  const [insights, setInsights] = useState<ProfileSummary[] | null>(null);  
 
   const isAuthenticated = !!user;
   console.log(livekitTokenResponse)
@@ -85,26 +88,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = async (email: string, password: string): Promise<void> => {
-    try {
       const response = await authService.login({ email, password });
-      const livekitTokenResponse = await createRoomAndToken(response.access_token);
 
       // Store auth token and user data
       localStorage.setItem("authToken", response.access_token);
       localStorage.setItem("userData", JSON.stringify(response.user));
       setUser(response.user);
-    } catch (error) {
-      throw error;
-    }
   };
 
   const signup = async (userData: SignupData): Promise<void> => {
-    try {
       await authService.signup(userData);
       // Signup successful, user should now login
-    } catch (error) {
-      throw error;
-    }
+   
   };
 
   const getLivekitTokenResponse = async () => {
@@ -133,8 +128,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const value: AuthContextType = {
     user,
     isAuthenticated,
+
     livekitTokenResponse,
     getLivekitTokenResponse,
+    insights,
+    setInsights,
     isLoading,
     login,
     signup,

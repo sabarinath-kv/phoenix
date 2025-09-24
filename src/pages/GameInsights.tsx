@@ -8,10 +8,15 @@ import { PreloadedImage } from "@/components/LazyImage";
 // Import game insights image
 import gameInsightsImage from "@/assets/images/game-insights.png";
 import result1Image from "@/assets/images/result1.png";
+import { useAuth } from "@/contexts/AuthContext";
+import { generateReport, getProfileSummary } from "@/api/apis";
 
 export const GameInsights = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(0);
+  const { user, setInsights } = useAuth();
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Progress bar animation
@@ -38,6 +43,20 @@ export const GameInsights = () => {
       clearTimeout(loadingTimer);
     };
   }, []);
+
+  useEffect(() => {
+    (async() => {
+      if (user?.id) {
+        await generateReport(user.id);
+       const insights = await getProfileSummary(user.id);
+       console.log("insightssss", insights);
+        setInsights(insights);
+        navigate('/profile');
+      }
+    })();
+  }, [user]);
+
+
 
   return (
     <>

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { API_BASE_URL, API_ENDPOINTS } from "@/constants/api";
 import axios, { apiHelpers } from "./axios";
 
@@ -62,6 +63,51 @@ export interface User {
   updated_at: string;
 }
 
+
+export type ProfileSummaryItem = {
+  title: string;
+  value: string;
+  sub_label: string;
+  message: string;
+  icon: string;
+  index: number;
+}
+
+export type ProfileSummaryResponse = {
+  strength_spotlight: ProfileSummaryItem
+  attention_focus: ProfileSummaryItem
+  response_style: ProfileSummaryItem
+  working_style: ProfileSummaryItem
+  adhd_risk: ProfileSummaryItem
+  summary_profile: ProfileSummaryItem
+  rhythm_consistency: ProfileSummaryItem
+  visual_tracking: ProfileSummaryItem
+  anxiety_signals: ProfileSummaryItem
+}
+
+export enum Summary {
+  strength_spotlight = "strength_spotlight",
+  attention_focus = "attention_focus",
+  response_style = "response_style",
+  working_style = "working_style",
+  adhd_risk = "adhd_risk",
+  summary_profile = "summary_profile",
+  rhythm_consistency = "rhythm_consistency"     ,
+  visual_tracking = "visual_tracking",
+  anxiety_signals = "anxiety_signals",
+}
+
+export type ProfileSummary = {
+  title: string;
+  value: string;
+  sub_label: string;
+  message: string;
+  icon: string;
+  index: number;
+  summaryName: Summary
+}
+
+
 export const createRoomAndToken = async (
   token: string
 ): Promise<LivekitTokenResponse> => {
@@ -121,3 +167,46 @@ export const updateUser = async (
     throw new Error("Network error occurred");
   }
 };
+
+
+
+export const generateReport = async (userId: number)=> {
+   return apiHelpers.get(
+      `${API_ENDPOINTS.GENERATE_REPORT(userId)}`
+    );
+  }
+
+
+export type ProfileSummaries = ProfileSummary[]
+
+
+  export const getProfileSummary = async (userId: number): Promise<ProfileSummaries> => {
+    try {
+      const response = await apiHelpers.get<ProfileSummaryResponse>(
+        `${API_ENDPOINTS.GET_PROFILE_SUMMARY(userId)}`
+      );
+
+      const profileData = response.data as ProfileSummaryResponse;
+      
+      // Transform the response object into an array with summaryName keys
+      const profileSummaries: ProfileSummary[] = Object.entries(profileData).map(([key, item]) => ({
+        ...item,
+        summaryName: key as Summary
+      }));
+
+      // Sort by index to maintain proper order
+      return profileSummaries.sort((a, b) => a.index - b.index);
+      
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(
+          error.response?.data?.message || "Get profile summary failed"
+        );
+      }
+      throw new Error("Network error occurred");
+    }
+  }
+
+
+
+

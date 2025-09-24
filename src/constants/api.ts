@@ -9,6 +9,8 @@ export const API_ENDPOINTS = {
   AUTH_LOGIN: "/auth/token",
   LIVEKIT_TOKEN: "/livekit/rooms",
   CREATE_GAME_SESSION: "/sessions",
+  GENERATE_REPORT: (user_id: number) => `/reports/users/${user_id}/churn`,
+  GET_PROFILE_SUMMARY: (user_id: number) => `/reports/users/${user_id}/profile-summary`,
 } as const;
 
 export const DEFAULT_TIMEOUT = 10000;

@@ -1,7 +1,6 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { updateUser } from "@/api/apis";
 import aibgImage from '@/assets/images/aibg.png';
 import { Button } from "@/components/ui/button";
 

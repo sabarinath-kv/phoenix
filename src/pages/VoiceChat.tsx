@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
     RoomAudioRenderer,
     RoomContext,
@@ -38,7 +39,7 @@ export default function VoiceChatPage() {
   const [isTextChatMode, setIsTextChatMode] = useState(false);
   const [textMessages, setTextMessages] = useState<Array<{ role: 'ai' | 'user'; message: string; timestamp: Date }>>([]);
   const lastCallTime = useRef(0);
-  const { user, getLivekitTokenResponse, livekitTokenResponse, refreshLivekitTokenResponse, setUser } = useAuth();
+  const { user, getLivekitTokenResponse, livekitTokenResponse, refreshLivekitTokenResponse, setUser, login } = useAuth();
   const agentId = useRef('');
   const navigate = useNavigate();
 
@@ -152,11 +153,15 @@ export default function VoiceChatPage() {
         setAgentConnected(false);
         setAgentSpeaking(false);
         setIsListening(false);
-        patchUser()
-        navigate("/end-chat");
+        callUser()
         console.log('🤖 [Agent] Agent disconnected');
       }
     };
+
+      const callUser = async () => {
+        await login(user.email, "123456");
+        navigate("/end-chat");
+      }
 
     // Audio track events
     const handleTrackSubscribed = (track: any, publication: any, participant: RemoteParticipant) => {
