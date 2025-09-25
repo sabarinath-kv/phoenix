@@ -329,7 +329,7 @@ function ControlPanel({
 
 function AISpeakingView({ aiTranscript }: { aiTranscript: string }) {
   return (
-    <div className="flex flex-col items-center space-y-6 max-w-sm mx-auto px-4 mt-[0px] max-h-[450px] overflow-scroll">
+    <div className="flex flex-col items-center space-y-6 max-w-sm mx-auto px-4 mt-[0px] max-h-[350px] overflow-scroll">
       {/* Main Content Container */}
       <div className="flex flex-col items-center space-y-4 text-center">
         {/* Welcome Message */}
