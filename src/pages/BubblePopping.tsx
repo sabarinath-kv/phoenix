@@ -105,7 +105,7 @@ const BUBBLE_COLORS = [
   "rgba(255, 255, 100, 0.7)", // Yellow
 ];
 
-const GAME_DURATION = 60000; // 60 seconds
+const GAME_DURATION = 120000; // 60 seconds
 const COUNTDOWN_DURATION = 3;
 const BUBBLE_LIFESPAN = 8000; // 8 seconds
 const SPAWN_RATE_MIN = 500;

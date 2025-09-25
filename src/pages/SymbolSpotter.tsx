@@ -84,7 +84,7 @@ const OBJECT_EMOJIS = [
   "🎺",
 ];
 
-const GAME_DURATION = 30000; // 30 seconds for better gameplay
+const GAME_DURATION = 180000; // 60 seconds
 const COUNTDOWN_DURATION = 3; // 3 second countdown
 const CENTER_BOX_SIZE = 350; // pixels
 const SPAWN_RATE_MIN = 300; // minimum ms between spawns
