@@ -113,7 +113,7 @@ export const WelcomeScreen: React.FC = () => {
                     textAlign: "center",
                   }}
                 >
-                  AI companion
+                  AI parenting companion
                 </span>
               </h1>
 
