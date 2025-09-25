@@ -82,7 +82,7 @@ export const FinalReport: React.FC<FocusSpanSliderProps> = ({
   return (
     <div className={cn("w-full max-w-sm mx-auto flex flex-col", className)} style={{ backgroundColor: '#F9F0CB' }}>
       {/* Back Button */}
-      <div className="mb-8">
+      <div className="mb-0">
         <button
           onClick={onBack}
           className="w-12 h-12 bg-white rounded-full shadow-md flex items-center justify-center hover:shadow-lg transition-shadow"
