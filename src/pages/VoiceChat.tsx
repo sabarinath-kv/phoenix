@@ -39,7 +39,7 @@ export default function VoiceChatPage() {
   const [isTextChatMode, setIsTextChatMode] = useState(false);
   const [textMessages, setTextMessages] = useState<Array<{ role: 'ai' | 'user'; message: string; timestamp: Date }>>([]);
   const lastCallTime = useRef(0);
-  const { user, getLivekitTokenResponse, livekitTokenResponse, refreshLivekitTokenResponse, setUser, login } = useAuth();
+  const { user, getLivekitTokenResponse, livekitTokenResponse, refreshLivekitTokenResponse, setUser, login, logout } = useAuth();
   const agentId = useRef('');
   const navigate = useNavigate();
 
@@ -541,6 +541,7 @@ export default function VoiceChatPage() {
     console.log('🔌 [VoiceChat] Ending chat...');
     room.disconnect();
     setConnected(false);
+    logout()
   };
 
   // Enable audio on first interaction if needed
