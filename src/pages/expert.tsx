@@ -23,7 +23,7 @@ const Expert: React.FC = () => {
     {/* Next Button */}
     <button
       onClick={() => {
-        navigate('/expert-list')
+        navigate('/expert-listing')
       }}
       className="w-full py-4 mt-10 rounded-full text-[#333333] font-bold text-lg shadow-lg hover:shadow-xl transition-shadow bg-[#FFD934]"
       style={{

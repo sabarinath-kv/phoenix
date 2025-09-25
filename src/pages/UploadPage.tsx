@@ -129,8 +129,7 @@ export const UploadPage: React.FC = () => {
 
   return (
     <div
-      className="min-h-screen relative overflow-hidden safe-area-inset bg-gradient-to-br from-yellow-100 to-green-100"
-      // style={{ backgroundColor: "#FFD934" }}
+      className="min-h-screen relative overflow-hidden safe-area-inset bg-gradient-to-br from-yellow-200 via-yellow-100 to-yellow-50"
     >
       {/* Main container */}
       <div className="min-h-screen p-6 relative z-10">
@@ -161,13 +160,13 @@ export const UploadPage: React.FC = () => {
 
         <div className="max-w-2xl mx-auto space-y-6">
           {/* Upload Zone */}
-          <Card
-            className={cn(
-              "bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-3xl",
-              isDragOver &&
-                "border-4 border-green-400 bg-green-50 scale-[1.02] shadow-2xl"
-            )}
-          >
+                      <Card
+              className={cn(
+                "bg-white border-0 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-3xl",
+                isDragOver &&
+                  "border-4 border-yellow-400 bg-yellow-50 scale-[1.02] shadow-2xl"
+              )}
+            >
             <CardContent className="p-8">
               <div
                 onDrop={handleDrop}
@@ -181,8 +180,8 @@ export const UploadPage: React.FC = () => {
                     className={cn(
                       "p-6 rounded-full transition-all duration-300",
                       isDragOver
-                        ? "bg-green-100 text-green-600 scale-110"
-                        : "bg-gradient-to-br from-yellow-100 to-green-100 text-green-700 hover:from-yellow-200 hover:to-green-200"
+                        ? "bg-yellow-100 text-yellow-600 scale-110"
+                        : "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
                     )}
                   >
                     <Upload className="h-12 w-12" />
@@ -201,7 +200,7 @@ export const UploadPage: React.FC = () => {
 
                   <Button
                     size="lg"
-                    className="bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-white border-0 py-3 px-8 text-base font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl micro-scale"
+                    className="bg-yellow-100 hover:bg-yellow-200 text-gray-700 border-2 border-yellow-300 hover:border-yellow-400 py-3 px-8 text-base font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl micro-scale"
                     onClick={(e) => {
                       e.stopPropagation();
                       openFileDialog();
@@ -237,7 +236,7 @@ export const UploadPage: React.FC = () => {
                 {uploadedFiles.map((uploadedFile, index) => (
                   <Card
                     key={uploadedFile.id}
-                    className="bg-white border-2 border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl hover:border-green-300"
+                    className="bg-white border-2 border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl hover:border-yellow-300"
                   >
                     <CardContent className="p-4">
                       <div className="flex items-center space-x-4">
@@ -250,7 +249,7 @@ export const UploadPage: React.FC = () => {
                               className="h-12 w-12 rounded-lg object-cover"
                             />
                           ) : (
-                            <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-yellow-100 to-green-100 flex items-center justify-center text-green-700">
+                            <div className="h-12 w-12 rounded-lg bg-yellow-100 flex items-center justify-center text-yellow-700">
                               {getFileIcon(uploadedFile.file)}
                             </div>
                           )}
@@ -269,7 +268,7 @@ export const UploadPage: React.FC = () => {
                           {uploadedFile.status === "uploading" && (
                             <div className="mt-2 w-full bg-gray-200 rounded-full h-2 overflow-hidden">
                               <div
-                                className="bg-gradient-to-r from-yellow-400 to-green-400 h-2 rounded-full transition-all duration-500 ease-out will-change-transform"
+                                className="bg-yellow-400 h-2 rounded-full transition-all duration-500 ease-out will-change-transform"
                                 style={{
                                   width: `${Math.max(
                                     0,
@@ -285,7 +284,7 @@ export const UploadPage: React.FC = () => {
                         {/* Status Icon */}
                         <div className="flex-shrink-0">
                           {uploadedFile.status === "success" && (
-                            <CheckCircle className="h-5 w-5 text-green-500" />
+                            <CheckCircle className="h-5 w-5 text-yellow-600" />
                           )}
                           {uploadedFile.status === "error" && (
                             <AlertCircle className="h-5 w-5 text-red-500" />
@@ -314,8 +313,11 @@ export const UploadPage: React.FC = () => {
               <div className="flex gap-3 pt-4">
                 <Button
                   size="lg"
-                  className="flex-1 bg-gradient-to-r from-green-400 to-green-500 hover:from-green-500 hover:to-green-600 text-white border-0 py-4 text-base font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl micro-scale"
+                  className="flex-1 bg-yellow-100 hover:bg-yellow-200 text-gray-700 border-2 border-yellow-300 hover:border-yellow-400 py-4 text-base font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl micro-scale"
                   disabled={uploadedFiles.some((f) => f.status === "uploading")}
+                  onClick={() => {
+                    navigate("/new-homepage");
+                  }}
                 >
                   Continue
                 </Button>
