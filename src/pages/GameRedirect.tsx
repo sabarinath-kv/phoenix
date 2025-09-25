@@ -14,6 +14,8 @@ import game3Image from "@/assets/images/game3.png";
 import checkLine from "@/assets/images/check-line.png";
 import GamePad from "@/assets/images/gamepad.png";
 import { useAuth } from "@/contexts/AuthContext";
+import CatGameImage from "@/assets/images/cat.png";
+import LetterSoundGameImage from "@/assets/images/medal.png";
 
 interface GameInfo {
   id: string;
@@ -48,7 +50,7 @@ const GAME_INFO_MAP: Record<string, GameInfo> = {
     description: "Tap the animals! But do not tap the cat.",
     route: "/games/freeze-cat",
     duration: "2 min",
-    imageUrl: game2Image,
+    imageUrl: CatGameImage,
   },
   "letter-sound": {
     id: "letter-sound",
@@ -56,7 +58,7 @@ const GAME_INFO_MAP: Record<string, GameInfo> = {
     description: "Match letters with sounds!",
     route: "/games/letter-sound-matcher",
     duration: "2 min",
-    imageUrl: game3Image,
+    imageUrl: LetterSoundGameImage,
   },
   "letter-reversal-spotter": {
     id: "letter-reversal-spotter",
