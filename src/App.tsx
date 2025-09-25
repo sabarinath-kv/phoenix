@@ -26,6 +26,11 @@ import { GameInsights } from "./pages/GameInsights";
 import { UserProfile } from "./pages/UserProfile";
 import EndChat from "./pages/EndChat";
 import { UploadPage } from "./pages/UploadPage";
+import { WelcomeScreen } from "./pages/WelcomeScreen";
+import { Success } from "./pages/Success";
+import { PlayJourney } from "./pages/PlayJourney";
+import TutorialIntro from "./pages/TutorialIntro";
+import ProgressInsights from "./pages/ProgressInsights";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +53,16 @@ const App = () => {
               {/* Public routes */}
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
+
+              {/* Welcome screen - shown after login */}
+              <Route
+                path="/welcome"
+                element={
+                  // <ProtectedRoute>
+                  <WelcomeScreen />
+                  // </ProtectedRoute>
+                }
+              />
 
               {/* Protected routes */}
               <Route
@@ -154,32 +169,64 @@ const App = () => {
                   </ProtectedRoute>
                 }
               />
-                          <Route
-              path="/profile"
-              element={
-                <ProtectedRoute>
-                  <UserProfile />
-                </ProtectedRoute>
-              }
-            />
-          <Route  
-              path="/end-chat"
-              element={
-                <ProtectedRoute>
-                  <EndChat />
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute>
+                    <UserProfile />
                   </ProtectedRoute>
-              }
+                }
               />
-            <Route
-              path="/upload"
-              element={
-                <ProtectedRoute>
-                  <UploadPage />
-                </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/end-chat"
+                element={
+                  <ProtectedRoute>
+                    <EndChat />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/upload"
+                element={
+                  <ProtectedRoute>
+                    <UploadPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/success"
+                element={
+                  <ProtectedRoute>
+                    <Success />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/play-journey"
+                element={
+                  <ProtectedRoute>
+                    <PlayJourney />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/tutorial-intro"
+                element={
+                  <ProtectedRoute>
+                    <TutorialIntro />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/progress-insights"
+                element={
+                  <ProtectedRoute>
+                    <ProgressInsights />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
