@@ -154,19 +154,10 @@ export const CameraBox = ({
       
       {/* Status indicators */}
       <div className="absolute top-2 right-2 flex gap-1">
-        {hasPermission && (
-          <div className="text-lg">📹</div>
-        )}
-        
         {isModelLoading && (
           <div className="text-lg animate-pulse">🤖</div>
         )}
         
-        {isModelLoaded && !isModelLoading && hasPermission && (
-          <div className="text-lg" title={`Detection method: ${detectionMethod}`}>
-            {detectionMethod === 'face-api' ? '🧠' : detectionMethod === 'simple' ? '👁️' : '🎭'}
-          </div>
-        )}
       </div>
     </Card>
   );
