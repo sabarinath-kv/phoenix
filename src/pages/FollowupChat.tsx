@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
     RoomAudioRenderer,
     RoomContext,
@@ -20,16 +21,17 @@ export default function FollowupChatPage() {
   );
   const [connected, setConnected] = useState(false);
   const [micEnabled, setMicEnabled] = useState(true); // Default enabled
-  const [agentSpeaking, setAgentSpeaking] = useState(true);
+  const [agentSpeaking, setAgentSpeaking] = useState(false);
   const [agentConnected, setAgentConnected] = useState(false);
   const [connectionState, setConnectionState] = useState<ConnectionState>(ConnectionState.Disconnected);
   const [autoMicEnabled, setAutoMicEnabled] = useState(true); // Auto-enable mic in listening state
+  const [isFirstmsgDone, setIsFirstmsgDone] = useState(false);
   
   // New state for UI management
   const [aiTranscript, setAiTranscript] = useState('');
   const [userTranscript, setUserTranscript] = useState('');
   const [chatHistory, setChatHistory] = useState<Array<{ role: 'ai' | 'user'; message: string; timestamp: Date }>>([]);
-  const [isListening, setIsListening] = useState(false);
+  const [isListening, setIsListening] = useState(true);
   
   // Text chat mode state
   const [isTextChatMode, setIsTextChatMode] = useState(false);
@@ -169,8 +171,8 @@ export default function FollowupChatPage() {
         }
         
         // Set agent speaking state and switch UI
-        setAgentSpeaking(true);
-        setIsListening(false);
+        // setAgentSpeaking(true);
+        // setIsListening(false);
         console.log('🎯 [UI State] Agent started speaking - switching to AI speaking UI');
         
         // Ensure audio context is started and track is properly attached
@@ -236,7 +238,7 @@ export default function FollowupChatPage() {
         // Switch to listening mode if agent is still connected
         if (agentConnected) {
           console.log('🎯 [UI State] Agent stopped speaking - switching to listening UI');
-          setIsListening(true);
+          // setIsListening(true);
           
         } else {
           console.log('🎯 [UI State] Agent disconnected - not switching to listening mode');
@@ -294,13 +296,13 @@ export default function FollowupChatPage() {
           }
         } else if (data.type === 'agent_speaking_start') {
           console.log('🎯 [Agent State] Agent speaking start signal received');
-          setAgentSpeaking(true);
+          // setAgentSpeaking(true);
           setIsListening(false);
         } else if (data.type === 'agent_speaking_end') {
           console.log('🎯 [Agent State] Agent speaking end signal received');
-          setAgentSpeaking(false);
+          // setAgentSpeaking(false);
           if (agentConnected) {
-            setIsListening(true);
+            // setIsListening(true);
           }
         }
       } catch (error) {
@@ -349,7 +351,7 @@ export default function FollowupChatPage() {
         } else {
             setTimeout(() => {
                 setAgentSpeaking(false);
-                setIsListening(true);
+                // setIsListening(true);
             }, 1000);
         }
         console.log('🎤 [LiveKit] Active speakers changed:', data);
@@ -363,8 +365,8 @@ export default function FollowupChatPage() {
         lastCallTime.current = now;
 
         if(data.isLocal) {
-            setAgentSpeaking(true);
-            setIsListening(false);
+            // setAgentSpeaking(true);
+            // setIsListening(false);
         }
         console.log('🎤 [LiveKit] Active speakers changed:', data);
     });

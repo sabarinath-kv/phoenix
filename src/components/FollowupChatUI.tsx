@@ -68,17 +68,17 @@ export function FollowupChatUI({
   useEffect(() => {
     const newView = !isConnected ? 'thinking' : isAISpeaking ? 'speaking' : 'listening';
     
-    if (newView !== currentView) {
-      setIsTransitioning(true);
+    // if (newView !== currentView) {
+    //   setIsTransitioning(true);
       
-      // Longer delay for disconnect transitions to allow for smoother animation
-      const transitionDelay = (currentView === 'thinking' || newView === 'thinking') ? 250 : 200;
+    //   // Longer delay for disconnect transitions to allow for smoother animation
+    //   const transitionDelay = (currentView === 'thinking' || newView === 'thinking') ? 250 : 200;
       
-      setTimeout(() => {
-        setCurrentView(newView);
-        setIsTransitioning(false);
-      }, transitionDelay);
-    }
+    //   setTimeout(() => {
+    //     setCurrentView(newView);
+    //     setIsTransitioning(false);
+    //   }, transitionDelay);
+    // }
   }, [isConnected, isAISpeaking, currentView]);
 
   // Log current UI state for debugging
@@ -131,13 +131,13 @@ export function FollowupChatUI({
                   ? (currentView === 'thinking' ? 'animate-disconnect-fade-out' : 'animate-ui-transition-out')
                   : (currentView === 'thinking' ? 'animate-disconnect-fade-in' : 'animate-ui-transition-in')
               }`}>
-                {currentView === 'thinking' && (
+                {!isConnected && (
                   <ListeningView isListening={isListening} userTranscript={userTranscript} message="loading" />
                 )}
-                {currentView === 'speaking' && (
+                {!(isListening && isConnected) && (
                   <AISpeakingView aiTranscript={aiTranscript} />
                 )}
-                {currentView === 'listening' && (
+                {isListening && isConnected && (
                   <ListeningView isListening={isListening} userTranscript={userTranscript} message="listening" />
                 )}
               </div>
