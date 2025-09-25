@@ -69,7 +69,7 @@ export const NewHomepage: React.FC = () => {
         style={{ backgroundColor: "#F9F0CB" }}
       >
         {/* App Bar */}
-        <div  className="absolute top-0 left-0 right-0 bg-[#F9F0CB] flex items-center gap-2 px-6 py-2 w-full">
+        <div onClick={logout}   className="absolute top-0 left-0 right-0 bg-[#F9F0CB] flex items-center gap-2 px-6 py-2 w-full">
           {/* Menu Button */}
           <div
             className="flex justify-center items-center gap-2 w-10 h-10 bg-white border border-[#F2E5B1] rounded-full p-2 shadow-sm"
@@ -87,7 +87,7 @@ export const NewHomepage: React.FC = () => {
         </div>
 
         {/* Main Content */}
-        <div className="pt-10">
+        <div  className="pt-10">
           <div className="w-full items-start mt-8 pt-4 ml-6 pb-[-4]">
             <h2
               style={{
@@ -102,7 +102,9 @@ export const NewHomepage: React.FC = () => {
               Good Morning!
             </h2>
           </div>
-          <div className="flex justify-center">
+          <div onClick={() => {
+          navigate("/parent-companion");
+        }} className="flex justify-center">
             <img
               src={TalkToWiglooImg}
               alt="Talk to Wigloo"
