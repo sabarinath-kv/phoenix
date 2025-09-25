@@ -73,7 +73,7 @@ export const SYMBOL_SPOTTER = {
 } as const;
 
 export const GAME_CLASS = {
-  ADHD: ["symbol-spotter", "bubble-popping", "freeze-cat"],
+  ADHD: ["symbol-spotter", "bubble-popping", "freeze-cat", "letter-sound"],
   DYSLEXIA: ["letter-sound", "symbol-spotter", "letter-reversal-spotter"],
   AUTISM: ["emotion-adventure", "emotion-detector"],
 };

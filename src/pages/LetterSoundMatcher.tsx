@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import BackButton from "@/components/ui/BackButton";
-import GameControls from "@/components/ui/GameControls";
 import { CommonInstructionsModal } from "@/components/CommonInstructionsModal";
 import { useGameRedirect } from "@/hooks/useGameRedirect";
 import { useGameSession } from "@/hooks/useGameSession";
@@ -108,7 +107,9 @@ export const LetterSoundMatcher = () => {
   const [roundAccuracy, setRoundAccuracy] = useState<number[]>([]);
   const [gameStartTime, setGameStartTime] = useState<number>(0);
   const [roundStartTime, setRoundStartTime] = useState<number>(0);
-  const [hoveredCards, setHoveredCards] = useState<Map<number, number>>(new Map());
+  const [hoveredCards, setHoveredCards] = useState<Map<number, number>>(
+    new Map()
+  );
   const [selfCorrectionCount, setSelfCorrectionCount] = useState(0);
 
   // Refs for cleanup and metrics
@@ -123,75 +124,78 @@ export const LetterSoundMatcher = () => {
   });
 
   // Speech synthesis function with consistent settings (same as LetterReversalSpotter)
-  const speakLetter = useCallback((letter: string, isReplay: boolean = false) => {
-    // Track audio replay if it's not the initial play
-    if (isReplay && gameStartTime > 0) {
-      const currentTime = Date.now();
-      const gameTime = currentTime - gameStartTime;
-      const replayEvent: AudioReplayEvent = {
-        timestamp: currentTime,
-        letter,
-        roundNumber: stats.currentRound,
-        gameTime,
-      };
-      setAudioReplays((prev) => [...prev, replayEvent]);
-    }
-    if ("speechSynthesis" in window) {
-      // Cancel any ongoing speech
-      window.speechSynthesis.cancel();
+  const speakLetter = useCallback(
+    (letter: string, isReplay: boolean = false) => {
+      // Track audio replay if it's not the initial play
+      if (isReplay && gameStartTime > 0) {
+        const currentTime = Date.now();
+        const gameTime = currentTime - gameStartTime;
+        const replayEvent: AudioReplayEvent = {
+          timestamp: currentTime,
+          letter,
+          roundNumber: stats.currentRound,
+          gameTime,
+        };
+        setAudioReplays((prev) => [...prev, replayEvent]);
+      }
+      if ("speechSynthesis" in window) {
+        // Cancel any ongoing speech
+        window.speechSynthesis.cancel();
 
-      // Wait a moment for cancellation to complete
-      setTimeout(() => {
-        const utterance = new SpeechSynthesisUtterance(`Capital ${letter}`);
+        // Wait a moment for cancellation to complete
+        setTimeout(() => {
+          const utterance = new SpeechSynthesisUtterance(letter);
 
-        // Consistent voice settings for all questions
-        utterance.rate = 0.7; // Slower, consistent rate
-        utterance.pitch = 1.1; // Consistent pitch
-        utterance.volume = 0.9; // Consistent volume
-        utterance.lang = "en-US"; // Consistent language
+          // Consistent voice settings for all questions
+          utterance.rate = 0.7; // Slower, consistent rate
+          utterance.pitch = 1.1; // Consistent pitch
+          utterance.volume = 0.9; // Consistent volume
+          utterance.lang = "en-US"; // Consistent language
 
-        // Try to use the same voice consistently
-        const voices = window.speechSynthesis.getVoices();
-        let selectedVoice = null;
+          // Try to use the same voice consistently
+          const voices = window.speechSynthesis.getVoices();
+          let selectedVoice = null;
 
-        // Priority order for consistent voice selection
-        const preferredVoices = [
-          "Microsoft Zira - English (United States)",
-          "Google US English",
-          "Alex",
-          "Samantha",
-          "Karen",
-          "Microsoft David - English (United States)",
-        ];
+          // Priority order for consistent voice selection
+          const preferredVoices = [
+            "Microsoft Zira - English (United States)",
+            "Google US English",
+            "Alex",
+            "Samantha",
+            "Karen",
+            "Microsoft David - English (United States)",
+          ];
 
-        // Find the first available preferred voice
-        for (const voiceName of preferredVoices) {
-          selectedVoice = voices.find((voice) => voice.name === voiceName);
-          if (selectedVoice) break;
-        }
+          // Find the first available preferred voice
+          for (const voiceName of preferredVoices) {
+            selectedVoice = voices.find((voice) => voice.name === voiceName);
+            if (selectedVoice) break;
+          }
 
-        // Fallback to first English voice if no preferred voice found
-        if (!selectedVoice) {
-          selectedVoice = voices.find(
-            (voice) =>
-              voice.lang.startsWith("en") &&
-              (voice.name.includes("Female") || voice.name.includes("Woman"))
-          );
-        }
+          // Fallback to first English voice if no preferred voice found
+          if (!selectedVoice) {
+            selectedVoice = voices.find(
+              (voice) =>
+                voice.lang.startsWith("en") &&
+                (voice.name.includes("Female") || voice.name.includes("Woman"))
+            );
+          }
 
-        // Final fallback to any English voice
-        if (!selectedVoice) {
-          selectedVoice = voices.find((voice) => voice.lang.startsWith("en"));
-        }
+          // Final fallback to any English voice
+          if (!selectedVoice) {
+            selectedVoice = voices.find((voice) => voice.lang.startsWith("en"));
+          }
 
-        if (selectedVoice) {
-          utterance.voice = selectedVoice;
-        }
+          if (selectedVoice) {
+            utterance.voice = selectedVoice;
+          }
 
-        window.speechSynthesis.speak(utterance);
-      }, 100);
-    }
-  }, []);
+          window.speechSynthesis.speak(utterance);
+        }, 100);
+      }
+    },
+    []
+  );
 
   // Generate cards for current round
   const generateCards = useCallback(
@@ -232,7 +236,7 @@ export const LetterSoundMatcher = () => {
       const currentTime = Date.now();
       const gameTime = currentTime - gameStartTime;
       const clickedCard = gameCards[cardIndex];
-      
+
       const clickEvent: ClickEvent = {
         timestamp: currentTime,
         cardIndex,
@@ -242,7 +246,7 @@ export const LetterSoundMatcher = () => {
         roundNumber: stats.currentRound,
         gameTime,
       };
-      
+
       setAllClicks((prev) => [...prev, clickEvent]);
 
       // Check for self-correction (if user clicked a different card before)
@@ -277,7 +281,11 @@ export const LetterSoundMatcher = () => {
             if (gameSession.isSessionActive) {
               const metrics = calculateMetricsFromRefs();
               gameSession
-                .endSession(true, stats.score + LETTER_SOUND.SCORE_INCREMENT, metrics)
+                .endSession(
+                  true,
+                  stats.score + LETTER_SOUND.SCORE_INCREMENT,
+                  metrics
+                )
                 .catch((error) => {
                   console.error("Failed to save game session:", error);
                 });
@@ -326,121 +334,144 @@ export const LetterSoundMatcher = () => {
   );
 
   // Error type classification
-  const classifyError = useCallback((clickedCard: GameCard, correctCard: GameCard): 'phonetic_confusion' | 'visual_confusion' | 'random_clicking' => {
-    // Define phonetic confusion patterns
-    const phoneticConfusions: Record<string, string[]> = {
-      'A': ['E'], // Similar vowel sounds
-      'B': ['P', 'D'], // Similar consonant sounds
-      'C': ['K', 'G'], // Hard C sounds
-      'D': ['B', 'P'], // Similar consonant sounds
-      'E': ['A'], // Similar vowel sounds
-      'F': ['V'], // Similar fricative sounds
-      'G': ['C', 'K'], // Similar sounds
-    };
+  const classifyError = useCallback(
+    (
+      clickedCard: GameCard,
+      correctCard: GameCard
+    ): "phonetic_confusion" | "visual_confusion" | "random_clicking" => {
+      // Define phonetic confusion patterns
+      const phoneticConfusions: Record<string, string[]> = {
+        A: ["E"], // Similar vowel sounds
+        B: ["P", "D"], // Similar consonant sounds
+        C: ["K", "G"], // Hard C sounds
+        D: ["B", "P"], // Similar consonant sounds
+        E: ["A"], // Similar vowel sounds
+        F: ["V"], // Similar fricative sounds
+        G: ["C", "K"], // Similar sounds
+      };
 
-    // Define visual confusion patterns
-    const visualConfusions: Record<string, string[]> = {
-      'B': ['D', 'P'], // Similar shapes
-      'D': ['B', 'P'], // Similar shapes
-      'P': ['B', 'D'], // Similar shapes
-      'C': ['G'], // Similar curves
-      'G': ['C'], // Similar curves
-    };
+      // Define visual confusion patterns
+      const visualConfusions: Record<string, string[]> = {
+        B: ["D", "P"], // Similar shapes
+        D: ["B", "P"], // Similar shapes
+        P: ["B", "D"], // Similar shapes
+        C: ["G"], // Similar curves
+        G: ["C"], // Similar curves
+      };
 
-    const correctLetter = correctCard.letter;
-    const clickedLetter = clickedCard.letter;
+      const correctLetter = correctCard.letter;
+      const clickedLetter = clickedCard.letter;
 
-    // Check for phonetic confusion
-    if (phoneticConfusions[correctLetter]?.includes(clickedLetter)) {
-      return 'phonetic_confusion';
-    }
+      // Check for phonetic confusion
+      if (phoneticConfusions[correctLetter]?.includes(clickedLetter)) {
+        return "phonetic_confusion";
+      }
 
-    // Check for visual confusion
-    if (visualConfusions[correctLetter]?.includes(clickedLetter)) {
-      return 'visual_confusion';
-    }
+      // Check for visual confusion
+      if (visualConfusions[correctLetter]?.includes(clickedLetter)) {
+        return "visual_confusion";
+      }
 
-    // Otherwise, it's random clicking
-    return 'random_clicking';
-  }, []);
+      // Otherwise, it's random clicking
+      return "random_clicking";
+    },
+    []
+  );
 
   // Calculate comprehensive metrics
-  const calculateMetricsFromRefs = useCallback((): LetterSoundMatcherMetrics => {
-    const { allClicks, hoverEvents, audioReplays, roundAccuracy, selfCorrectionCount } = metricsDataRef.current;
-    
-    // Core Metrics
-    const firstClickTime = allClicks.length > 0 ? allClicks[0].gameTime : 0;
-    const totalClicks = allClicks.length;
-    
-    // Convert hover events to hover pattern
-    const hoverPattern = hoverEvents.map(event => ({
-      cardIndex: event.cardIndex,
-      letter: event.letter,
-      word: event.word,
-      duration: event.duration,
-      roundNumber: event.roundNumber,
-    }));
+  const calculateMetricsFromRefs =
+    useCallback((): LetterSoundMatcherMetrics => {
+      const {
+        allClicks,
+        hoverEvents,
+        audioReplays,
+        roundAccuracy,
+        selfCorrectionCount,
+      } = metricsDataRef.current;
 
-    // Calculate error types
-    const errorTypes = { phonetic_confusion: 0, visual_confusion: 0, random_clicking: 0 };
-    const incorrectClicks = allClicks.filter(click => !click.isCorrect);
-    
-    incorrectClicks.forEach(click => {
-      // Find the correct card for this round
-      const correctCard = gameCards.find(card => card.isCorrect);
-      if (correctCard) {
-        const clickedCard = { letter: click.letter, word: click.word, isCorrect: false, image: '' };
-        const errorType = classifyError(clickedCard, correctCard);
-        errorTypes[errorType]++;
+      // Core Metrics
+      const firstClickTime = allClicks.length > 0 ? allClicks[0].gameTime : 0;
+      const totalClicks = allClicks.length;
+
+      // Convert hover events to hover pattern
+      const hoverPattern = hoverEvents.map((event) => ({
+        cardIndex: event.cardIndex,
+        letter: event.letter,
+        word: event.word,
+        duration: event.duration,
+        roundNumber: event.roundNumber,
+      }));
+
+      // Calculate error types
+      const errorTypes = {
+        phonetic_confusion: 0,
+        visual_confusion: 0,
+        random_clicking: 0,
+      };
+      const incorrectClicks = allClicks.filter((click) => !click.isCorrect);
+
+      incorrectClicks.forEach((click) => {
+        // Find the correct card for this round
+        const correctCard = gameCards.find((card) => card.isCorrect);
+        if (correctCard) {
+          const clickedCard = {
+            letter: click.letter,
+            word: click.word,
+            isCorrect: false,
+            image: "",
+          };
+          const errorType = classifyError(clickedCard, correctCard);
+          errorTypes[errorType]++;
+        }
+      });
+
+      const audioReplayCount = audioReplays.length;
+
+      // Pattern Tracking
+      const totalRounds = roundAccuracy.length;
+      let improvementCurve = 0;
+      let fatiguePoint = -1;
+
+      if (totalRounds >= 7) {
+        const first4 = roundAccuracy.slice(0, 4);
+        const last3 = roundAccuracy.slice(-3);
+        const avgFirst4 = first4.reduce((a, b) => a + b, 0) / first4.length;
+        const avgLast3 = last3.reduce((a, b) => a + b, 0) / last3.length;
+        improvementCurve = avgLast3 - avgFirst4;
       }
-    });
 
-    const audioReplayCount = audioReplays.length;
+      // Find fatigue point (when accuracy starts declining consistently)
+      for (let i = 2; i < totalRounds - 1; i++) {
+        const before = roundAccuracy.slice(Math.max(0, i - 2), i);
+        const after = roundAccuracy.slice(i, Math.min(totalRounds, i + 3));
+        const avgBefore = before.reduce((a, b) => a + b, 0) / before.length;
+        const avgAfter = after.reduce((a, b) => a + b, 0) / after.length;
 
-    // Pattern Tracking
-    const totalRounds = roundAccuracy.length;
-    let improvementCurve = 0;
-    let fatiguePoint = -1;
-
-    if (totalRounds >= 7) {
-      const first4 = roundAccuracy.slice(0, 4);
-      const last3 = roundAccuracy.slice(-3);
-      const avgFirst4 = first4.reduce((a, b) => a + b, 0) / first4.length;
-      const avgLast3 = last3.reduce((a, b) => a + b, 0) / last3.length;
-      improvementCurve = avgLast3 - avgFirst4;
-    }
-
-    // Find fatigue point (when accuracy starts declining consistently)
-    for (let i = 2; i < totalRounds - 1; i++) {
-      const before = roundAccuracy.slice(Math.max(0, i - 2), i);
-      const after = roundAccuracy.slice(i, Math.min(totalRounds, i + 3));
-      const avgBefore = before.reduce((a, b) => a + b, 0) / before.length;
-      const avgAfter = after.reduce((a, b) => a + b, 0) / after.length;
-      
-      if (avgAfter < avgBefore - 0.2) { // 20% drop in accuracy
-        fatiguePoint = i;
-        break;
+        if (avgAfter < avgBefore - 0.2) {
+          // 20% drop in accuracy
+          fatiguePoint = i;
+          break;
+        }
       }
-    }
 
-    const gameDuration = gameStartTime > 0 ? Date.now() - gameStartTime : 0;
+      const gameDuration = gameStartTime > 0 ? Date.now() - gameStartTime : 0;
 
-    return {
-      first_click_time: firstClickTime,
-      total_clicks: totalClicks,
-      hover_pattern: hoverPattern,
-      error_types: errorTypes,
-      self_correction: selfCorrectionCount,
-      audio_replay_count: audioReplayCount,
-      improvement_curve: improvementCurve,
-      fatigue_point: fatiguePoint,
-      all_clicks: allClicks,
-      hover_events: hoverEvents,
-      audio_replays: audioReplays,
-      round_accuracy: roundAccuracy,
-      game_duration: gameDuration,
-    };
-  }, [classifyError, gameCards, gameStartTime]);
+      return {
+        first_click_time: firstClickTime,
+        total_clicks: totalClicks,
+        hover_pattern: hoverPattern,
+        error_types: errorTypes,
+        self_correction: selfCorrectionCount,
+        audio_replay_count: audioReplayCount,
+        improvement_curve: improvementCurve,
+        fatigue_point: fatiguePoint,
+        all_clicks: allClicks,
+        hover_events: hoverEvents,
+        audio_replays: audioReplays,
+        round_accuracy: roundAccuracy,
+        game_duration: gameDuration,
+      };
+    }, [classifyError, gameCards, gameStartTime]);
 
   // Start countdown
   const startCountdown = useCallback(() => {
@@ -537,12 +568,12 @@ export const LetterSoundMatcher = () => {
     console.log("Game state changed to:", gameState); // Debug log
     if (gameState === "playing") {
       console.log("Initializing game for playing state"); // Debug log
-      
+
       // Set game start time for metrics
       const startTime = Date.now();
       setGameStartTime(startTime);
       setRoundStartTime(startTime);
-      
+
       // Reset metrics
       setAllClicks([]);
       setHoverEvents([]);
@@ -550,7 +581,7 @@ export const LetterSoundMatcher = () => {
       setRoundAccuracy([]);
       setSelfCorrectionCount(0);
       setHoveredCards(new Map());
-      
+
       // Reset to first round
       const firstItem = LETTER_SOUND_ITEMS[0];
       setCurrentItem(firstItem);
@@ -632,28 +663,43 @@ export const LetterSoundMatcher = () => {
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-red-50">
         {/* Header */}
         <header
-          className="bg-white/90 backdrop-blur-sm border border-white/40 relative z-30"
+          className="backdrop-blur-sm relative z-30"
           style={{ height: "100px" }}
         >
           <div className="container mx-auto px-4 py-6">
-            <div className="flex items-center justify-center">
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">
-                Letter-Sound Matching
-              </h1>
+            <div className="flex items-center justify-between">
+              {/* Left side - Back button */}
+              <div className="flex items-center gap-4">
+                <BackButton onClick={() => navigate("/")} />
+              </div>
+
+              {/* Right side - Score and Round */}
+              {(gameState === "playing" || gameState === "completed") && (
+                <div className="flex items-center gap-3">
+                  {/* Score */}
+                  <div className="bg-white/90 backdrop-blur-sm border border-white/40 rounded-xl px-4 py-2 shadow-sm w-[80px]">
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="text-lg">🏆</div>
+                      <div className="text-sm font-bold text-gray-800 font-mono tabular-nums">
+                        {stats.score}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Round Progress */}
+                  <div className="bg-white/90 backdrop-blur-sm border border-white/40 rounded-xl px-4 py-2 shadow-sm w-[80px]">
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="text-lg">📖</div>
+                      <div className="text-sm font-bold text-gray-800 font-mono tabular-nums">
+                        {stats.currentRound + 1}/{stats.totalRounds}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-          {/* Back Button */}
-          <BackButton onClick={() => navigate("/")} />
         </header>
-
-        {/* Game Controls */}
-        {(gameState === "playing" || gameState === "completed") && (
-          <GameControls
-            score={stats.score}
-            currentRound={stats.currentRound}
-            totalRounds={stats.totalRounds}
-          />
-        )}
 
         {/* Game Content */}
         {gameState === "playing" && (
@@ -711,7 +757,9 @@ export const LetterSoundMatcher = () => {
                     onClick={() => handleCardClick(index, card.isCorrect)}
                     onMouseEnter={() => {
                       if (gameState === "playing" && gameStartTime > 0) {
-                        setHoveredCards(prev => new Map(prev).set(index, Date.now()));
+                        setHoveredCards((prev) =>
+                          new Map(prev).set(index, Date.now())
+                        );
                       }
                     }}
                     onMouseLeave={() => {
@@ -728,8 +776,8 @@ export const LetterSoundMatcher = () => {
                             duration,
                             roundNumber: stats.currentRound,
                           };
-                          setHoverEvents(prev => [...prev, hoverEvent]);
-                          setHoveredCards(prev => {
+                          setHoverEvents((prev) => [...prev, hoverEvent]);
+                          setHoveredCards((prev) => {
                             const newMap = new Map(prev);
                             newMap.delete(index);
                             return newMap;

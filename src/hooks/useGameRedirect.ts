@@ -58,7 +58,7 @@ export const useGameRedirect = (currentGameId: string) => {
         });
       } else {
         // All games completed, go to homepage
-        navigate("/game-insights");
+        navigate("/success");
       }
     }
   }, [
