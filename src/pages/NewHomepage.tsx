@@ -8,9 +8,12 @@ import { Menu } from "lucide-react";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import MenuIcon from "@/assets/icons/menu.svg";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const NewHomepage: React.FC = () => {
   const navigate = useNavigate();
+
+  const  {logout} = useAuth()
 
   const handleTalkToWigloo = () => {
     navigate("/voice-chat");
@@ -67,7 +70,7 @@ export const NewHomepage: React.FC = () => {
         style={{ backgroundColor: "#F9F0CB" }}
       >
         {/* App Bar */}
-        <div className="absolute top-0 left-0 right-0 bg-[#F9F0CB] flex items-center gap-2 px-6 py-2 w-full">
+        <div  className="absolute top-0 left-0 right-0 bg-[#F9F0CB] flex items-center gap-2 px-6 py-2 w-full">
           {/* Menu Button */}
           <div className="flex justify-center items-center gap-2 w-10 h-10 bg-white border border-[#F2E5B1] rounded-full p-2 shadow-sm"
           style={{
@@ -75,7 +78,7 @@ export const NewHomepage: React.FC = () => {
               "2.13px 2.84px 7.81px 0px rgba(160, 158, 158, 0.1), 8.52px 11.36px 14.2px 0px rgba(160, 158, 158, 0.09)",
               marginTop: "10px",
           }}>
-            <img src={MenuIcon} alt="Menu" className="w-4 h-4 text-[#1C1B1F]" />
+            <img onClick={logout} src={MenuIcon} alt="Menu" className="w-4 h-4 text-[#1C1B1F]" />
           </div>
           
           {/* Search/Content Area */}
@@ -102,7 +105,9 @@ export const NewHomepage: React.FC = () => {
             Good Morning!
           </h2>
         </div>
-          <div className="flex justify-center">
+          <div onClick={() => {
+            navigate("/parent-companion");
+          }} className="flex justify-center">
             <img
               src={TalkToWiglooImg}
               alt="Talk to Wigloo"

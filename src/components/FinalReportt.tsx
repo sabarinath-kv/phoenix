@@ -129,7 +129,7 @@ export const FinalReport: React.FC<FocusSpanSliderProps> = ({
       {/* Next Button */}
       <button
         onClick={() => {
-          navigate('/tutorial-intro')
+          navigate( user.metadata?.voice_assessment?.adhd_confidence_score > 0 ? '/expert' : '/tutorial-intro')
         }}
         className="w-full py-4 mt-20 rounded-full text-[#333333] font-bold text-lg shadow-lg hover:shadow-xl transition-shadow bg-[#FFD934]"
         style={{

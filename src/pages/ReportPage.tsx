@@ -95,7 +95,7 @@ const ReportPage: React.FC = () => {
 
   const handleNext = () => {
     if (currentSlideIndex == slides.length - 1) {
-        setShowFinal(true)
+        navigate( user.metadata?.voice_assessment?.adhd_confidence_score > 0 ? '/expert' : '/summary')
     }
     if (currentSlideIndex < slides.length - 1) {
       const nextIndex = currentSlideIndex + 1;
@@ -118,8 +118,6 @@ const ReportPage: React.FC = () => {
   };
 
   useEffect(() => {
-    console.log("slidessss1", currentSlideIndex);
-    console.log("slidessss", slides);
     if (currentSlideIndex == slides.length && currentSlideIndex != 0) {
       setShowFinal(true)
     }
@@ -128,22 +126,7 @@ const ReportPage: React.FC = () => {
 
   return (
     <div className="min-h-screen p-4" style={{ backgroundColor: '#F9F0CB' }}>
-      {slides.length === 0 ? <div></div> : showFinal ? 
-      <FinalReport name={user.metadata?.voice_assessment?.summary?.child_name} value={slides[currentSlideIndex].value}
-        imageSrc={slides[currentSlideIndex].imageSrc}
-        imageAlt={slides[currentSlideIndex].imageAlt}
-        title={slides[currentSlideIndex].title}
-        currentTime={slides[currentSlideIndex].currentTime}
-        maxTime={slides[currentSlideIndex].maxTime}
-        progress={slides[currentSlideIndex].progress}
-        recommendation={slides[currentSlideIndex].recommendation}
-        currentSlide={currentSlideIndex + 1}
-        totalSlides={slides.length}
-        type={slides[currentSlideIndex].type}
-        interactive={true}
-        onProgressChange={handleProgressChange}
-        onNext={handleNext}
-        onBack={handleBack} /> : <FocusSpanSlider
+      {slides.length === 0 ? <div></div> : <FocusSpanSlider
       value={slides[currentSlideIndex].value}
         imageSrc={slides[currentSlideIndex].imageSrc}
         imageAlt={slides[currentSlideIndex].imageAlt}

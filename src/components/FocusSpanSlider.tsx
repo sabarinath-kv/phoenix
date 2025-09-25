@@ -293,12 +293,12 @@ export const FocusSpanSlider: React.FC<FocusSpanSliderProps> = ({
           {value}
         </h1>}
 
-        { type != Summary.attention_focus ? <div className="mb-6">
+        {/* { type != Summary.attention_focus ? <div className="mb-6">
           <div className=" bg-[#FAF6F3] mx-16 rounded-md  flex flex-row p-2 justify-center items-center">
             <img src={imageAlt} alt="shapesFill" className="w-5 h-5 mr-2" />
             <p>{sub}</p>
           </div>
-        </div> : null}
+        </div> : null} */}
 
         {/* Recommendation */}
         <div 

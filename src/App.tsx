@@ -33,6 +33,8 @@ import TutorialIntro from "./pages/TutorialIntro";
 import ProgressInsights from "./pages/ProgressInsights";
 import NewHomepage from "./pages/NewHomepage";
 import ReportPage from "./pages/ReportPage";
+import Expert from "./pages/expert";
+import Summary from "./pages/summary";
 
 const queryClient = new QueryClient();
 
@@ -248,6 +250,24 @@ const App = () => {
               element={
                 <ProtectedRoute>
                   <ReportPage />
+                </ProtectedRoute>
+              }
+            />
+
+          <Route
+              path="/expert"
+              element={
+                <ProtectedRoute>
+                  <Expert />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/summary"
+              element={
+                <ProtectedRoute>
+                  <Summary />
                 </ProtectedRoute>
               }
             />

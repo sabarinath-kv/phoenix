@@ -132,7 +132,7 @@ export function FollowupChatUI({
                   : (currentView === 'thinking' ? 'animate-disconnect-fade-in' : 'animate-ui-transition-in')
               }`}>
                 {currentView === 'thinking' && (
-                  <ListeningView isListening={isListening} userTranscript={userTranscript} message="thinking" />
+                  <ListeningView isListening={isListening} userTranscript={userTranscript} message="loading" />
                 )}
                 {currentView === 'speaking' && (
                   <AISpeakingView aiTranscript={aiTranscript} />

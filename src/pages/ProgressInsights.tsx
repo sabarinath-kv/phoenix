@@ -69,7 +69,7 @@ export const ProgressInsights: React.FC = () => {
           step.id === 5 ? { ...step, completed: true, current: false } : step
         )
       );
-    }, 8000);
+    }, 12000);
 
     // const timer5 = setTimeout(() => {
     //   navigate("/game-insights");
@@ -99,7 +99,9 @@ export const ProgressInsights: React.FC = () => {
         setReport(insights);
         setInsights(insights);
         clearInterval(interval);
-        navigate("/report");
+        setTimeout(() => {
+          navigate("/report");
+        }, 8000);
       }
     }, 1000);
 
