@@ -202,7 +202,7 @@ export const GameRedirect: React.FC = () => {
       handleStartGame(nextIndex);
     } else {
       // All games completed, redirect to homepage
-      navigate("/homepage");
+      navigate("/success");
     }
   };
 

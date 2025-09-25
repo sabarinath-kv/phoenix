@@ -1,9 +1,16 @@
-import React from "react";
+import React, { useEffect } from "react";
 import SuccessImage from "@/assets/images/success.png";
-import { useParams } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 export const Success: React.FC = () => {
-  const { name } = useParams();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  useEffect(() => {
+    setTimeout(() => {
+      navigate("/progress-insights");
+    }, 3000);
+  }, []);
   return (
     <div className="min-h-screen min-h-[100dvh] bg-white flex items-center justify-center relative">
       <div className="w-full max-w-md mx-auto">
@@ -26,7 +33,8 @@ export const Success: React.FC = () => {
             textAlign: "center",
           }}
         >
-          Hurray!!!! <br /> You did well {name}!
+          Hurray!!!! <br /> You did well{" "}
+          {user.metadata?.voice_assessment?.summary?.child_name}!
         </h1>
       </div>
     </div>
