@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import BackButton from "@/components/ui/BackButton";
-import GameControls from "@/components/ui/GameControls";
 import { CommonInstructionsModal } from "@/components/CommonInstructionsModal";
 import { useGameRedirect } from "@/hooks/useGameRedirect";
 import { useGameSession } from "@/hooks/useGameSession";
@@ -827,24 +826,43 @@ export const FreezeCat = () => {
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-red-50 relative overflow-hidden">
         {/* Header */}
         <header
-          className="bg-white/90 backdrop-blur-sm border border-white/40 relative z-30"
+          className="backdrop-blur-sm relative z-30"
           style={{ height: "100px" }}
         >
           <div className="container mx-auto px-4 py-6">
-            <div className="flex items-center justify-center">
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">
-                Freeze Cat
-              </h1>
+            <div className="flex items-center justify-between">
+              {/* Left side - Back button and title */}
+              <div className="flex items-center gap-4">
+                <BackButton onClick={() => navigate("/")} />
+              </div>
+
+              {/* Right side - Score and Timer */}
+              {(gameState === "playing" || gameState === "completed") && (
+                <div className="flex items-center gap-3">
+                  {/* Score */}
+                  <div className="bg-white/90 backdrop-blur-sm border border-white/40 rounded-xl px-4 py-2 shadow-sm w-[80px]">
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="text-lg">🏆</div>
+                      <div className="text-sm font-bold text-gray-800 font-mono tabular-nums">
+                        {stats.score}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Timer */}
+                  <div className="bg-white/90 backdrop-blur-sm border border-white/40 rounded-xl px-4 py-2 shadow-sm w-[80px]">
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="text-lg">⏱️</div>
+                      <div className="text-sm font-bold text-gray-800 font-mono tabular-nums">
+                        {Math.ceil(gameTimeLeft / 1000)}s
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-          {/* Back Button */}
-          <BackButton onClick={() => navigate("/")} />
         </header>
-
-        {/* Game Controls */}
-        {(gameState === "playing" || gameState === "completed") && (
-          <GameControls score={stats.score} timeLeft={gameTimeLeft} />
-        )}
 
         {/* Game Grid - Landscape Optimized */}
         <div className="flex items-center justify-center min-h-[calc(100vh-140px)] p-4">
@@ -927,9 +945,7 @@ export const FreezeCat = () => {
                       size="lg"
                       className="bg-gradient-to-r from-orange-400 to-red-400 hover:from-orange-500 hover:to-red-500 text-white border-0 px-8 py-3 text-xl font-bold rounded-full transition-all duration-300 shadow-lg hover:shadow-xl w-full"
                     >
-                      {gameRedirect.isLastGame
-                        ? "Finish"
-                        : "Go to Next Game"}
+                      {gameRedirect.isLastGame ? "Finish" : "Go to Next Game"}
                     </Button>
                     <Button
                       onClick={resetGame}
