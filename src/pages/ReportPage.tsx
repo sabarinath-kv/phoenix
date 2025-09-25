@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import report1Image from '@/assets/images/report1.png';
 import { getProfileSummary, generateReport, Summary } from '@/api/apis';
 import { useAuth } from '@/contexts/AuthContext';
-import FinalReport from '@/components/finalReport';
+import FinalReport from '@/components/FinalReportt';
 import strength from '@/assets/images/strength.png';
 import report3 from '@/assets/images/report3.png';
 import working from '@/assets/images/working.png';
