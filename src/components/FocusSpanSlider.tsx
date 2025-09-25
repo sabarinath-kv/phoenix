@@ -78,7 +78,7 @@ export const FocusSpanSlider: React.FC<FocusSpanSliderProps> = ({
   return (
     <div className={cn("w-full max-w-sm mx-auto flex flex-col", className)} style={{ backgroundColor: '#F9F0CB' }}>
       {/* Back Button */}
-      <div className="mb-8">
+      <div className="mb-0">
         <button
           onClick={onBack}
           className="w-12 h-12 bg-white rounded-full shadow-md flex items-center justify-center hover:shadow-lg transition-shadow"
@@ -332,7 +332,7 @@ export const FocusSpanSlider: React.FC<FocusSpanSliderProps> = ({
       {/* Next Button */}
       <button
         onClick={onNext}
-        className="w-full py-4 mt-8 rounded-full text-[#333333] font-bold text-lg shadow-lg hover:shadow-xl transition-shadow bg-[#FFD934]"
+        className="w-full py-4 mt-4 rounded-full text-[#333333] font-bold text-lg shadow-lg hover:shadow-xl transition-shadow bg-[#FFD934]"
         style={{
           boxShadow: '0px 6px 0px 4px #FAAD61'
         }}
