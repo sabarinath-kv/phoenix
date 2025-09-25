@@ -28,6 +28,7 @@ import EndChat from "./pages/EndChat";
 import { UploadPage } from "./pages/UploadPage";
 import { WelcomeScreen } from "./pages/WelcomeScreen";
 import { Success } from "./pages/Success";
+import { PlayJourney } from "./pages/PlayJourney";
 
 const queryClient = new QueryClient();
 
@@ -190,16 +191,24 @@ const App = () => {
                   </ProtectedRoute>
                 }
               />
-              <Route
-                path="/success"
-                element={
-                  <ProtectedRoute>
-                    <Success />
-                  </ProtectedRoute>
-                }
-              />
+                          <Route
+              path="/success"
+              element={
+                <ProtectedRoute>
+                  <Success />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/play-journey"
+              element={
+                // <ProtectedRoute>
+                  <PlayJourney />
+                // </ProtectedRoute>
+              }
+            />
 
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
