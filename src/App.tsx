@@ -33,6 +33,7 @@ import TutorialIntro from "./pages/TutorialIntro";
 import ProgressInsights from "./pages/ProgressInsights";
 import NewHomepage from "./pages/NewHomepage";
 import ReportPage from "./pages/ReportPage";
+import Experts from "./pages/Experts";
 
 const queryClient = new QueryClient();
 
@@ -251,9 +252,15 @@ const App = () => {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/expert-listing"
+              element={
+                <ProtectedRoute>
+                  <Experts />
+                </ProtectedRoute>
+              }
+            />
 
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
         </TooltipProvider>

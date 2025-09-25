@@ -137,21 +137,13 @@ export const NewHomepage: React.FC = () => {
           >
             {/* Home */}
             <div className="flex flex-col items-center py-3 px-0 min-w-[60px]">
-              <img
-                src={HomeIcon}
-                alt="Home"
-                className="w-6 h-6 text-[#FAAD61] mb-0.5"
-              />
+              <img src="/figma/icon-home-black.svg" alt="Home" className="w-6 h-6 mb-0.5" />
             </div>
 
             {/* Brain/Psychology */}
             <div className="flex flex-col items-center py-3 px-5 min-w-[60px]">
               <div className="w-8 h-8 bg-transparent rounded-2xl flex items-center justify-center">
-                <img
-                  src={BrainIcon}
-                  alt="Brain"
-                  className="w-6 h-6 text-[#0D0D0D]"
-                />
+                <img src="/figma/icon-head-orange.svg" alt="Brain" className="h-8" />
               </div>
             </div>
 
