@@ -191,24 +191,24 @@ const App = () => {
                   </ProtectedRoute>
                 }
               />
-                          <Route
-              path="/success"
-              element={
-                <ProtectedRoute>
-                  <Success />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/play-journey"
-              element={
-                // <ProtectedRoute>
-                  <PlayJourney />
-                // </ProtectedRoute>
-              }
-            />
+              <Route
+                path="/success"
+                element={
+                  <ProtectedRoute>
+                    <Success />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/play-journey"
+                element={
+                  <ProtectedRoute>
+                    <PlayJourney />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
