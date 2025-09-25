@@ -29,6 +29,7 @@ import { UploadPage } from "./pages/UploadPage";
 import { WelcomeScreen } from "./pages/WelcomeScreen";
 import { Success } from "./pages/Success";
 import { PlayJourney } from "./pages/PlayJourney";
+import TutorialIntro from "./pages/TutorialIntro";
 
 const queryClient = new QueryClient();
 
@@ -204,6 +205,14 @@ const App = () => {
                 element={
                   <ProtectedRoute>
                     <PlayJourney />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/tutorial-intro"
+                element={
+                  <ProtectedRoute>
+                    <TutorialIntro />
                   </ProtectedRoute>
                 }
               />
