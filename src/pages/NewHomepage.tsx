@@ -63,7 +63,7 @@ export const NewHomepage: React.FC = () => {
       `}</style>
 
       <div
-        className="min-h-screen min-h-[100dvh] relative overflow-hidden"
+        className="min-h-screen min-h-[100dvh] relative "
         style={{ backgroundColor: "#F9F0CB" }}
       >
         {/* App Bar */}
@@ -79,13 +79,29 @@ export const NewHomepage: React.FC = () => {
           </div>
           
           {/* Search/Content Area */}
-          <div className="flex-1 flex items-center gap-2 bg-transparent rounded-lg px-2 py-2">
-            {/* Empty search area - can be customized */}
+          <div className="flex-1 flex items-center gap-2 bg-transparent rounded-lg px-2 py-2 ">
+            
           </div>
         </div>
 
+        
+
         {/* Main Content */}
-        <div className="absolute left-0 right-0" style={{ top: "40px" }}>
+        <div className="pt-10">
+        <div className="w-full items-start mt-8 pt-4 ml-6 pb-[-4]">
+          <h2
+            style={{
+              fontFamily: "Plus Jakarta Sans",
+              fontWeight: 700,
+              fontStyle: "normal",
+              fontSize: "22px",
+              lineHeight: "24px",
+              letterSpacing: "0px",
+            }}
+          >
+            Good Morning!
+          </h2>
+        </div>
           <div className="flex justify-center">
             <img
               src={TalkToWiglooImg}
@@ -95,14 +111,21 @@ export const NewHomepage: React.FC = () => {
                 width: "90%",
                 height: "100%",
                 margin: "0 auto",
-                paddingTop: "42px",
+                paddingTop: "18px",
               }}
             />
+          </div>
+
+          {/* Figma sections below hero */}
+          <div className="w-full flex justify-center mt-4 pb-28">
+            <div className="w-full  px-6 flex flex-col items-center gap-5">
+              <img src="/figma/section-1.png" alt="Section 1" className="w-full h-auto overflow-y-scroll" />
+            </div>
           </div>
         </div>
 
         {/* Bottom Navigation */}
-        <div className="absolute bottom-0 left-0 right-0 bg-transparent px-9 py-6 rounded-t-3xl shadow-lg">
+        <div className="fixed bottom-0 left-0 right-0 bg-transparent px-9 py-6 rounded-t-3xl shadow-lg z-50">
           <div
             className="flex items-center justify-between px-2"
             style={{
@@ -147,7 +170,7 @@ export const NewHomepage: React.FC = () => {
                 <img
                   src={ArticleIcon}
                   alt="Article"
-                  className="w-6 h-6 text-[#1C1B1F]"
+                  className="w-6 h-6 text-[#1C1B1F] "
                 />
               </div>
             </div>
