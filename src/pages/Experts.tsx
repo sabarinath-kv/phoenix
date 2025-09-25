@@ -1,13 +1,14 @@
 import React from "react";
-import Avatar1 from "@/assets/images/profile-avatar-17b9bf.png";
-import Avatar2 from "@/assets/images/maker-mindset-icon-107687.png";
-import Avatar3 from "@/assets/images/profile-bg-vector.png";
+import Avatar1 from "@/assets/images/avatar1.png";
+import Avatar2 from "@/assets/images/avatar2.png";
+import Avatar3 from "@/assets/images/avatar3.png";
 import MenuIcon from "@/assets/icons/menu.svg";
-import HomeIcon from "@/assets/icons/home.svg";
-import BrainIcon from "@/assets/icons/head.svg";
+import HomeIcon from "@/assets/icons/home-black.svg";
+import BrainIcon from "@/assets/icons/head-orange.svg";
 import ChartIcon from "@/assets/icons/pie_chart.svg";
 import ArticleIcon from "@/assets/icons/article.svg";
 import GlobeIcon from "@/assets/icons/globe.svg";
+import { useNavigate } from "react-router-dom";
 
 interface Expert {
   id: string;
@@ -85,18 +86,62 @@ const Card: React.FC<{ expert: Expert }> = ({ expert }) => {
     >
       <div className="p-4">
         <div className="flex items-start gap-3">
-          <div className="w-14 h-14 rounded-xl overflow-hidden bg-white border" style={{ borderColor: "#F1E2C7" }}>
-            <img src={expert.avatar} alt={expert.name} className="w-full h-full object-cover" />
+          <div
+            className="w-14 h-14 rounded-xl overflow-hidden bg-white border"
+            style={{ borderColor: "#F1E2C7" }}
+          >
+            <img
+              src={expert.avatar}
+              alt={expert.name}
+              className="w-full h-full object-cover"
+            />
           </div>
           <div className="flex-1">
-            <div className="text-[#0D0D0D]" style={{ fontFamily: "Plus Jakarta Sans", fontSize: "16px", fontWeight: 700, lineHeight: "20px" }}>{expert.name}</div>
-            <div className="text-[#6F6F6F] mt-0.5" style={{ fontFamily: "Plus Jakarta Sans", fontSize: "12px", lineHeight: "16px" }}>{expert.title}</div>
+            <div
+              className="text-[#0D0D0D]"
+              style={{
+                fontFamily: "Plus Jakarta Sans",
+                fontSize: "16px",
+                fontWeight: 700,
+                lineHeight: "20px",
+              }}
+            >
+              {expert.name}
+            </div>
+            <div
+              className="text-[#6F6F6F] mt-0.5"
+              style={{
+                fontFamily: "Plus Jakarta Sans",
+                fontSize: "12px",
+                lineHeight: "16px",
+              }}
+            >
+              {expert.title}
+            </div>
             <div className="mt-2 flex items-center gap-2 flex-wrap">
-              <span className="text-[#0D0D0D] opacity-80" style={{ fontFamily: "Plus Jakarta Sans", fontSize: "12px", lineHeight: "16px" }}>
+              <span
+                className="text-[#0D0D0D] opacity-80"
+                style={{
+                  fontFamily: "Plus Jakarta Sans",
+                  fontSize: "12px",
+                  lineHeight: "16px",
+                }}
+              >
                 {expert.experienceYears}+ Years experience
               </span>
-              <span className="text-[#0D0D0D]" style={{ fontFamily: "Plus Jakarta Sans", fontSize: "12px", lineHeight: "16px" }}>
-                • Starts at <span style={{ color: "#FAAD61", fontWeight: 700 }}>₹{expert.rateInr}</span> per session
+              <span
+                className="text-[#0D0D0D]"
+                style={{
+                  fontFamily: "Plus Jakarta Sans",
+                  fontSize: "12px",
+                  lineHeight: "16px",
+                }}
+              >
+                • Starts at{" "}
+                <span style={{ color: "#FAAD61", fontWeight: 700 }}>
+                  ₹{expert.rateInr}
+                </span>{" "}
+                per session
               </span>
             </div>
             <div className="mt-3 flex items-center gap-2 flex-wrap">
@@ -111,21 +156,46 @@ const Card: React.FC<{ expert: Expert }> = ({ expert }) => {
         </div>
       </div>
 
-      <div className="px-4 py-3 flex items-center justify-between" style={{ background: "#FFF9EE", borderTop: "1px solid #F1E2C7" }}>
-        <div className="" style={{ fontFamily: "Plus Jakarta Sans", fontSize: "12px", lineHeight: "16px", color: "#7A4C00" }}>
+      <div
+        className="px-4 py-3 flex items-center justify-between"
+        style={{ background: "#FFF9EE", borderTop: "1px solid #F1E2C7" }}
+      >
+        <div
+          className=""
+          style={{
+            fontFamily: "Plus Jakarta Sans",
+            fontSize: "12px",
+            lineHeight: "16px",
+            color: "#7A4C00",
+          }}
+        >
           <div className="opacity-80">Next available slot</div>
-          <div className="font-semibold" style={{ color: "#0D0D0D" }}>{expert.nextSlot}</div>
+          <div className="font-semibold" style={{ color: "#0D0D0D" }}>
+            {expert.nextSlot}
+          </div>
         </div>
         <div className="flex items-center gap-3">
           <button
             className="px-4 py-2 rounded-full font-medium"
-            style={{ background: "#FAAD61", color: "#0D0D0D", fontFamily: "Plus Jakarta Sans", fontSize: "12px", boxShadow: "0 1px 0 rgba(0,0,0,0.1)" }}
+            style={{
+              background: "#FAAD61",
+              color: "#0D0D0D",
+              fontFamily: "Plus Jakarta Sans",
+              fontSize: "12px",
+              boxShadow: "0 1px 0 rgba(0,0,0,0.1)",
+            }}
           >
             Book
           </button>
           <button
             className="px-4 py-2 rounded-full font-medium border"
-            style={{ borderColor: "#F1E2C7", background: "#FFFFFF", color: "#0D0D0D", fontFamily: "Plus Jakarta Sans", fontSize: "12px" }}
+            style={{
+              borderColor: "#F1E2C7",
+              background: "#FFFFFF",
+              color: "#0D0D0D",
+              fontFamily: "Plus Jakarta Sans",
+              fontSize: "12px",
+            }}
           >
             View Profile
           </button>
@@ -136,12 +206,17 @@ const Card: React.FC<{ expert: Expert }> = ({ expert }) => {
 };
 
 const Experts: React.FC = () => {
+  const navigate = useNavigate();
   return (
-    <div className="min-h-screen min-h-[100dvh] relative overflow-x-hidden" style={{ background: "#F9F0CB" }}>
+    <div
+      className="min-h-screen min-h-[100dvh] relative overflow-x-hidden"
+      style={{ background: "#F9F0CB" }}
+    >
       {/* App Bar */}
       <div className="absolute top-0 left-0 right-0 bg-[#F9F0CB] flex items-center gap-2 px-6 py-2 w-full">
         {/* Menu Button */}
-        <div className="flex justify-center items-center gap-2 w-10 h-10 bg-white border border-[#F2E5B1] rounded-full p-2 shadow-sm"
+        <div
+          className="flex justify-center items-center gap-2 w-10 h-10 bg-white border border-[#F2E5B1] rounded-full p-2 shadow-sm"
           style={{
             boxShadow:
               "2.13px 2.84px 7.81px 0px rgba(160, 158, 158, 0.1), 8.52px 11.36px 14.2px 0px rgba(160, 158, 158, 0.09)",
@@ -164,6 +239,8 @@ const Experts: React.FC = () => {
               width: "100%",
               textAlign: "center",
               color: "#0D0D0D",
+              marginRight: "20px",
+              paddingRight: "10px",
             }}
           >
             Experts
@@ -197,6 +274,7 @@ const Experts: React.FC = () => {
               src={HomeIcon}
               alt="Home"
               className="w-6 h-6 text-[#0D0D0D] mb-0.5"
+              onClick={() => navigate("/new-homepage")}
             />
           </div>
 
@@ -245,4 +323,4 @@ const Experts: React.FC = () => {
   );
 };
 
-export default Experts; 
+export default Experts;

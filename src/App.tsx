@@ -236,31 +236,30 @@ const App = () => {
                   </ProtectedRoute>
                 }
               />
-            <Route
-              path="/upload"
-              element={
-                <ProtectedRoute>
-                  <UploadPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/report"
-              element={
-                <ProtectedRoute>
-                  <ReportPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/expert-listing"
-              element={
-                <ProtectedRoute>
-                  <Experts />
-                </ProtectedRoute>
-              }
-            />
-
+              <Route
+                path="/upload"
+                element={
+                  <ProtectedRoute>
+                    <UploadPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/report"
+                element={
+                  <ProtectedRoute>
+                    <ReportPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/expert-listing"
+                element={
+                  <ProtectedRoute>
+                    <Experts />
+                  </ProtectedRoute>
+                }
+              />
             </Routes>
           </BrowserRouter>
         </TooltipProvider>
