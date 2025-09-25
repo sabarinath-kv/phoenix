@@ -329,14 +329,13 @@ function ControlPanel({
 
 function AISpeakingView({ aiTranscript }: { aiTranscript: string }) {
   return (
-    <div className="flex flex-col items-center space-y-6 max-w-sm mx-auto px-4 mt-[200px]">
+    <div className="flex flex-col items-center space-y-6 max-w-sm mx-auto px-4 mt-[0px] max-h-[550px] overflow-scroll">
       {/* Main Content Container */}
       <div className="flex flex-col items-center space-y-4 text-center">
         {/* Welcome Message */}
         <div className="flex flex-col space-y-4 px-10">
           <h1 className="text-[#393738] text-[29px] text-left font-normal leading-[40px] font-['Replay_Pro']">
-          {aiTranscript}
-          </h1>
+          {aiTranscript} </h1>
           
           {/* <p className="text-[#393738] text-2xl font-normal leading-[30px] font-replay">
             ...I'll help understand your child better through fun games.
