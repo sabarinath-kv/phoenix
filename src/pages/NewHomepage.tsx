@@ -63,7 +63,7 @@ export const NewHomepage: React.FC = () => {
       `}</style>
 
       <div
-        className="min-h-screen min-h-[100dvh] relative "
+        className="min-h-screen min-h-[100dvh] relative overflow-x-hidden"
         style={{ backgroundColor: "#F9F0CB" }}
       >
         {/* App Bar */}
@@ -125,7 +125,7 @@ export const NewHomepage: React.FC = () => {
         </div>
 
         {/* Bottom Navigation */}
-        <div className="fixed bottom-0 left-0 right-0 bg-transparent px-9 py-6 rounded-t-3xl shadow-lg z-50">
+        <div className="fixed bottom-0 left-0 right-0 w-full bg-transparent px-9 py-6 rounded-t-3xl shadow-lg z-50">
           <div
             className="flex items-center justify-between px-2"
             style={{
