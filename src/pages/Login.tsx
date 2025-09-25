@@ -36,6 +36,10 @@ export const Login: React.FC = () => {
   useEffect(() => {
     if (!user) return;
     // Always navigate to welcome screen after login
+    if (user.metadata.game) {
+      navigate("/success");
+      return
+    }
     if (user.metadata.isOnboarded) {
       navigate("/game-redirect", {
         state: {
