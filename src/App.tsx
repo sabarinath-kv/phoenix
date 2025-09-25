@@ -57,9 +57,9 @@ const App = () => {
               <Route
                 path="/welcome"
                 element={
-                  <ProtectedRoute>
+                  // <ProtectedRoute>
                     <WelcomeScreen />
-                  </ProtectedRoute>
+                  // </ProtectedRoute>
                 }
               />
 

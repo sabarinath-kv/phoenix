@@ -152,15 +152,13 @@ export const WelcomeScreen: React.FC = () => {
               {/* Get Started Button */}
               <div className="flex justify-center pb-8">
                 <Button
-                  onClick={() =>
-                    navigate("/voice-chat")
-                  }
-                  className="w-full m-4 rounded-full px-6 py-7 text-white border transition-all duration-300 font-plus-jakarta"
+                  onClick={() => navigate("/voice-chat")}
+                  className="w-full m-4 rounded-full px-6 py-7 text-black border transition-all duration-300 font-plus-jakarta"
                   style={{
-                    backgroundColor: "#0957D0",
-                    borderColor: "#083376",
+                    backgroundColor: "#FFD934",
+                    borderColor: "#FAAD61",
                     borderWidth: "1px",
-                    boxShadow: "0px 3px 0px 3px #083376",
+                    boxShadow: "0px 3px 0px 3px #FAAD61",
                     fontFamily: "Plus Jakarta Sans",
                     fontWeight: 700,
                     fontSize: "16px",
