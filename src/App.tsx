@@ -30,6 +30,7 @@ import { WelcomeScreen } from "./pages/WelcomeScreen";
 import { Success } from "./pages/Success";
 import { PlayJourney } from "./pages/PlayJourney";
 import TutorialIntro from "./pages/TutorialIntro";
+import ProgressInsights from "./pages/ProgressInsights";
 
 const queryClient = new QueryClient();
 
@@ -58,7 +59,7 @@ const App = () => {
                 path="/welcome"
                 element={
                   // <ProtectedRoute>
-                    <WelcomeScreen />
+                  <WelcomeScreen />
                   // </ProtectedRoute>
                 }
               />
@@ -213,6 +214,14 @@ const App = () => {
                 element={
                   <ProtectedRoute>
                     <TutorialIntro />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/progress-insights"
+                element={
+                  <ProtectedRoute>
+                    <ProgressInsights />
                   </ProtectedRoute>
                 }
               />
