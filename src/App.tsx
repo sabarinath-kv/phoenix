@@ -36,6 +36,7 @@ import ReportPage from "./pages/ReportPage";
 import Expert from "./pages/expert";
 import Summary from "./pages/summary";
 import Experts from "./pages/Experts";
+import { NanniPage } from "./components/nanniPage";
 
 const queryClient = new QueryClient();
 
@@ -273,11 +274,19 @@ const App = () => {
               }
             />
 
-<Route
+          <Route
               path="/expert-listing"
               element={
                 <ProtectedRoute>
                   <Experts />
+                </ProtectedRoute>
+              }
+            />
+              <Route
+              path="/nanni"
+              element={
+                <ProtectedRoute>
+                  <NanniPage />
                 </ProtectedRoute>
               }
             />

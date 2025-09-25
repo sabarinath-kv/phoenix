@@ -37,7 +37,7 @@ export const Login: React.FC = () => {
     if (!user) return;
     // Always navigate to welcome screen after login
     if (user.metadata.game) {
-      navigate("/");
+      navigate("/nanni");
       return
     }
     if (user.metadata.isOnboarded) {

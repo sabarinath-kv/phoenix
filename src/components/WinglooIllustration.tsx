@@ -13,7 +13,7 @@ export function WinglooIllustration({ isListening, className = "" }: WinglooIllu
       {/* Container with relative positioning for animations */}
       <div className="relative flex items-center justify-center">
         {/* Animated background glow */}
-        <div className={`absolute w-[300px] h-[300px] ''}`} />
+        <div className={`absolute w-[400px] h-[400px] ''}`} />
         
         <img 
             src={wiglooImage} 
