@@ -26,7 +26,7 @@ const experts: Expert[] = [
   {
     id: "1",
     name: "Sharika Pramod",
-    title: "Consultant Psychologist",
+    title: "Behavioral Therapist",
     experienceYears: 2,
     rateInr: 1000,
     languages: ["English", "Malayalam"],
@@ -37,7 +37,7 @@ const experts: Expert[] = [
   {
     id: "2",
     name: "Fathima Shirin",
-    title: "Consultant Psychologist",
+    title: "Development Therapist",
     experienceYears: 2,
     rateInr: 1000,
     languages: ["English", "Malayalam"],
@@ -48,7 +48,7 @@ const experts: Expert[] = [
   {
     id: "3",
     name: "Merin Susan",
-    title: "Consultant Psychologist",
+    title: "Child Counsellor",
     experienceYears: 3,
     rateInr: 1200,
     languages: ["English", "Malayalam"],

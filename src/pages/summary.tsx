@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import noIssue from '@/assets/images/noIssue.png';
+import issue from '@/assets/images/issue.png';
 import { ChevronLeft } from 'lucide-react';
 
 
@@ -13,7 +13,7 @@ const SummaryPage: React.FC = () => {
     {/* Main Card */}
     <div className={"bg-white mt-8 rounded-3xl p-8 mb-4"}>
       <img
-            src={noIssue}
+            src={issue}
             className="w-full h-full object-contain"
           />
     </div>
