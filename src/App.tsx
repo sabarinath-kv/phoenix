@@ -32,6 +32,7 @@ import { PlayJourney } from "./pages/PlayJourney";
 import TutorialIntro from "./pages/TutorialIntro";
 import ProgressInsights from "./pages/ProgressInsights";
 import NewHomepage from "./pages/NewHomepage";
+import ReportPage from "./pages/ReportPage";
 
 const queryClient = new QueryClient();
 
@@ -234,6 +235,22 @@ const App = () => {
                   </ProtectedRoute>
                 }
               />
+            <Route
+              path="/upload"
+              element={
+                <ProtectedRoute>
+                  <UploadPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/report"
+              element={
+                <ProtectedRoute>
+                  <ReportPage />
+                </ProtectedRoute>
+              }
+            />
 
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />

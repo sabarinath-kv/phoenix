@@ -9,7 +9,7 @@ export const Success: React.FC = () => {
   useEffect(() => {
     setTimeout(() => {
       navigate("/progress-insights");
-    }, 3000);
+    }, 10000);
   }, []);
   return (
     <div className="min-h-screen min-h-[100dvh] bg-white flex items-center justify-center relative">

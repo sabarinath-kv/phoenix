@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Check } from "lucide-react";
 import WiglooImg from "@/assets/images/wigloo-image.png";
+import { useAuth } from "@/contexts/AuthContext";
+import { generateReport, getProfileSummary, ProfileSummaries } from "@/api/apis";
 
 interface ProgressStep {
   id: number;
@@ -11,6 +13,8 @@ interface ProgressStep {
 }
 
 export const ProgressInsights: React.FC = () => {
+
+  const { user, setInsights } = useAuth();
   const navigate = useNavigate();
   const [steps, setSteps] = useState<ProgressStep[]>([
     { id: 1, text: "Looking at play", completed: true, current: false },
@@ -19,6 +23,7 @@ export const ProgressInsights: React.FC = () => {
     { id: 4, text: "Seeing challenges", completed: false, current: false },
     { id: 5, text: "Making a plan", completed: false, current: false },
   ]);
+  const [report, setReport] = useState<ProfileSummaries>([])
 
   useEffect(() => {
     // Simulate progress through steps - same pattern as PlayJourney
@@ -66,19 +71,40 @@ export const ProgressInsights: React.FC = () => {
       );
     }, 8000);
 
-    const timer5 = setTimeout(() => {
-      // Navigate to next screen after completion
-      navigate("/game-insights");
-    }, 9500);
+    // const timer5 = setTimeout(() => {
+    //   navigate("/game-insights");
+    // }, 9500);
 
     return () => {
       clearTimeout(timer1);
       clearTimeout(timer2);
       clearTimeout(timer3);
       clearTimeout(timer4);
-      clearTimeout(timer5);
+      // clearTimeout(timer5);
     };
   }, [navigate]);
+
+  useEffect(() => {
+    (async() => {
+      if (user?.id) {
+        await generateReport(user.id);
+      }
+    })();
+  }, [user]);
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const insights = await getProfileSummary(user?.id);
+      if (insights && insights.length > 0) {
+        setReport(insights);
+        setInsights(insights);
+        clearInterval(interval);
+        navigate("/report");
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <>

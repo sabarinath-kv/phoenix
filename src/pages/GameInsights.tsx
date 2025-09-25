@@ -14,7 +14,6 @@ import { generateReport, getProfileSummary } from "@/api/apis";
 export const GameInsights = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(0);
-  const { user, setInsights } = useAuth();
 
   const navigate = useNavigate();
 
@@ -44,17 +43,7 @@ export const GameInsights = () => {
     };
   }, []);
 
-  useEffect(() => {
-    (async() => {
-      if (user?.id) {
-        await generateReport(user.id);
-       const insights = await getProfileSummary(user.id);
-       console.log("insightssss", insights);
-        setInsights(insights);
-        navigate('/profile');
-      }
-    })();
-  }, [user]);
+
 
 
 

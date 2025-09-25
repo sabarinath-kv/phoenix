@@ -83,6 +83,7 @@ export type ProfileSummaryResponse = {
   rhythm_consistency: ProfileSummaryItem
   visual_tracking: ProfileSummaryItem
   anxiety_signals: ProfileSummaryItem
+  learning_style: ProfileSummaryItem
 }
 
 export enum Summary {
@@ -95,6 +96,7 @@ export enum Summary {
   rhythm_consistency = "rhythm_consistency"     ,
   visual_tracking = "visual_tracking",
   anxiety_signals = "anxiety_signals",
+  learning_style = "learning_style",
 }
 
 export type ProfileSummary = {
@@ -171,7 +173,7 @@ export const updateUser = async (
 
 
 export const generateReport = async (userId: number)=> {
-   return apiHelpers.get(
+   return apiHelpers.post(
       `${API_ENDPOINTS.GENERATE_REPORT(userId)}`
     );
   }
@@ -186,13 +188,15 @@ export type ProfileSummaries = ProfileSummary[]
         `${API_ENDPOINTS.GET_PROFILE_SUMMARY(userId)}`
       );
 
-      const profileData = response.data as ProfileSummaryResponse;
+      const profileData = response.data['summary'] as ProfileSummaryResponse;
+      console.log("profileData", profileData);
       
       // Transform the response object into an array with summaryName keys
       const profileSummaries: ProfileSummary[] = Object.entries(profileData).map(([key, item]) => ({
         ...item,
         summaryName: key as Summary
       }));
+      console.log("profileSummaries", profileSummaries);
 
       // Sort by index to maintain proper order
       return profileSummaries.sort((a, b) => a.index - b.index);
