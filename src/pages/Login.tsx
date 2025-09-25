@@ -35,16 +35,8 @@ export const Login: React.FC = () => {
 
   useEffect(() => {
     if (!user) return;
-    if (user.metadata["isOnboarded"]) {
-      navigate("/game-redirect", {
-        state: {
-          gameClass: "ADHD",
-          completedGames: [],
-        },
-      });
-    } else {
-      navigate("/voice-chat");
-    }
+    // Always navigate to welcome screen after login
+    navigate("/welcome");
   }, [user]);
 
   const onSubmit = async (data: LoginFormData) => {
@@ -97,7 +89,7 @@ export const Login: React.FC = () => {
                   color: "#303130",
                 }}
               >
-                  Welcome to Wigloo!
+                Welcome to Wigloo!
               </h1>
               <p
                 className="text-gray-600 text-sm md:text-lg"

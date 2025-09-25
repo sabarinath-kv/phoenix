@@ -265,6 +265,12 @@ export default {
         heading: ["Manrope", "Inter", "system-ui", "sans-serif"],
         replay: ["Replay Pro", "Manrope", "Inter", "system-ui", "sans-serif"],
         "dm-sans": ["DM Sans", "Inter", "system-ui", "sans-serif"],
+        "plus-jakarta": [
+          "Plus Jakarta Sans",
+          "Inter",
+          "system-ui",
+          "sans-serif",
+        ],
       },
       fontSize: {
         // Typography scale following the design system
