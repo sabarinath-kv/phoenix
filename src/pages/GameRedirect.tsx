@@ -12,6 +12,7 @@ import game1Image from "@/assets/images/game1.png";
 import game2Image from "@/assets/images/game2.png";
 import game3Image from "@/assets/images/game3.png";
 import checkLine from "@/assets/images/check-line.png";
+import GamePad from "@/assets/images/gamepad.png";
 
 interface GameInfo {
   id: string;
@@ -243,12 +244,12 @@ export const GameRedirect: React.FC = () => {
       {/* Header with Yellow Background and Curved Bottom */}
       <div className="relative">
         {/* Yellow Header Background */}
-        <div className="bg-yellow-400 relative">
+        <div className="flex flex-row bg-[#F9F0CB] relative">
           <div className="container mx-auto px-6 py-8 relative">
             {/* Header Content */}
             <div className="pt-8 pb-16">
               <p className="text-gray-700 text-lg font-medium mb-2">
-                Hello, Arjun
+                Hello, Arjun!
               </p>
               <h1 className="text-4xl sm:text-5xl font-bold text-gray-800 leading-tight">
                 Start with
@@ -257,6 +258,19 @@ export const GameRedirect: React.FC = () => {
               </h1>
             </div>
           </div>
+          <img
+            src={GamePad}
+            alt="GamePad"
+            style={{
+              width: "87px",
+              height: "99px",
+              position: "absolute",
+              top: "90px",
+              left: "320px",
+              transform: "rotate(0deg)",
+              opacity: 1,
+            }}
+          />
 
           {/* Smooth Inward Curve using SVG */}
           <div
@@ -319,7 +333,9 @@ export const GameRedirect: React.FC = () => {
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.4, delay: index * 0.1 }}
-                    className={`relative ${isHardcodedGame ? 'cursor-default' : 'cursor-pointer'}`}
+                    className={`relative ${
+                      isHardcodedGame ? "cursor-default" : "cursor-pointer"
+                    }`}
                     onClick={() => !isLocked && handleStartGame(index)}
                   >
                     {/* Progress Dot positioned at center-left of card */}
@@ -352,7 +368,11 @@ export const GameRedirect: React.FC = () => {
                           ? "hover:shadow-lg hover:border-gray-200 hover:-translate-y-1"
                           : ""
                       }
-                      ${isCurrent && !isHardcodedGame ? "ring-2 ring-yellow-400" : ""}
+                      ${
+                        isCurrent && !isHardcodedGame
+                          ? "ring-2 ring-yellow-400"
+                          : ""
+                      }
                     `}
                       style={{
                         boxShadow: "0px 8px 0px 0px #D4D1D2",
