@@ -36,7 +36,16 @@ export const Login: React.FC = () => {
   useEffect(() => {
     if (!user) return;
     // Always navigate to welcome screen after login
-    navigate("/welcome");
+    if (user.metadata.isOnboarded) {
+      navigate("/game-redirect", {
+        state: {
+          gameClass: "ADHD",
+          completedGames: [],
+        },
+      });
+    } else {
+      navigate("/welcome");
+    }   
   }, [user]);
 
   const onSubmit = async (data: LoginFormData) => {
