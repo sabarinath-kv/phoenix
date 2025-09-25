@@ -271,6 +271,7 @@ export default {
           "system-ui",
           "sans-serif",
         ],
+        nunito: ["Nunito", "Inter", "system-ui", "sans-serif"],
       },
       fontSize: {
         // Typography scale following the design system

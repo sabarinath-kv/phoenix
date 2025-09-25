@@ -27,6 +27,7 @@ import { UserProfile } from "./pages/UserProfile";
 import EndChat from "./pages/EndChat";
 import { UploadPage } from "./pages/UploadPage";
 import { WelcomeScreen } from "./pages/WelcomeScreen";
+import { Success } from "./pages/Success";
 
 const queryClient = new QueryClient();
 
@@ -186,6 +187,14 @@ const App = () => {
                 element={
                   <ProtectedRoute>
                     <UploadPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/success"
+                element={
+                  <ProtectedRoute>
+                    <Success />
                   </ProtectedRoute>
                 }
               />
