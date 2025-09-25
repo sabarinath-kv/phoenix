@@ -138,11 +138,7 @@ export const NewHomepage: React.FC = () => {
           >
             {/* Home */}
             <div className="flex flex-col items-center py-3 px-0 min-w-[60px]">
-              <img
-                src={HomeIcon}
-                alt="Home"
-                className="w-6 h-6 mb-0.5"
-              />
+              <img src={HomeIcon} alt="Home" className="w-6 h-6 mb-0.5" />
             </div>
 
             {/* Brain/Psychology */}
@@ -173,6 +169,9 @@ export const NewHomepage: React.FC = () => {
                   src={ArticleIcon}
                   alt="Article"
                   className="w-6 h-6 text-[#1C1B1F] "
+                  onClick={() => {
+                    navigate("/upload");
+                  }}
                 />
               </div>
             </div>

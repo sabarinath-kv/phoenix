@@ -305,6 +305,9 @@ const Experts: React.FC = () => {
                 src={ArticleIcon}
                 alt="Article"
                 className="w-6 h-6 text-[#1C1B1F]"
+                onClick={() => {
+                  navigate("/upload");
+                }}
               />
             </div>
           </div>
