@@ -79,13 +79,29 @@ export const NewHomepage: React.FC = () => {
           </div>
           
           {/* Search/Content Area */}
-          <div className="flex-1 flex items-center gap-2 bg-transparent rounded-lg px-2 py-2">
-            {/* Empty search area - can be customized */}
+          <div className="flex-1 flex items-center gap-2 bg-transparent rounded-lg px-2 py-2 ">
+            
           </div>
         </div>
 
+        
+
         {/* Main Content */}
         <div className="pt-10">
+        <div className="w-full items-start mt-8 pt-4 ml-6 pb-[-4]">
+          <h2
+            style={{
+              fontFamily: "Plus Jakarta Sans",
+              fontWeight: 700,
+              fontStyle: "normal",
+              fontSize: "22px",
+              lineHeight: "24px",
+              letterSpacing: "0px",
+            }}
+          >
+            Good Morning!
+          </h2>
+        </div>
           <div className="flex justify-center">
             <img
               src={TalkToWiglooImg}
@@ -95,7 +111,7 @@ export const NewHomepage: React.FC = () => {
                 width: "90%",
                 height: "100%",
                 margin: "0 auto",
-                paddingTop: "42px",
+                paddingTop: "18px",
               }}
             />
           </div>
@@ -154,7 +170,7 @@ export const NewHomepage: React.FC = () => {
                 <img
                   src={ArticleIcon}
                   alt="Article"
-                  className="w-6 h-6 text-[#1C1B1F]"
+                  className="w-6 h-6 text-[#1C1B1F] "
                 />
               </div>
             </div>
