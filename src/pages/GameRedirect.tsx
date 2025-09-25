@@ -13,6 +13,7 @@ import game2Image from "@/assets/images/game2.png";
 import game3Image from "@/assets/images/game3.png";
 import checkLine from "@/assets/images/check-line.png";
 import GamePad from "@/assets/images/gamepad.png";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface GameInfo {
   id: string;
@@ -137,6 +138,7 @@ interface LocationState {
 export const GameRedirect: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const state = (location.state as LocationState) || {
     gameClass: "ADHD",
     completedGames: [],
@@ -202,7 +204,7 @@ export const GameRedirect: React.FC = () => {
       handleStartGame(nextIndex);
     } else {
       // All games completed, redirect to homepage
-      navigate("/homepage");
+      navigate("/success");
     }
   };
 
@@ -249,7 +251,10 @@ export const GameRedirect: React.FC = () => {
             {/* Header Content */}
             <div className="pt-8 pb-16">
               <p className="text-gray-700 text-lg font-medium mb-2">
-                Hello, Arjun!
+                Hello,{" "}
+                {user.metadata?.voice_assessment?.summary?.child_name ??
+                  "kiddo"}
+                !
               </p>
               <h1 className="text-4xl sm:text-5xl font-bold text-gray-800 leading-tight">
                 Start with

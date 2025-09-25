@@ -31,6 +31,7 @@ import { Success } from "./pages/Success";
 import { PlayJourney } from "./pages/PlayJourney";
 import TutorialIntro from "./pages/TutorialIntro";
 import ProgressInsights from "./pages/ProgressInsights";
+import NewHomepage from "./pages/NewHomepage";
 
 const queryClient = new QueryClient();
 
@@ -222,6 +223,14 @@ const App = () => {
                 element={
                   <ProtectedRoute>
                     <ProgressInsights />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/new-homepage"
+                element={
+                  <ProtectedRoute>
+                    <NewHomepage />
                   </ProtectedRoute>
                 }
               />

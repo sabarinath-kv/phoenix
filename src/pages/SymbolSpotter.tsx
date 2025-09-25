@@ -84,7 +84,7 @@ const OBJECT_EMOJIS = [
   "🎺",
 ];
 
-const GAME_DURATION = 30000; // 30 seconds for better gameplay
+const GAME_DURATION = 180000; // 60 seconds
 const COUNTDOWN_DURATION = 3; // 3 second countdown
 const CENTER_BOX_SIZE = 350; // pixels
 const SPAWN_RATE_MIN = 300; // minimum ms between spawns
@@ -896,37 +896,56 @@ export const SymbolSpotter = () => {
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-yellow-50 to-red-50 relative overflow-hidden">
         {/* Header */}
         <header
-          className="bg-white/90 backdrop-blur-sm border border-white/40 relative z-30"
+          className="backdrop-blur-sm relative z-30"
           style={{ height: "100px" }}
         >
           <div className="container mx-auto px-4 py-6">
-            <div className="flex items-center justify-center">
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-800">
-                Symbol Spotter
-              </h1>
+            <div className="flex items-center justify-between">
+              {/* Left side - Back Button and Title */}
+              <div className="flex items-center gap-4">
+                <BackButton onClick={() => navigate("/")} />
+              </div>
+
+              {/* Right side - Score and Timer */}
+              {(gameState === "playing" || gameState === "completed") && (
+                <div className="flex items-center gap-3">
+                  {/* Score */}
+                  <div className="bg-white/90 backdrop-blur-sm border border-white/40 rounded-xl px-4 py-2 shadow-sm w-[80px]">
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="text-lg">🏆</div>
+                      <div className="text-sm font-bold text-gray-800 font-mono tabular-nums">
+                        {score}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Timer */}
+                  <div className="bg-white/90 backdrop-blur-sm border border-white/40 rounded-xl px-4 py-2 shadow-sm w-[80px]">
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="text-lg">⏱️</div>
+                      <div className="text-sm font-bold text-gray-800 font-mono tabular-nums">
+                        {Math.ceil(gameTimeLeft / 1000)}s
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-          {/* Back Button */}
-          <BackButton onClick={() => navigate("/")} />
         </header>
 
         {/* Target Emoji Display */}
         {(gameState === "playing" || gameState === "completed") && (
-          <div className="fixed top-28 left-1/2 transform -translate-x-1/2 z-40">
-            <div className="bg-white/90 backdrop-blur-sm border border-white/40 rounded-2xl px-4 py-2 shadow-lg">
-              <div className="flex items-center gap-3">
-                <div className="text-sm text-gray-600 font-medium">
+          <div className="fixed bottom-28 left-1/2 transform -translate-x-1/2 z-40">
+            <div className="bg-white/90 backdrop-blur-sm border border-white/40 rounded-2xl px-6 py-3 shadow-lg">
+              <div className="flex items-center gap-4">
+                <div className="text-base text-gray-600 font-medium whitespace-nowrap">
                   Find this symbol:
                 </div>
-                <div className="text-2xl">{targetEmoji}</div>
+                <div className="text-3xl">{targetEmoji}</div>
               </div>
             </div>
           </div>
-        )}
-
-        {/* Game Controls */}
-        {(gameState === "playing" || gameState === "completed") && (
-          <GameControls score={score} timeLeft={gameTimeLeft} />
         )}
 
         {/* Game Area */}

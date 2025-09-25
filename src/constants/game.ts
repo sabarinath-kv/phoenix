@@ -5,7 +5,7 @@ export const FREEZE_CAT = {
   GRID_SIZE: 3,
   INITIAL_APPEAR_INTERVAL: 2000, // 2 seconds
   MIN_APPEAR_INTERVAL: 800, // 0.8 seconds
-  GAME_DURATION: 20000, // 20 seconds
+  GAME_DURATION: 120000, // 60 seconds
   COUNTDOWN_DURATION: 3, // 3 second countdown
   SCORE_INCREMENT: 10, // Points for correct tap
   SCORE_PENALTY: 5, // Points deducted for tapping cat
